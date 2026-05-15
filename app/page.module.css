@@ -1462,14 +1462,13 @@ html {
     display: contents; /* دمج كل الأيقونات في أب واحد (headerLayout) للترتيب */
   }
 
-  /* ترتيب الأيقونات حسب الطلب */
+  /* ترتيب الأيقونات حسب الطلب للجوال */
   .circularsIcon { order: 1; } 
   .mobileBellWrapper { order: 2; } /* الجرس بجانب التعاميم */
-  .reviewersIcon { order: 3; }
-  .driveIcon { order: 4; }
-  .phoneIcon { order: 5; }
-  .infoIcon { order: 6; }
-  .mobileSwitchWrapper { order: 7; } /* التبديل بجانب المعلومات */
+  .driveIcon { order: 3; }
+  .phoneIcon { order: 4; }
+  .infoIcon { order: 5; }         /* ملخص ودورة حياة البلاغ */
+  .mobileSwitchWrapper { order: 6; } /* التبديل بجانب الملخص يساره */
 
   .profileGroup {
     order: 10; /* وضع الملف الشخصي تحت الأيقونات */
