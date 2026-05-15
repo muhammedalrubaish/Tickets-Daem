@@ -1132,7 +1132,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       }).length,
       duplicateCount: (() => {
         const numberCounts: {[key: string]: number} = {};
-        baseComplaints.filter(c => c.number && (c.number.trim().startsWith('IM') || c.number.includes('جازة'))).forEach(c => {
+        // نستثني الإجازات من فحص التكرار لأنها ليست بلاغات فريدة برقم IM
+        baseComplaints.filter(c => c.number && c.number.trim().startsWith('IM')).forEach(c => {
           const num = c.number.trim();
           numberCounts[num] = (numberCounts[num] || 0) + 1;
         });
@@ -1159,12 +1160,12 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       else if (activeFilter === 'duplicate') {
         const counts: {[key: string]: number} = {};
         result.forEach(c => {
-          if (c.number && c.number !== 'غير محدد') {
+          if (c.number && c.number.trim().startsWith('IM')) {
             const n = c.number.trim();
             counts[n] = (counts[n] || 0) + 1;
           }
         });
-        result = result.filter(c => c.number && counts[c.number.trim()] > 1);
+        result = result.filter(c => c.number && c.number.trim().startsWith('IM') && counts[c.number.trim()] > 1);
       }
     }
 
