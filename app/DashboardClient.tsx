@@ -1458,7 +1458,11 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               </span>
               {loggedInUser && (
                 <button 
-                  onClick={() => { setSelectedReceiver(loggedInUser); setActiveFilter('undefined'); }} 
+                  onClick={() => { 
+                    setSelectedReceiver(loggedInUser); 
+                    setActiveFilter('undefined'); 
+                    document.getElementById('complaints-list')?.scrollIntoView({ behavior: 'smooth' });
+                  }} 
                   className={styles.myWorkspaceBtn} 
                   title="🎯 مساحتي"
                   style={{ marginLeft:'5px', fontSize:'0.75rem', background:'var(--primary)', color:'white', border:'none', padding:'5px 15px', borderRadius:'15px', cursor:'pointer', fontWeight:'bold', transition: 'all 0.3s ease' }}
@@ -2230,7 +2234,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         </div>
       )}
 
-      <div className={styles.listHeader}>
+      <div className={styles.listHeader} id="complaints-list">
         <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
           <h2 style={{fontSize:'1.1rem', color:'var(--text)', margin:0}}>📑 قائمة البلاغات</h2>
           
