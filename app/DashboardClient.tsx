@@ -1676,7 +1676,21 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
             </div>
             <div id="solutionFilterOptions" className={styles.customFilterOptions} style={{display: 'none'}}>
               <div className={styles.customFilterOption} onClick={() => { setSelectedSolution('all'); document.getElementById('solutionFilterOptions')!.style.display = 'none'; }}>الحل (الكل)</div>
-              {Array.from(new Set(complaints.map(c => (c.solution || '').trim()).filter(s => s && s !== 'غير محدد'))).sort().map(sol => (
+              {[
+                'بلاغ جديد',
+                'بانتظار المستفيد',
+                'لدى الوزارة',
+                'مشكلة عامة',
+                'لم يتم الحل',
+                'تم الحل',
+                'مجاز'
+              ].map(sol => (
+                <div key={sol} className={styles.customFilterOption} onClick={() => { setSelectedSolution(sol); document.getElementById('solutionFilterOptions')!.style.display = 'none'; }}>{sol}</div>
+              ))}
+              {/* إضافة أي حالات أخرى موجودة في البيانات وغير مذكورة أعلاه */}
+              {Array.from(new Set(complaints.map(c => (c.solution || '').trim()).filter(s => s && s !== 'غير محدد' && ![
+                'بلاغ جديد', 'بانتظار المستفيد', 'لدى الوزارة', 'مشكلة عامة', 'لم يتم الحل', 'تم الحل', 'مجاز'
+              ].includes(s)))).sort().map(sol => (
                 <div key={sol} className={styles.customFilterOption} onClick={() => { setSelectedSolution(sol); document.getElementById('solutionFilterOptions')!.style.display = 'none'; }}>{sol}</div>
               ))}
             </div>
