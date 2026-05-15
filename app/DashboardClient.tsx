@@ -1161,11 +1161,10 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           const receiver = (c.receiver || '').trim().replace(/\s+/g, ' ');
           if (!receiver || receiver === 'غير محدد') return;
 
-          // مطابقة مرنة لتجاوز مشكلة المسافات أو الهمزات
+          // مطابقة مرنة فائقة لتجاوز كافة اختلافات الكتابة
           const matchedName = priorityOrder.find(p => 
-            p === receiver || 
-            p.replace(/\s+/g, '') === receiver.replace(/\s+/g, '') ||
-            (receiver.includes(p.split(' ')[0]) && p.includes(receiver.split(' ')[0]))
+            receiver.includes(p.split(' ')[0]) || 
+            p.includes(receiver.split(' ')[0])
           );
 
           if (matchedName) {
