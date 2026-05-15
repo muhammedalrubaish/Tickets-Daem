@@ -1139,6 +1139,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         return Object.keys(numberCounts).filter(num => numberCounts[num] > 1).length;
       })(),
       lastComplaint: [...complaints].sort((a,b) => (b.date||'').localeCompare(a.date||''))[0],
+      leastReceiver: (() => {
         const priorityOrder = [
           'البراء النصيان',
           'محمد الربيش',
