@@ -923,10 +923,15 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     }
 
     if (Object.keys(ticketStateMap).length > 0) {
+      const todayStr = new Date().toISOString().split('T')[0];
       complaints.forEach(ticket => {
         const prev = ticketStateMap[ticket.id] as {state: string, number: string} | undefined;
         const currentState = `${ticket.status}-${ticket.solution}`;
-        if (prev && prev.state !== currentState) {
+        
+        // لا ترسل تنبيه إلا إذا كان البلاغ بتاريخ اليوم فقط لمنع الإزعاج بالقديم
+        const isToday = ticket.date && ticket.date >= todayStr;
+
+        if (prev && prev.state !== currentState && isToday) {
           const msg = `تحديث في بلاغ ${ticket.number} للمستقبل ${ticket.receiver || 'غير محدد'}: ${ticket.solution}`;
           newNotifications.push({
             id: `update-${ticket.id}-${Date.now()}`,
