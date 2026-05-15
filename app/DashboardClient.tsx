@@ -1139,36 +1139,43 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         return Object.keys(numberCounts).filter(num => numberCounts[num] > 1).length;
       })(),
       lastComplaint: [...complaints].sort((a,b) => (b.date||'').localeCompare(a.date||''))[0],
-      leastReceiver: (() => {
+        const priorityOrder = [
+          'البراء النصيان',
+          'محمد الربيش',
+          'عبدالرحمن العمري',
+          'عزام الحربي',
+          'صالح الغصن',
+          'طارق الهدياني',
+          'ثامر المنصور'
+        ];
+
         const counts: {[key: string]: number} = {};
-        // تهيئة العداد لكل موظف فعلي (نستثني المشرف من الاقتراح)
-        EMPLOYEES.forEach(e => {
-          if (!e.name.includes('محمد الربيش')) {
-            counts[e.name] = 0;
-          }
+        // تهيئة العداد لكل الموظفين الموجودين في قائمة الأولوية
+        priorityOrder.forEach(name => {
+          counts[name] = 0;
         });
         
-        // حساب عدد البلاغات الفعلية (نركز على البلاغات وليس التحديثات)
+        // حساب عدد البلاغات الفعلية منذ 4 إبريل
         baseComplaints.filter(c => c.type !== 'تحديث نظام' && !c.number.includes('جازة')).forEach(c => {
-          if (c.receiver && counts[c.receiver] !== undefined) {
-            counts[c.receiver]++;
+          const receiver = (c.receiver || '').trim();
+          if (counts[receiver] !== undefined) {
+            counts[receiver]++;
           }
         });
 
-        const staffNames = Object.keys(counts);
-        if (staffNames.length === 0) return { name: 'الموظفين', count: 0 };
+        // البحث عن الموظف الأنسب بناءً على (أقل عدد بلاغات) ثم (الأولوية في القائمة)
+        let bestCandidate = priorityOrder[0];
+        let minCount = counts[bestCandidate];
 
-        let minName = staffNames[0];
-        let minVal = counts[minName];
-
-        staffNames.forEach(name => {
-          if (counts[name] < minVal) {
-            minVal = counts[name];
-            minName = name;
+        for (const name of priorityOrder) {
+          if (counts[name] < minCount) {
+            minCount = counts[name];
+            bestCandidate = name;
           }
-        });
+          // ملاحظة: إذا تساوى العدد، سيحتفظ النظام بالاسم الأسبق في مصفوفة priorityOrder
+        }
 
-        return { name: minName, count: minVal };
+        return { name: bestCandidate, count: minCount };
       })()
     };
   }, [complaints, selectedReceiver]);
