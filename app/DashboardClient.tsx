@@ -1014,28 +1014,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     });
   };
 
-  // تأثير الظهور السلس عند التمرير
-  useEffect(() => {
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add(styles.activeReveal);
-          observer.unobserve(entry.target);
-        }
-      });
-    }, observerOptions);
-
-    const revealElements = document.querySelectorAll(`.${styles.reveal}`);
-    revealElements.forEach(el => observer.observe(el));
-
-    return () => observer.disconnect();
-  }, [filteredComplaints]); // إعادة التشغيل عند تغيير القائمة
-
   const handleLogout = () => {
     document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     router.push('/login');
@@ -1291,7 +1269,29 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       }
       return true; // إظهار كل شيء آخر (بما في ذلك الإجازات) بشكل منفصل
     });
-  }, [complaints, activeFilter, searchTerm, selectedReceiver, selectedType]);
+  }, [complaints, activeFilter, searchTerm, selectedReceiver, selectedType, selectedSolution]);
+
+  // تأثير الظهور السلس عند التمرير
+  useEffect(() => {
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add(styles.activeReveal);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    const revealElements = document.querySelectorAll(`.${styles.reveal}`);
+    revealElements.forEach(el => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [filteredComplaints]); // إعادة التشغيل عند تغيير القائمة
 
   return (
     <main className={styles.container}>
