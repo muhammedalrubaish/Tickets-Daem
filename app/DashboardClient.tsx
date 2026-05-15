@@ -761,7 +761,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     return colors[Math.abs(hash) % colors.length];
   };
 
-  const [activeFilter, setActiveFilter] = useState<'all' | 'open' | 'closed' | 'inProgress' | 'undated' | 'undefined' | 'general' | 'late' | 'waiting' | 'vacation' | 'duplicate'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'open' | 'closed' | 'inProgress' | 'undated' | 'undefined' | 'general' | 'late' | 'waiting' | 'vacation' | 'duplicate' | 'ministry' | 'new'>('all');
   const [showSupervisorTools, setShowSupervisorTools] = useState(false);
   const [selectedReceiver, setSelectedReceiver] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
