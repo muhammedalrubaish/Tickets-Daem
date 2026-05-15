@@ -1102,6 +1102,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
     return {
       total: baseComplaints.filter(c => c.type !== 'تحديث نظام').length,
+      today: baseComplaints.filter(c => c.date === new Date().toISOString().split('T')[0]).length,
       open: baseComplaints.filter((c) => (c.solution || '').trim() === 'لم يتم الحل').length,
       closed: baseComplaints.filter((c) => (c.solution || '').trim() === 'تم الحل').length,
       inProgress: baseComplaints.filter((c) => (c.solution || '').trim() === 'أخرى معلقة').length,
