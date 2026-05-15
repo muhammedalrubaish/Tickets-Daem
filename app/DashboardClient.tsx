@@ -1006,11 +1006,35 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   }, [router]);
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
+    setTheme(prev => {
+      const next = prev === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      return next;
+    });
   };
+
+  // تأثير الظهور السلس عند التمرير
+  useEffect(() => {
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add(styles.activeReveal);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    const revealElements = document.querySelectorAll(`.${styles.reveal}`);
+    revealElements.forEach(el => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [filteredComplaints]); // إعادة التشغيل عند تغيير القائمة
 
   const handleLogout = () => {
     document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
@@ -2274,14 +2298,18 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
       <div className={styles.grid} key={activeFilter + searchTerm + selectedReceiver + selectedType}>
         {filteredComplaints.length > 0 ? (
-          filteredComplaints.map((complaint) => {
+          filteredComplaints.map((complaint, index) => {
              let statusClass = 'open';
              if (complaint.solution === 'تم الحل') statusClass = 'closed';
              else if (complaint.solution === 'لم يتم الحل') statusClass = 'open';
              else if (complaint.solution === 'أخرى معلقة') statusClass = 'inProgress';
              else if (complaint.solution === 'غير محدد' || !complaint.solution) statusClass = 'undefined';
             return (
-              <div key={complaint.id} className={`${styles.card} ${styles['status-' + statusClass]}`}>
+              <div 
+                key={complaint.id} 
+                className={`${styles.card} ${styles['status-' + statusClass]} ${styles.reveal}`}
+                style={{ transitionDelay: `${(index % 10) * 0.05}s` }}
+              >
                 <div className={styles.cardHeader} style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                   <span className={styles.ticketNumber}>{complaint.number}</span>
                   {(userRole === 'super_admin' || (userRole === 'editor' && (
