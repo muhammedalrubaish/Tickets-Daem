@@ -1395,147 +1395,83 @@ html {
   width: 100%;
 }
 
-@media (min-width: 901px), (orientation: landscape) {
-  .headerLayout {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-  }
-
-  .topUtilityRow {
-    order: 2; /* وضعهم في أقصى اليسار في الكمبيوتر */
-    width: auto;
-    gap: 15px;
-    flex-direction: row-reverse; /* لعكس الترتيب إذا لزم الأمر */
-  }
-
-  .mainActionsRow {
-    order: 1; /* وضعهم في اليمين */
-    flex-direction: row;
-    width: auto;
-    gap: 20px;
-  }
-
-  .iconsGroup {
-    justify-content: flex-start;
-  }
-
-  .profileGroup {
-    width: auto;
-  }
+/* 
+   تم توحيد التصميم ليكون نسخة كمبيوتر كاملة على كافة الأجهزة بناءً على طلب المستخدم.
+*/
+.container {
+  min-width: 1200px; /* لضمان ظهور نسخة الكمبيوتر كاملة دون تداخل */
+  padding: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
-@media (max-width: 768px) {
-  .container {
-    padding: 1rem;
-  }
+.headerLayout {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
 
-  .headerLayout {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 1.5rem;
-    position: relative;
-    padding-top: 60px; /* مساحة لأيقونات الزوايا */
-  }
+.topUtilityRow {
+  order: 2; /* وضعهم في أقصى اليسار في الكمبيوتر */
+  width: auto;
+  gap: 15px;
+  display: flex;
+  flex-direction: row-reverse; /* لعكس الترتيب إذا لزم الأمر */
+}
 
-  /* أيقونات الزوايا في الجوال */
-  .logoutIcon {
-    position: absolute !important;
-    top: 0;
-    left: 0;
-    z-index: 10;
-  }
+.mainActionsRow {
+  order: 1; /* وضعهم في اليمين */
+  display: flex;
+  flex-direction: row;
+  width: auto;
+  gap: 20px;
+}
 
-  .themeIcon {
-    position: absolute !important;
-    top: 0;
-    right: 0;
-    z-index: 10;
-  }
+.iconsGroup {
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+}
 
-  .topUtilityRow, .mainActionsRow, .iconsGroup {
-    display: contents; /* دمج كل الأيقونات في أب واحد (headerLayout) للترتيب */
-  }
+.profileGroup {
+  width: auto;
+  display: flex;
+  justify-content: flex-end;
+}
 
-  /* ترتيب الأيقونات حسب الطلب للجوال */
-  .circularsIcon { order: 1; } 
-  .mobileBellWrapper { order: 2; } /* الجرس بجانب التعاميم */
-  .driveIcon { order: 3; }
-  .phoneIcon { order: 4; }
-  .infoIcon { order: 5; }         /* ملخص ودورة حياة البلاغ */
-  .mobileSwitchWrapper { order: 6; } /* التبديل بجانب الملخص يساره */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
 
-  .profileGroup {
-    order: 10; /* وضع الملف الشخصي تحت الأيقونات */
-    width: 100%;
-    justify-content: center;
-    margin-top: 0.5rem;
-  }
+.statTodayFull {
+  grid-column: span 2;
+}
 
-  .statsGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-  }
+.notesCard {
+  grid-column: span 2;
+}
 
-  .statTodayFull, .notesCard {
-    grid-column: span 2;
-    padding: 1rem !important;
-  }
+.statCard {
+  padding: 1.25rem;
+  min-height: 120px;
+}
 
-  .notesCard {
-    max-height: 140px;
-  }
+.listHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
 
-  .statCard {
-    padding: 0.75rem 0.5rem !important;
-    flex-direction: column;
-    text-align: center;
-    gap: 6px;
-    min-height: 90px;
-    justify-content: center;
-  }
-
-  .statCard h3 {
-    font-size: 0.75rem !important;
-  }
-
-  .statValue {
-    font-size: 1.1rem !important;
-  }
-
-  .navIconButton {
-    width: 36px !important;
-    height: 36px !important;
-  }
-
-  .listHeader {
-    flex-direction: column;
-    gap: 12px;
-    align-items: center;
-  }
-
-  .listHeader h2 {
-    font-size: 1.1rem !important;
-  }
-
-  .quickActions {
-    width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .quickBtn {
-    height: 40px !important;
-    padding: 0 12px !important;
-    font-size: 0.8rem !important;
-  }
+.quickActions {
+  display: flex;
+  gap: 12px;
 }
 
 .bottomLoadingBar {
