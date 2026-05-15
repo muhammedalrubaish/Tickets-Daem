@@ -1139,7 +1139,37 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         return Object.keys(numberCounts).filter(num => numberCounts[num] > 1).length;
       })(),
       lastComplaint: [...complaints].sort((a,b) => (b.date||'').localeCompare(a.date||''))[0],
-      leastReceiver: { name: 'الموظفين', count: 0 }
+      leastReceiver: (() => {
+        const counts: {[key: string]: number} = {};
+        // تهيئة العداد لكل موظف فعلي (نستثني المشرف من الاقتراح)
+        EMPLOYEES.forEach(e => {
+          if (!e.name.includes('محمد الربيش')) {
+            counts[e.name] = 0;
+          }
+        });
+        
+        // حساب عدد البلاغات الفعلية (نركز على البلاغات وليس التحديثات)
+        baseComplaints.filter(c => c.type !== 'تحديث نظام' && !c.number.includes('جازة')).forEach(c => {
+          if (c.receiver && counts[c.receiver] !== undefined) {
+            counts[c.receiver]++;
+          }
+        });
+
+        const staffNames = Object.keys(counts);
+        if (staffNames.length === 0) return { name: 'الموظفين', count: 0 };
+
+        let minName = staffNames[0];
+        let minVal = counts[minName];
+
+        staffNames.forEach(name => {
+          if (counts[name] < minVal) {
+            minVal = counts[name];
+            minName = name;
+          }
+        });
+
+        return { name: minName, count: minVal };
+      })()
     };
   }, [complaints, selectedReceiver]);
 
