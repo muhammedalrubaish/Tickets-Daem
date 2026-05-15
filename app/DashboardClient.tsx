@@ -1282,7 +1282,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add(styles.activeReveal);
-          observer.unobserve(entry.target);
+        } else {
+          entry.target.classList.remove(styles.activeReveal);
         }
       });
     }, observerOptions);
