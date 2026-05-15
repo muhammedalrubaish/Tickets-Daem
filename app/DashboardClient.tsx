@@ -1185,7 +1185,16 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       result = result.filter(c => c.type === selectedType);
     }
 
-    return result.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const sorted = result.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    
+    // إخفاء التكرار بصرياً من القائمة
+    return sorted.filter((v, i, a) => {
+      if (v.number && v.number !== 'غير محدد') {
+        const n = v.number.trim();
+        return a.findIndex(t => t.number && t.number.trim() === n) === i;
+      }
+      return a.findIndex(t => t.id === v.id) === i;
+    });
   }, [complaints, activeFilter, searchTerm, selectedReceiver, selectedType]);
 
   return (
