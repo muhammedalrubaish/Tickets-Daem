@@ -958,7 +958,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     });
       const numberCounts: {[key: string]: number} = {};
       complaints.forEach(c => {
-        if (c.number && c.number !== 'غير محدد' && !c.number.includes('جازة') && c.type !== 'تحديث نظام') {
+        if (c.number && c.number !== 'غير محدد' && c.type !== 'تحديث نظام') {
           numberCounts[c.number] = (numberCounts[c.number] || 0) + 1;
         }
       });
@@ -1123,11 +1123,15 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       }).length,
       undefinedStatus: baseComplaints.filter((c) => {
         const sol = (c.solution || '').trim();
-        return sol === 'غير محدد' || sol === '' || sol === 'مجاز';
+        return sol === 'غير محدد' || sol === '';
+      }).length,
+      vacationStatus: baseComplaints.filter((c) => {
+        const sol = (c.solution || '').trim();
+        return sol === 'مجاز';
       }).length,
       duplicateCount: (() => {
         const numberCounts: {[key: string]: number} = {};
-        baseComplaints.filter(c => c.number && c.number.trim().startsWith('IM')).forEach(c => {
+        baseComplaints.filter(c => c.number && (c.number.trim().startsWith('IM') || c.number.includes('جازة'))).forEach(c => {
           const num = c.number.trim();
           numberCounts[num] = (numberCounts[num] || 0) + 1;
         });
@@ -1149,7 +1153,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       else if (activeFilter === 'general') result = result.filter(c => c.solution === 'مشكلة عامة');
       else if (activeFilter === 'waiting') result = result.filter(c => c.solution === 'بانتظار المستفيد');
       else if (activeFilter === 'new') result = result.filter(c => c.solution === 'بلاغ جديد');
-      else if (activeFilter === 'undefined') result = result.filter(c => ['غير محدد', '', 'مجاز'].includes((c.solution || '').trim()));
+      else if (activeFilter === 'undefined') result = result.filter(c => ['غير محدد', ''].includes((c.solution || '').trim()));
+      else if (activeFilter === 'vacation') result = result.filter(c => (c.solution || '').trim() === 'مجاز');
       else if (activeFilter === 'duplicate') {
         const counts: {[key: string]: number} = {};
         result.forEach(c => {
@@ -1448,6 +1453,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           { label: 'لدى الوزارة', value: stats.ministry, color: '#f59e0b', filter: 'ministry' as const, percent: stats.total > 0 ? (stats.ministry/stats.total)*100 : 0 },
           { label: 'أخرى معلقة', value: stats.inProgress, color: '#ff9800', filter: 'inProgress' as const, percent: stats.total > 0 ? (stats.inProgress/stats.total)*100 : 0 },
           { label: 'بلاغ جديد', value: stats.undefinedStatus, color: '#8b5cf6', filter: 'undefined' as const, percent: stats.total > 0 ? (stats.undefinedStatus/stats.total)*100 : 0 },
+          { label: 'إجازات', value: stats.vacationStatus, color: '#94a3b8', filter: 'vacation' as const, percent: stats.total > 0 ? (stats.vacationStatus/stats.total)*100 : 0 },
           { label: 'مشكلة عامة', value: stats.generalStatus, color: '#06b6d4', filter: 'general' as const, percent: stats.total > 0 ? (stats.generalStatus/stats.total)*100 : 0 },
           { label: 'لم يتم الحل', value: stats.open, color: '#ef4444', filter: 'open' as const, percent: stats.total > 0 ? (stats.open/stats.total)*100 : 0 },
           { label: 'متأخرة (>أسبوع)', value: stats.lateStatus, color: '#f43f5e', filter: 'late' as const, percent: stats.total > 0 ? (stats.lateStatus/stats.total)*100 : 0 },
