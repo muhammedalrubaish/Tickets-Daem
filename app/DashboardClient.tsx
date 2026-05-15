@@ -1127,10 +1127,11 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       }).length,
       duplicateCount: (() => {
         const numberCounts: {[key: string]: number} = {};
-        baseComplaints.filter(c => c.number && c.number.startsWith('IM')).forEach(c => {
-          numberCounts[c.number] = (numberCounts[c.number] || 0) + 1;
+        baseComplaints.filter(c => c.number && c.number.trim().startsWith('IM')).forEach(c => {
+          const num = c.number.trim();
+          numberCounts[num] = (numberCounts[num] || 0) + 1;
         });
-        return Object.values(numberCounts).filter(count => count > 1).reduce((sum, count) => sum + count, 0);
+        return Object.keys(numberCounts).filter(num => numberCounts[num] > 1).length;
       })(),
       lastComplaint: [...complaints].sort((a,b) => (b.date||'').localeCompare(a.date||''))[0],
       leastReceiver: { name: 'الموظفين', count: 0 }
