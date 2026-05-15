@@ -1306,9 +1306,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         <div className={styles.topUtilityRow}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {/* 1. الجرس */}
-            <div style={{position:'relative'}}>
+            <div style={{position:'relative'}} className={styles.mobileBellWrapper}>
               <button 
-                className={styles.navIconButton} 
+                className={`${styles.navIconButton} ${styles.bellIcon}`}
                 onClick={() => setIsNotiOpen(!isNotiOpen)} 
                 title="الإشعارات" 
                 style={{background:'rgba(255,255,255,0.1)', color:'white'}}
@@ -1361,9 +1361,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
             </div>
 
             {/* 2. تبديل البوابة */}
-            <div style={{position:'relative'}}>
+            <div style={{position:'relative'}} className={styles.mobileSwitchWrapper}>
               <button 
-                className={styles.navIconButton} 
+                className={`${styles.navIconButton} ${styles.switchIcon}`}
                 onClick={() => setIsSwitchModalOpen(true)} 
                 title="تبديل البوابة / الحساب" 
                 style={{background:'rgba(255,255,255,0.1)', color:'white'}}
@@ -1379,13 +1379,13 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
             </div>
 
             {/* 3. الوضع الداكن */}
-            <button className={styles.navIconButton} onClick={toggleTheme} title="تغيير مظهر الموقع" style={{ background: 'rgba(255,255,255,0.1)' }}>
+            <button className={`${styles.navIconButton} ${styles.themeIcon}`} onClick={toggleTheme} title="تغيير مظهر الموقع" style={{ background: 'rgba(255,255,255,0.1)' }}>
               <span style={{fontSize:'1.2rem'}}>{theme === 'light' ? '🌙' : '☀️'}</span>
             </button>
 
             {/* 4. تسجيل الخروج (أخر واحد يسار) */}
             <button 
-              className={styles.navIconButton} 
+              className={`${styles.navIconButton} ${styles.logoutIcon}`}
               onClick={handleLogout} 
               title="تسجيل الخروج" 
               style={{background:'rgba(239, 68, 68, 0.15)', border:'none', color:'#ef4444'}}
@@ -1402,7 +1402,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         <div className={styles.mainActionsRow}>
           <div className={styles.iconsGroup}>
             <button 
-              className={styles.navIconButton} 
+              className={`${styles.navIconButton} ${styles.circularsIcon}`}
               onClick={() => { 
                 setIsCircularsOpen(true); 
                 setHasNewUpdate(false); 
@@ -1422,21 +1422,46 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '10px', height: '10px', background: '#ef4444', borderRadius: '50%', border: '2px solid white', animation: 'pulse 2s infinite' }} />
               )}
             </button>
-            <button className={styles.navIconButton} onClick={() => setIsDriveOpen(true)} title="مركز النماذج والمرفقات" style={{ backgroundColor: 'var(--primary)' }}>
+
+            {/* زر بيان المراجعين */}
+            <a 
+              href="https://docs.google.com/spreadsheets/d/1z9AEnkj2G9I2FRo0IPUlLHQQ-IazzhLMYWefEZQUV3I/edit"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="بيان المراجعين"
+              className={`${styles.quickBtn} ${styles.reviewersIcon}`}
+              style={{
+                padding:'0 15px',
+                background:'#1d6f42', color:'white', 
+                fontSize:'0.85rem', fontWeight:'bold', boxShadow: '0 4px 10px rgba(29, 111, 66, 0.3)',
+                display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              بيان المراجعين
+            </a>
+
+            <button className={`${styles.navIconButton} ${styles.driveIcon}`} onClick={() => setIsDriveOpen(true)} title="مركز النماذج والمرفقات" style={{ backgroundColor: 'var(--primary)' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
               </svg>
             </button>
 
             {/* الهاتف */}
-            <button className={styles.navIconButton} onClick={() => setIsSupOpen(true)} title="دليل أرقام مشرفي البلديات" style={{ backgroundColor: 'var(--primary)' }}>
+            <button className={`${styles.navIconButton} ${styles.phoneIcon}`} onClick={() => setIsSupOpen(true)} title="دليل أرقام مشرفي البلديات" style={{ backgroundColor: 'var(--primary)' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
               </svg>
             </button>
 
             {/* معلومات */}
-            <button className={styles.navIconButton} onClick={() => setIsInfoOpen(true)} title="ملخص ودورة حياة البلاغ" style={{ backgroundColor: 'var(--primary)' }}>
+            <button className={`${styles.navIconButton} ${styles.infoIcon}`} onClick={() => setIsInfoOpen(true)} title="ملخص ودورة حياة البلاغ" style={{ backgroundColor: 'var(--primary)' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
