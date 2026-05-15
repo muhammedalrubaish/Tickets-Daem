@@ -1106,11 +1106,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       open: baseComplaints.filter((c) => (c.solution || '').trim() === 'لم يتم الحل').length,
       closed: baseComplaints.filter((c) => (c.solution || '').trim() === 'تم الحل').length,
       inProgress: baseComplaints.filter((c) => (c.solution || '').trim() === 'أخرى معلقة').length,
-      ministry: (() => {
-        const count = baseComplaints.filter((c) => (c.solution || '').trim() === 'لدى الوزارة').length;
-        console.log('Ministry tickets count:', count);
-        return count;
-      })(),
+      ministry: baseComplaints.filter((c) => (c.solution || '').trim() === 'لدى الوزارة').length,
       waitingStatus: baseComplaints.filter((c) => (c.solution || '').trim() === 'بانتظار المستفيد').length,
       newTickets: baseComplaints.filter((c) => (c.solution || '').trim() === 'بلاغ جديد').length,
       generalStatus: baseComplaints.filter((c) => (c.solution || '').trim() === 'مشكلة عامة').length,
@@ -1449,7 +1445,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           { label: 'إجمالي البلاغات', value: stats.total, color: 'var(--primary)', filter: 'all' as const, percent: 100 },
           { label: 'تم الحل', value: stats.closed, color: '#22c55e', filter: 'closed' as const, percent: stats.total > 0 ? (stats.closed/stats.total)*100 : 0 },
           { label: 'بانتظار المستفيد', value: stats.waitingStatus, color: '#ec4899', filter: 'waiting' as const, percent: stats.total > 0 ? (stats.waitingStatus/stats.total)*100 : 0 },
-          { label: 'لدى الوزارة', value: stats.inProgress, color: '#f59e0b', filter: 'inProgress' as const, percent: stats.total > 0 ? (stats.inProgress/stats.total)*100 : 0 },
+          { label: 'لدى الوزارة', value: stats.ministry, color: '#f59e0b', filter: 'ministry' as const, percent: stats.total > 0 ? (stats.ministry/stats.total)*100 : 0 },
+          { label: 'أخرى معلقة', value: stats.inProgress, color: '#ff9800', filter: 'inProgress' as const, percent: stats.total > 0 ? (stats.inProgress/stats.total)*100 : 0 },
           { label: 'بلاغ جديد', value: stats.undefinedStatus, color: '#8b5cf6', filter: 'undefined' as const, percent: stats.total > 0 ? (stats.undefinedStatus/stats.total)*100 : 0 },
           { label: 'مشكلة عامة', value: stats.generalStatus, color: '#06b6d4', filter: 'general' as const, percent: stats.total > 0 ? (stats.generalStatus/stats.total)*100 : 0 },
           { label: 'لم يتم الحل', value: stats.open, color: '#ef4444', filter: 'open' as const, percent: stats.total > 0 ? (stats.open/stats.total)*100 : 0 },
