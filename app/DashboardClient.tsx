@@ -1098,7 +1098,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           const targetName = selectedReceiver.toLowerCase().trim();
           const targetUser = emp ? emp.user.toLowerCase().trim() : '';
           return receiverValue.includes(targetName.split(' ')[0]) || (targetUser && receiverValue.includes(targetUser));
-        }));
+        })).filter(c => c.date && c.date >= '2026-04-04');
 
     return {
       total: baseComplaints.filter(c => c.type !== 'تحديث نظام').length,
@@ -1138,7 +1138,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   }, [complaints, selectedReceiver]);
 
   const filteredComplaints = useMemo(() => {
-    let result = complaints.filter(c => c.type !== 'تحديث نظام');
+    let result = complaints.filter(c => c.type !== 'تحديث نظام' && c.date && c.date >= '2026-04-04');
     if (activeFilter !== 'all') {
       if (activeFilter === 'open') result = result.filter(c => c.solution === 'لم يتم الحل');
       else if (activeFilter === 'closed') result = result.filter(c => c.solution === 'تم الحل');
