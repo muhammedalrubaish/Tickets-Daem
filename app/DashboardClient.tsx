@@ -1460,9 +1460,17 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           { label: 'مشكلة عامة', value: stats.generalStatus, color: '#06b6d4', filter: 'general' as const, percent: stats.total > 0 ? (stats.generalStatus/stats.total)*100 : 0 },
           { label: 'لم يتم الحل', value: stats.open, color: '#ef4444', filter: 'open' as const, percent: stats.total > 0 ? (stats.open/stats.total)*100 : 0 },
           { label: 'متأخرة (>أسبوع)', value: stats.lateStatus, color: '#f43f5e', filter: 'late' as const, percent: stats.total > 0 ? (stats.lateStatus/stats.total)*100 : 0 },
-          { label: '🔄 مكررة', value: stats.duplicateCount, color: '#a855f7', filter: 'duplicate' as const, percent: stats.total > 0 ? (stats.duplicateCount/stats.total)*100 : 0, wide: true },
+          { 
+            label: '🔄 مكررة', 
+            value: stats.duplicateCount, 
+            color: '#a855f7', 
+            filter: 'duplicate' as const, 
+            percent: stats.total > 0 ? (stats.duplicateCount/stats.total)*100 : 0, 
+            wide: true,
+            fullWidth: !(loggedInUser?.includes('محمد الربيش') || userRole === 'super_admin')
+          },
         ].filter(Boolean).map((item: any) => {
-          const { label, value, color, filter, percent, wide } = item;
+          const { label, value, color, filter, percent, wide, fullWidth } = item;
           const r = 28;
           const circ = 2 * Math.PI * r;
           const dash = (percent / 100) * circ;
@@ -1480,7 +1488,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 borderColor: activeFilter === filter ? color : 'var(--border)',
                 transform: activeFilter === filter ? 'scale(1.02)' : 'none',
                 transition: 'all 0.3s ease',
-                gridColumn: wide ? 'span 3' : 'auto'
+                gridColumn: fullWidth ? '1 / -1' : (wide ? 'span 3' : 'auto')
               }}
             >
               {/* الحلقة الدائرية */}
