@@ -1110,6 +1110,17 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       waitingStatus: baseComplaints.filter((c) => (c.solution || '').trim() === 'بانتظار المستفيد').length,
       newTickets: baseComplaints.filter((c) => (c.solution || '').trim() === 'بلاغ جديد').length,
       generalStatus: baseComplaints.filter((c) => (c.solution || '').trim() === 'مشكلة عامة').length,
+      lateStatus: baseComplaints.filter((c) => {
+        const sol = (c.solution || '').trim();
+        const isNew = sol === 'بلاغ جديد' || sol === 'غير محدد' || sol === '';
+        if (!isNew || !c.date || c.date === 'غير محدد') return false;
+        try {
+          const ticketDate = new Date(c.date);
+          const oneWeekAgo = new Date();
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+          return ticketDate < oneWeekAgo;
+        } catch { return false; }
+      }).length,
       undefinedStatus: baseComplaints.filter((c) => {
         const sol = (c.solution || '').trim();
         return sol === 'غير محدد' || sol === '' || sol === 'مجاز';
