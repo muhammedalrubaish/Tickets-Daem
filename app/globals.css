@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap');
+
+* {
+  font-family: 'Cairo', sans-serif !important;
+}
+
+:root {
+  --background: #f8f9fa; /* خلفية فاتحة جداً */
+  --foreground: #1c1c1e; /* نص داكن */
+  --primary: #217346; /* الأخضر الأساسي لمنصة بلدي */
+  --primary-hover: #1e6b3e; /* أخضر داكن للتأثيرات */
+  --secondary: #A67C52; /* البني الفاتح */
+  --card-bg: #ffffff; /* بطاقات بيضاء ناصعة */
+  --border: #e2e8f0; /* حدود رمادية خفيفة */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --text-muted: #64748b;
+}
+
+[data-theme='dark'] {
+  --background: #181d19;
+  --foreground: #f8fafc;
+  --primary: #4C9A2A;
+  --primary-hover: #3e8121;
+  --secondary: #C8A57F;
+  --card-bg: #232a26;
+  --border: #2c3630;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --background: #181d19;
+    --foreground: #f8fafc;
+    --primary: #4C9A2A;
+    --primary-hover: #3e8121;
+    --secondary: #C8A57F;
+    --card-bg: #232a26;
+    --border: #2c3630;
+  }
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Cairo', sans-serif;
+  direction: rtl;
+  unicode-bidi: plaintext;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* تمرير سلس للايفون */
+}
+
+input, select, textarea, button {
+  font-family: 'Cairo', sans-serif;
+  direction: rtl;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+/* Custom Green Cursor */
+* {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%23217346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2" fill="%23217346"></circle></svg>') 12 12, auto !important;
+}
+
+a, button, select, input, textarea, .clickable {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%23217346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2" fill="%23217346"></circle></svg>') 12 12, pointer !important;
+}
+/* إصلاح فوري لواجهة وحدة بلدي على الآيفون */
+@media (max-width: 480px) {
+  .stats-grid, .grid-cols-3 { 
+    display: grid !important; 
+    grid-template-columns: 1fr !important; 
+    gap: 12px; 
+  }
+  .card, .stat-box { 
+    width: 100% !important; 
+    will-change: transform; /* تسريع المعالجة الرسومية */
+  }
+  h1 { font-size: 1.2rem !important; }
+  
+  /* تقليل جودة الظلال المعقدة على الجوال لزيادة السلاسة */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    transition: none !important; /* إلغاء الحركات المعقدة أثناء التمرير */
+  }
+}

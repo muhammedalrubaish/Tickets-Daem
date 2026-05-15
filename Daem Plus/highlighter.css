@@ -1,0 +1,17 @@
+/* أنماط تلوين خلية "رقم التذكرة" v18 */
+
+.daem-cell-new { background-color: #c8e6c9 !important; border-right: 5px solid #2e7d32 !important; }
+.daem-cell-recent { background-color: #b3e5fc !important; border-right: 5px solid #0277bd !important; }
+.daem-cell-old { background-color: #fff9c4 !important; border-right: 5px solid #fbc02d !important; }
+.daem-cell-very-old { background-color: #ffcdd2 !important; border-right: 5px solid #c62828 !important; }
+.daem-cell-unassigned { background-color: #e0e0e0 !important; border-right: 5px solid #616161 !important; }
+
+/* تنسيق النص داخل الخلية الملونة - تمت إزالة التعديلات على الخط للحفاظ على الشكل الأصلي */
+td.daem-cell-new, td.daem-cell-recent, td.daem-cell-old, td.daem-cell-very-old, td.daem-cell-unassigned {
+    /* تم حذف font-weight و text-align للحفاظ على التنسيق الأصلي للمنصة */
+}
+
+/* ضمان بقاء الرابط بلونه الأصلي وشكله الطبيعي */
+td.daem-cell-new a, td.daem-cell-recent a, td.daem-cell-old a, td.daem-cell-very-old a, td.daem-cell-unassigned a {
+    /* تم حذف color و text-decoration لكي لا يتغير شكل الأرقام */
+}
