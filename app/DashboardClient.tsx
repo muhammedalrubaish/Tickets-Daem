@@ -1090,31 +1090,37 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     }
   };
 
+  // تصفية البلاغات الأساسية لاستبعاد تحديثات النظام فقط (الإجازات تُحتسب كبلاغ)
+  const baseComplaints = useMemo(() => {
+    return complaints.filter(c => 
+      c.date && 
+      c.date >= '2026-04-04' && 
+      c.type !== 'تحديث نظام' && 
+      c.type !== 'تحديثات النظام' &&
+      !c.number.includes('📢')
+    );
+  }, [complaints]);
+
   const stats = useMemo(() => {
-    const baseComplaints = (selectedReceiver === 'all' 
-      ? complaints 
-      : complaints.filter(c => {
+    const userFilteredComplaints = (selectedReceiver === 'all' 
+      ? baseComplaints 
+      : baseComplaints.filter(c => {
           const emp = EMPLOYEES.find(e => e.name === selectedReceiver);
           const receiverValue = (c.receiver || '').toLowerCase().trim();
           const targetName = selectedReceiver.toLowerCase().trim();
           const targetUser = emp ? emp.user.toLowerCase().trim() : '';
           return receiverValue.includes(targetName.split(' ')[0]) || (targetUser && receiverValue.includes(targetUser));
-        })).filter(c => 
-          c.date && 
-          c.date >= '2026-04-04' && 
-          c.type !== 'تحديث نظام' && 
-          !c.number.includes('📢')
-        );
+        }));
 
     return {
-      total: baseComplaints.filter(c => c.type !== 'تحديث نظام').length,
-      today: baseComplaints.filter(c => c.date === new Date().toISOString().split('T')[0]).length,
-      open: baseComplaints.filter((c) => (c.solution || '').trim() === 'لم يتم الحل').length,
-      closed: baseComplaints.filter((c) => (c.solution || '').trim() === 'تم الحل').length,
-      ministry: baseComplaints.filter((c) => (c.solution || '').trim() === 'لدى الوزارة').length,
-      waitingStatus: baseComplaints.filter((c) => (c.solution || '').trim() === 'بانتظار المستفيد').length,
-      newTickets: baseComplaints.filter((c) => (c.solution || '').trim() === 'بلاغ جديد').length,
-      generalStatus: baseComplaints.filter((c) => (c.solution || '').trim() === 'مشكلة عامة').length,
+      total: userFilteredComplaints.length,
+      today: userFilteredComplaints.filter(c => c.date === new Date().toISOString().split('T')[0]).length,
+      open: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'لم يتم الحل').length,
+      closed: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'تم الحل').length,
+      ministry: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'لدى الوزارة').length,
+      waitingStatus: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'بانتظار المستفيد').length,
+      newTickets: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'بلاغ جديد').length,
+      generalStatus: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'مشكلة عامة').length,
       lateStatus: baseComplaints.filter((c) => {
         const sol = (c.solution || '').trim();
         const isNew = sol === 'بلاغ جديد' || sol === 'غير محدد' || sol === '';
@@ -1136,8 +1142,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       }).length,
       duplicateCount: (() => {
         const numberCounts: {[key: string]: number} = {};
-        // نستثني الإجازات من فحص التكرار لأنها ليست بلاغات فريدة برقم IM
-        baseComplaints.filter(c => c.number && c.number.trim().startsWith('IM')).forEach(c => {
+        userFilteredComplaints.filter(c => c.number && c.number.trim().startsWith('IM')).forEach(c => {
           const num = c.number.trim();
           numberCounts[num] = (numberCounts[num] || 0) + 1;
         });
@@ -1192,7 +1197,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         return { name: bestCandidate, count: minCount };
       })()
     };
-  }, [baseComplaints]);
+  }, [baseComplaints, selectedReceiver]);
 
   const filteredComplaints = useMemo(() => {
     let result = baseComplaints;
