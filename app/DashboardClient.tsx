@@ -1280,24 +1280,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       <div className={styles.headerLayout}>
         <div className={styles.topUtilityRow}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button className={styles.navIconButton} onClick={toggleTheme} title="تغيير مظهر الموقع" style={{ background: 'rgba(255,255,255,0.1)' }}>
-              <span style={{fontSize:'1.2rem'}}>{theme === 'light' ? '🌙' : '☀️'}</span>
-            </button>
-            <button 
-              className={styles.navIconButton} 
-              onClick={handleLogout} 
-              title="تسجيل الخروج" 
-              style={{background:'rgba(239, 68, 68, 0.15)', border:'none', color:'#ef4444'}}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-            </button>
-
-            {/* نقل الجرس والتبديل لهنا بجانب الخروج */}
-            {/* الجرس */}
+            {/* 1. الجرس */}
             <div style={{position:'relative'}}>
               <button 
                 className={styles.navIconButton} 
@@ -1352,7 +1335,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               )}
             </div>
 
-            {/* تبديل البوابة */}
+            {/* 2. تبديل البوابة */}
             <div style={{position:'relative'}}>
               <button 
                 className={styles.navIconButton} 
@@ -1369,6 +1352,25 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 </svg>
               </button>
             </div>
+
+            {/* 3. الوضع الداكن */}
+            <button className={styles.navIconButton} onClick={toggleTheme} title="تغيير مظهر الموقع" style={{ background: 'rgba(255,255,255,0.1)' }}>
+              <span style={{fontSize:'1.2rem'}}>{theme === 'light' ? '🌙' : '☀️'}</span>
+            </button>
+
+            {/* 4. تسجيل الخروج (أخر واحد يسار) */}
+            <button 
+              className={styles.navIconButton} 
+              onClick={handleLogout} 
+              title="تسجيل الخروج" 
+              style={{background:'rgba(239, 68, 68, 0.15)', border:'none', color:'#ef4444'}}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -1417,11 +1419,15 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
           </div>
 
-          {/* بيانات المستخدم */}
-          <div className={styles.profileGroup}>
-            <div style={{display:'flex', alignItems:'center', gap:'10px', background:'rgba(255,255,255,0.1)', padding:'6px 14px', borderRadius:'20px', border:'1px solid var(--border)', whiteSpace:'nowrap'}}>
-              <span style={{fontSize:'0.8rem', color:'white', fontWeight:'600', display:'flex', alignItems:'center', gap:'6px'}}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        </div>
+      </div>
+      <header className={styles.logoHeader}>
+        {/* بيانات المستخدم - ممركزة فوق الشعار */}
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '1.5rem' }}>
+          <div className={styles.profileGroup} style={{ justifyContent: 'center', width: 'auto' }}>
+            <div style={{display:'flex', alignItems:'center', gap:'10px', background:'rgba(255,255,255,0.1)', padding:'8px 18px', borderRadius:'20px', border:'1px solid var(--border)', whiteSpace:'nowrap', boxShadow: '0 4px 15px rgba(0,0,0,0.1)'}}>
+              <span style={{fontSize:'0.9rem', color:'white', fontWeight:'600', display:'flex', alignItems:'center', gap:'8px'}}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
                 </svg>
                 {userRole === 'super_admin' && loggedInUser ? `${loggedInUser} (المشرف)` : (userRole === 'super_admin' || userRole === 'viewer' ? 'المشرف' : (loggedInUser ? loggedInUser : 'مستخدم'))}
@@ -1431,7 +1437,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                   onClick={() => { setSelectedReceiver(loggedInUser); setActiveFilter('undefined'); }} 
                   className={styles.myWorkspaceBtn} 
                   title="🎯 مساحتي"
-                  style={{ marginLeft:'5px', fontSize:'0.7rem', background:'var(--primary)', color:'white', border:'none', padding:'4px 12px', borderRadius:'15px', cursor:'pointer', fontWeight:'bold' }}
+                  style={{ marginLeft:'5px', fontSize:'0.75rem', background:'var(--primary)', color:'white', border:'none', padding:'5px 15px', borderRadius:'15px', cursor:'pointer', fontWeight:'bold', transition: 'all 0.3s ease' }}
                 >
                   🎯 مساحتي
                 </button>
@@ -1439,8 +1445,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
             </div>
           </div>
         </div>
-      </div>
-      <header className={styles.logoHeader}>
         <img src="/logo.png" alt="Baladi Logo" className={styles.mainLogo} onClick={() => window.location.reload()} />
         <h1 className={styles.dashboardTitle}>
           لوحة التحكم للبلاغات | وحدة بلدي
