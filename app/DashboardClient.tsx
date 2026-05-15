@@ -1461,7 +1461,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 <button 
                   onClick={() => { 
                     setSelectedReceiver(loggedInUser); 
-                    setActiveFilter('undefined'); 
+                    setActiveFilter('new'); 
                     document.getElementById('complaints-list')?.scrollIntoView({ behavior: 'smooth' });
                   }} 
                   className={styles.myWorkspaceBtn} 
