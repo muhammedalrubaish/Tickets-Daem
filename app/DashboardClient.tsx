@@ -1099,7 +1099,12 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           const targetName = selectedReceiver.toLowerCase().trim();
           const targetUser = emp ? emp.user.toLowerCase().trim() : '';
           return receiverValue.includes(targetName.split(' ')[0]) || (targetUser && receiverValue.includes(targetUser));
-        })).filter(c => c.date && c.date >= '2026-04-04');
+        })).filter(c => 
+          c.date && 
+          c.date >= '2026-04-04' && 
+          c.type !== 'تحديث نظام' && 
+          !c.number.includes('📢')
+        );
 
     return {
       total: baseComplaints.filter(c => c.type !== 'تحديث نظام').length,
@@ -1156,8 +1161,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           counts[name] = 0;
         });
         
-        // حساب عدد البلاغات الفعلية منذ 4 إبريل
-        baseComplaints.filter(c => c.type !== 'تحديث نظام' && !c.number.includes('جازة')).forEach(c => {
+        // حساب عدد البلاغات الفعلية منذ 4 إبريل (بما فيها الإجازات)
+        baseComplaints.forEach(c => {
           const receiver = (c.receiver || '').trim().replace(/\s+/g, ' ');
           if (!receiver || receiver === 'غير محدد') return;
 
@@ -1187,10 +1192,10 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         return { name: bestCandidate, count: minCount };
       })()
     };
-  }, [complaints, selectedReceiver]);
+  }, [baseComplaints]);
 
   const filteredComplaints = useMemo(() => {
-    let result = complaints.filter(c => c.type !== 'تحديث نظام' && c.date && c.date >= '2026-04-04');
+    let result = baseComplaints;
     
     if (activeFilter !== 'all') {
       if (activeFilter === 'open') result = result.filter(c => c.solution === 'لم يتم الحل');
