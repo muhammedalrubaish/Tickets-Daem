@@ -964,7 +964,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     });
       const numberCounts: {[key: string]: number} = {};
       complaints.forEach(c => {
-        if (c.number && c.number !== 'غير محدد' && c.type !== 'تحديث نظام') {
+        // نستثني الإجازات وتحديثات النظام من فحص التكرار
+        if (c.number && c.number !== 'غير محدد' && c.type !== 'تحديث نظام' && !c.number.includes('جازة')) {
           numberCounts[c.number] = (numberCounts[c.number] || 0) + 1;
         }
       });
@@ -1147,7 +1148,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       }).length,
       duplicateCount: (() => {
         const numberCounts: {[key: string]: number} = {};
-        userFilteredComplaints.filter(c => c.number && c.number.trim().startsWith('IM')).forEach(c => {
+        // نستثني الإجازات من فحص التكرار لأنها تشترك في نفس المسمى عادة
+        userFilteredComplaints.filter(c => c.number && c.number.trim().startsWith('IM') && !c.number.includes('جازة')).forEach(c => {
           const num = c.number.trim();
           numberCounts[num] = (numberCounts[num] || 0) + 1;
         });
