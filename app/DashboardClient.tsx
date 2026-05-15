@@ -1150,6 +1150,16 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       else if (activeFilter === 'waiting') result = result.filter(c => c.solution === 'بانتظار المستفيد');
       else if (activeFilter === 'new') result = result.filter(c => c.solution === 'بلاغ جديد');
       else if (activeFilter === 'undefined') result = result.filter(c => ['غير محدد', '', 'مجاز'].includes((c.solution || '').trim()));
+      else if (activeFilter === 'duplicate') {
+        const counts: {[key: string]: number} = {};
+        result.forEach(c => {
+          if (c.number && c.number !== 'غير محدد') {
+            const n = c.number.trim();
+            counts[n] = (counts[n] || 0) + 1;
+          }
+        });
+        result = result.filter(c => c.number && counts[c.number.trim()] > 1);
+      }
     }
 
     if (searchTerm) {
