@@ -1456,11 +1456,12 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           { label: 'بانتظار المستفيد', value: stats.waitingStatus, color: '#ec4899', filter: 'waiting' as const, percent: stats.total > 0 ? (stats.waitingStatus/stats.total)*100 : 0 },
           { label: 'لدى الوزارة', value: stats.ministry, color: '#f59e0b', filter: 'ministry' as const, percent: stats.total > 0 ? (stats.ministry/stats.total)*100 : 0 },
           { label: 'بلاغ جديد', value: stats.undefinedStatus, color: '#8b5cf6', filter: 'undefined' as const, percent: stats.total > 0 ? (stats.undefinedStatus/stats.total)*100 : 0 },
-          { label: 'إجازات', value: stats.vacationStatus, color: '#94a3b8', filter: 'vacation' as const, percent: stats.total > 0 ? (stats.vacationStatus/stats.total)*100 : 0 },
+          ((loggedInUser?.includes('محمد الربيش') || userRole === 'super_admin') ? { label: 'إجازات', value: stats.vacationStatus, color: '#94a3b8', filter: 'vacation' as const, percent: stats.total > 0 ? (stats.vacationStatus/stats.total)*100 : 0 } : null),
           { label: 'مشكلة عامة', value: stats.generalStatus, color: '#06b6d4', filter: 'general' as const, percent: stats.total > 0 ? (stats.generalStatus/stats.total)*100 : 0 },
           { label: 'لم يتم الحل', value: stats.open, color: '#ef4444', filter: 'open' as const, percent: stats.total > 0 ? (stats.open/stats.total)*100 : 0 },
           { label: 'متأخرة (>أسبوع)', value: stats.lateStatus, color: '#f43f5e', filter: 'late' as const, percent: stats.total > 0 ? (stats.lateStatus/stats.total)*100 : 0 },
-        ].map(({ label, value, color, filter, percent }) => {
+        ].filter(Boolean).map((item: any) => {
+          const { label, value, color, filter, percent } = item;
           const r = 28;
           const circ = 2 * Math.PI * r;
           const dash = (percent / 100) * circ;
