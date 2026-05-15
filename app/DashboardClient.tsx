@@ -1460,8 +1460,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           { label: 'مشكلة عامة', value: stats.generalStatus, color: '#06b6d4', filter: 'general' as const, percent: stats.total > 0 ? (stats.generalStatus/stats.total)*100 : 0 },
           { label: 'لم يتم الحل', value: stats.open, color: '#ef4444', filter: 'open' as const, percent: stats.total > 0 ? (stats.open/stats.total)*100 : 0 },
           { label: 'متأخرة (>أسبوع)', value: stats.lateStatus, color: '#f43f5e', filter: 'late' as const, percent: stats.total > 0 ? (stats.lateStatus/stats.total)*100 : 0 },
+          { label: '🔄 مكررة', value: stats.duplicateCount, color: '#a855f7', filter: 'duplicate' as const, percent: stats.total > 0 ? (stats.duplicateCount/stats.total)*100 : 0, wide: true },
         ].filter(Boolean).map((item: any) => {
-          const { label, value, color, filter, percent } = item;
+          const { label, value, color, filter, percent, wide } = item;
           const r = 28;
           const circ = 2 * Math.PI * r;
           const dash = (percent / 100) * circ;
@@ -1478,7 +1479,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 backgroundColor: activeFilter === filter ? (color.startsWith('#') ? `${color}33` : 'rgba(34, 197, 94, 0.2)') : 'transparent',
                 borderColor: activeFilter === filter ? color : 'var(--border)',
                 transform: activeFilter === filter ? 'scale(1.02)' : 'none',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                gridColumn: wide ? 'span 3' : 'auto'
               }}
             >
               {/* الحلقة الدائرية */}
@@ -1515,53 +1517,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           );
         })}
 
-        {/* مؤشرات المشرف - مخفية افتراضياً */}
-        {/* أدوات المشرف (مفعلة دائماً) */}
-        <div style={{gridColumn:'1 / -1', display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:'1rem', marginTop:'1rem'}}>
-
-        {[
-          { label: '🔄 مكررة', value: stats.duplicateCount, color: '#a855f7', filter: 'duplicate' as const, percent: stats.total > 0 ? (stats.duplicateCount/stats.total)*100 : 0 },
-          ].map(({ label, value, color, filter, percent }) => {
-            const r = 28;
-            const circ = 2 * Math.PI * r;
-            const dash = (percent / 100) * circ;
-            return (
-              <div
-                key={filter}
-                className={`${styles.statCard} ${activeFilter === filter ? styles.active : ''}`}
-                onClick={() => setActiveFilter(activeFilter === filter ? 'all' : filter)}
-                style={{
-                  display:'flex', 
-                  alignItems:'center', 
-                  gap:'0.75rem', 
-                  cursor:'pointer',
-                  backgroundColor: activeFilter === filter ? `${color}33` : 'transparent',
-                  borderColor: activeFilter === filter ? color : 'rgba(168, 85, 247, 0.3)',
-                  borderStyle: 'dashed',
-                  transform: activeFilter === filter ? 'scale(1.02)' : 'none',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                <svg width="70" height="70" viewBox="0 0 70 70" style={{flexShrink:0, transform:'rotate(-90deg)'}}>
-                  <circle cx="35" cy="35" r={r} fill="none" stroke="var(--border)" strokeWidth="7"/>
-                  <circle cx="35" cy="35" r={r} fill="none" stroke={color} strokeWidth="7"
-                    strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-                    style={{transition:'stroke-dasharray 0.8s ease'}}
-                  />
-                  <text x="35" y="35" textAnchor="middle" dominantBaseline="central"
-                    fill={theme === 'dark' ? '#ffffff' : '#1a1a2e'}
-                    fontSize="13" fontWeight="bold"
-                    style={{transform:'rotate(90deg)', transformOrigin:'35px 35px'}}
-                  >{Math.round(percent)}%</text>
-                </svg>
-                <div>
-                  <h3 style={{margin:0, fontSize:'0.85rem', color:'var(--text-muted)'}}>{label}</h3>
-                  <p style={{margin:'0.1rem 0 0', fontSize:'1.8rem', fontWeight:'bold', color}}>{value}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {/* تم نقل مؤشر المكررة للأعلى بجانب المتأخرة */}
       </div>
 
       {/* نافذة المعلومات */}
