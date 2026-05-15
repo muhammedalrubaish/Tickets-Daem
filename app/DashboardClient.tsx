@@ -1158,9 +1158,18 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         
         // حساب عدد البلاغات الفعلية منذ 4 إبريل
         baseComplaints.filter(c => c.type !== 'تحديث نظام' && !c.number.includes('جازة')).forEach(c => {
-          const receiver = (c.receiver || '').trim();
-          if (counts[receiver] !== undefined) {
-            counts[receiver]++;
+          const receiver = (c.receiver || '').trim().replace(/\s+/g, ' ');
+          if (!receiver || receiver === 'غير محدد') return;
+
+          // مطابقة مرنة لتجاوز مشكلة المسافات أو الهمزات
+          const matchedName = priorityOrder.find(p => 
+            p === receiver || 
+            p.replace(/\s+/g, '') === receiver.replace(/\s+/g, '') ||
+            (receiver.includes(p.split(' ')[0]) && p.includes(receiver.split(' ')[0]))
+          );
+
+          if (matchedName) {
+            counts[matchedName]++;
           }
         });
 
