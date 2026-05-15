@@ -1125,6 +1125,13 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         const sol = (c.solution || '').trim();
         return sol === 'غير محدد' || sol === '' || sol === 'مجاز';
       }).length,
+      duplicateCount: (() => {
+        const numberCounts: {[key: string]: number} = {};
+        baseComplaints.filter(c => c.number && c.number.startsWith('IM')).forEach(c => {
+          numberCounts[c.number] = (numberCounts[c.number] || 0) + 1;
+        });
+        return Object.values(numberCounts).filter(count => count > 1).reduce((sum, count) => sum + count, 0);
+      })(),
       lastComplaint: [...complaints].sort((a,b) => (b.date||'').localeCompare(a.date||''))[0],
       leastReceiver: { name: 'الموظفين', count: 0 }
     };
