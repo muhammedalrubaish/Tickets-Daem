@@ -1455,7 +1455,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           { label: 'تم الحل', value: stats.closed, color: '#22c55e', filter: 'closed' as const, percent: stats.total > 0 ? (stats.closed/stats.total)*100 : 0 },
           { label: 'بانتظار المستفيد', value: stats.waitingStatus, color: '#ec4899', filter: 'waiting' as const, percent: stats.total > 0 ? (stats.waitingStatus/stats.total)*100 : 0 },
           { label: 'لدى الوزارة', value: stats.ministry, color: '#f59e0b', filter: 'ministry' as const, percent: stats.total > 0 ? (stats.ministry/stats.total)*100 : 0 },
-          { label: 'بلاغ جديد', value: stats.undefinedStatus, color: '#8b5cf6', filter: 'undefined' as const, percent: stats.total > 0 ? (stats.undefinedStatus/stats.total)*100 : 0 },
+          { label: 'بلاغ جديد', value: stats.newTickets, color: '#8b5cf6', filter: 'new' as const, percent: stats.total > 0 ? (stats.newTickets/stats.total)*100 : 0 },
           ((loggedInUser?.includes('محمد الربيش') || userRole === 'super_admin') ? { label: 'إجازات', value: stats.vacationStatus, color: '#94a3b8', filter: 'vacation' as const, percent: stats.total > 0 ? (stats.vacationStatus/stats.total)*100 : 0 } : null),
           { label: 'مشكلة عامة', value: stats.generalStatus, color: '#06b6d4', filter: 'general' as const, percent: stats.total > 0 ? (stats.generalStatus/stats.total)*100 : 0 },
           { label: 'لم يتم الحل', value: stats.open, color: '#ef4444', filter: 'open' as const, percent: stats.total > 0 ? (stats.open/stats.total)*100 : 0 },
