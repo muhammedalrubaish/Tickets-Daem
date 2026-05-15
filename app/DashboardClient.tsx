@@ -765,6 +765,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [showSupervisorTools, setShowSupervisorTools] = useState(false);
   const [selectedReceiver, setSelectedReceiver] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedSolution, setSelectedSolution] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -1188,6 +1189,10 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
     if (selectedType !== 'all') {
       result = result.filter(c => c.type === selectedType);
+    }
+
+    if (selectedSolution !== 'all') {
+      result = result.filter(c => (c.solution || '').trim() === selectedSolution);
     }
 
     const sorted = result.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
@@ -1649,6 +1654,30 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               <div className={styles.customFilterOption} onClick={() => { setSelectedType('all'); document.getElementById('categoryFilterOptions')!.style.display = 'none'; }}>التصنيف (الكل)</div>
               {Array.from(new Set(complaints.map(c => c.type).filter(t => t && t !== 'غير محدد'))).sort().map(type => (
                 <div key={type} className={styles.customFilterOption} onClick={() => { setSelectedType(type); document.getElementById('categoryFilterOptions')!.style.display = 'none'; }}>{type}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className={styles.filterGroup} style={{flex: '1.5'}}>
+          <div className={styles.customFilterWrapper}>
+            <div 
+              className={styles.customFilterTrigger}
+              onClick={() => {
+                const options = document.getElementById('solutionFilterOptions');
+                if (options) options.style.display = options.style.display === 'none' ? 'block' : 'none';
+                const other1 = document.getElementById('employeeFilterOptions');
+                if (other1) other1.style.display = 'none';
+                const other2 = document.getElementById('categoryFilterOptions');
+                if (other2) other2.style.display = 'none';
+              }}
+            >
+              <span>{selectedSolution === 'all' ? 'الحل (الكل)' : selectedSolution}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div id="solutionFilterOptions" className={styles.customFilterOptions} style={{display: 'none'}}>
+              <div className={styles.customFilterOption} onClick={() => { setSelectedSolution('all'); document.getElementById('solutionFilterOptions')!.style.display = 'none'; }}>الحل (الكل)</div>
+              {Array.from(new Set(complaints.map(c => (c.solution || '').trim()).filter(s => s && s !== 'غير محدد'))).sort().map(sol => (
+                <div key={sol} className={styles.customFilterOption} onClick={() => { setSelectedSolution(sol); document.getElementById('solutionFilterOptions')!.style.display = 'none'; }}>{sol}</div>
               ))}
             </div>
           </div>
