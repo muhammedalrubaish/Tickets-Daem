@@ -1107,9 +1107,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       closed: baseComplaints.filter((c) => (c.solution || '').trim() === 'تم الحل').length,
       inProgress: baseComplaints.filter((c) => (c.solution || '').trim() === 'أخرى معلقة').length,
       ministry: baseComplaints.filter((c) => (c.solution || '').trim() === 'لدى الوزارة').length,
-      general: baseComplaints.filter((c) => (c.solution || '').trim() === 'مشكلة عامة').length,
-      waiting: baseComplaints.filter((c) => (c.solution || '').trim() === 'بانتظار المستفيد').length,
+      waitingStatus: baseComplaints.filter((c) => (c.solution || '').trim() === 'بانتظار المستفيد').length,
       newTickets: baseComplaints.filter((c) => (c.solution || '').trim() === 'بلاغ جديد').length,
+      generalStatus: baseComplaints.filter((c) => (c.solution || '').trim() === 'مشكلة عامة').length,
       undefinedStatus: baseComplaints.filter((c) => {
         const sol = (c.solution || '').trim();
         return sol === 'غير محدد' || sol === '' || sol === 'مجاز';
