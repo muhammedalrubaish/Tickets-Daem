@@ -1140,6 +1140,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
   const filteredComplaints = useMemo(() => {
     let result = complaints.filter(c => c.type !== 'تحديث نظام' && c.date && c.date >= '2026-04-04');
+    
     if (activeFilter !== 'all') {
       if (activeFilter === 'open') result = result.filter(c => c.solution === 'لم يتم الحل');
       else if (activeFilter === 'closed') result = result.filter(c => c.solution === 'تم الحل');
@@ -1150,8 +1151,32 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       else if (activeFilter === 'new') result = result.filter(c => c.solution === 'بلاغ جديد');
       else if (activeFilter === 'undefined') result = result.filter(c => ['غير محدد', '', 'مجاز'].includes((c.solution || '').trim()));
     }
+
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      result = result.filter(c => 
+        (c.number || '').toLowerCase().includes(lowerSearch) ||
+        (c.type || '').toLowerCase().includes(lowerSearch) ||
+        (c.receiver || '').toLowerCase().includes(lowerSearch)
+      );
+    }
+
+    if (selectedReceiver !== 'all') {
+      result = result.filter(c => {
+        const emp = EMPLOYEES.find(e => e.name === selectedReceiver);
+        const val = (c.receiver || '').toLowerCase().trim();
+        const target = selectedReceiver.toLowerCase().trim();
+        const user = emp ? emp.user.toLowerCase().trim() : '';
+        return val.includes(target.split(' ')[0]) || (user && val.includes(user));
+      });
+    }
+
+    if (selectedType !== 'all') {
+      result = result.filter(c => c.type === selectedType);
+    }
+
     return result.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  }, [complaints, activeFilter]);
+  }, [complaints, activeFilter, searchTerm, selectedReceiver, selectedType]);
 
   return (
     <main className={styles.container}>
