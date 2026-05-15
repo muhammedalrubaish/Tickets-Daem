@@ -1196,13 +1196,13 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
     const sorted = result.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     
-    // إخفاء التكرار بصرياً من القائمة
+    // إخفاء التكرار بصرياً من القائمة (مع استثناء الإجازات لكي تظهر جميعها)
     return sorted.filter((v, i, a) => {
-      if (v.number && v.number !== 'غير محدد') {
+      if (v.number && v.number !== 'غير محدد' && !v.number.includes('جازة')) {
         const n = v.number.trim();
         return a.findIndex(t => t.number && t.number.trim() === n) === i;
       }
-      return a.findIndex(t => t.id === v.id) === i;
+      return true; // إظهار كل شيء آخر (بما في ذلك الإجازات) بشكل منفصل
     });
   }, [complaints, activeFilter, searchTerm, selectedReceiver, selectedType]);
 
