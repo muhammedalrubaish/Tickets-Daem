@@ -1106,7 +1106,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       today: baseComplaints.filter(c => c.date === new Date().toISOString().split('T')[0]).length,
       open: baseComplaints.filter((c) => (c.solution || '').trim() === 'لم يتم الحل').length,
       closed: baseComplaints.filter((c) => (c.solution || '').trim() === 'تم الحل').length,
-      inProgress: baseComplaints.filter((c) => (c.solution || '').trim() === 'أخرى معلقة').length,
       ministry: baseComplaints.filter((c) => (c.solution || '').trim() === 'لدى الوزارة').length,
       waitingStatus: baseComplaints.filter((c) => (c.solution || '').trim() === 'بانتظار المستفيد').length,
       newTickets: baseComplaints.filter((c) => (c.solution || '').trim() === 'بلاغ جديد').length,
@@ -1150,7 +1149,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     if (activeFilter !== 'all') {
       if (activeFilter === 'open') result = result.filter(c => c.solution === 'لم يتم الحل');
       else if (activeFilter === 'closed') result = result.filter(c => c.solution === 'تم الحل');
-      else if (activeFilter === 'inProgress') result = result.filter(c => c.solution === 'أخرى معلقة');
       else if (activeFilter === 'ministry') result = result.filter(c => c.solution === 'لدى الوزارة');
       else if (activeFilter === 'general') result = result.filter(c => c.solution === 'مشكلة عامة');
       else if (activeFilter === 'waiting') result = result.filter(c => c.solution === 'بانتظار المستفيد');
@@ -1457,7 +1455,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           { label: 'تم الحل', value: stats.closed, color: '#22c55e', filter: 'closed' as const, percent: stats.total > 0 ? (stats.closed/stats.total)*100 : 0 },
           { label: 'بانتظار المستفيد', value: stats.waitingStatus, color: '#ec4899', filter: 'waiting' as const, percent: stats.total > 0 ? (stats.waitingStatus/stats.total)*100 : 0 },
           { label: 'لدى الوزارة', value: stats.ministry, color: '#f59e0b', filter: 'ministry' as const, percent: stats.total > 0 ? (stats.ministry/stats.total)*100 : 0 },
-          { label: 'أخرى معلقة', value: stats.inProgress, color: '#ff9800', filter: 'inProgress' as const, percent: stats.total > 0 ? (stats.inProgress/stats.total)*100 : 0 },
           { label: 'بلاغ جديد', value: stats.undefinedStatus, color: '#8b5cf6', filter: 'undefined' as const, percent: stats.total > 0 ? (stats.undefinedStatus/stats.total)*100 : 0 },
           { label: 'إجازات', value: stats.vacationStatus, color: '#94a3b8', filter: 'vacation' as const, percent: stats.total > 0 ? (stats.vacationStatus/stats.total)*100 : 0 },
           { label: 'مشكلة عامة', value: stats.generalStatus, color: '#06b6d4', filter: 'general' as const, percent: stats.total > 0 ? (stats.generalStatus/stats.total)*100 : 0 },
@@ -1580,7 +1577,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 { label: 'معدل الحل', value: stats.total > 0 ? `${Math.round((stats.closed/stats.total)*100)}%` : '0%', color: '#22c55e' },
                 { label: 'قيد الانتظار', value: stats.open, color: '#ef4444' },
                 { label: 'تم معالجتها', value: stats.closed, color: '#22c55e' },
-                { label: 'معلقة', value: stats.inProgress, color: '#f59e0b' },
               ].map(item => (
                 <div key={item.label} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0.5rem 0.75rem', borderRadius:'8px', background:'var(--bg)'}}>
                   <span style={{fontSize:'0.9rem', color:'var(--text-muted)'}}>{item.label}</span>
