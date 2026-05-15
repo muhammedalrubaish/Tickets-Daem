@@ -1,5 +1,5 @@
 import './globals.css'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 
 export const metadata: Metadata = {
   title: 'لوحة التحكم للبلاغات | وحدة بلدي',
@@ -11,6 +11,11 @@ export const metadata: Metadata = {
     ],
     apple: '/logo.png',
   },
+}
+
+export const viewport: Viewport = {
+  width: 1200,
+  initialScale: 1,
 }
 
 
