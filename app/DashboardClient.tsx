@@ -1106,7 +1106,11 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       open: baseComplaints.filter((c) => (c.solution || '').trim() === 'لم يتم الحل').length,
       closed: baseComplaints.filter((c) => (c.solution || '').trim() === 'تم الحل').length,
       inProgress: baseComplaints.filter((c) => (c.solution || '').trim() === 'أخرى معلقة').length,
-      ministry: baseComplaints.filter((c) => (c.solution || '').trim() === 'لدى الوزارة').length,
+      ministry: (() => {
+        const count = baseComplaints.filter((c) => (c.solution || '').trim() === 'لدى الوزارة').length;
+        console.log('Ministry tickets count:', count);
+        return count;
+      })(),
       waitingStatus: baseComplaints.filter((c) => (c.solution || '').trim() === 'بانتظار المستفيد').length,
       newTickets: baseComplaints.filter((c) => (c.solution || '').trim() === 'بلاغ جديد').length,
       generalStatus: baseComplaints.filter((c) => (c.solution || '').trim() === 'مشكلة عامة').length,

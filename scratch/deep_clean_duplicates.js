@@ -35,7 +35,7 @@ async function cleanAllDuplicates() {
   const idsToDelete = [];
 
   allTickets.forEach(ticket => {
-    const num = ticket.ticket_number;
+    const num = ticket.ticket_number ? ticket.ticket_number.trim() : null;
     if (num && num !== 'غير محدد') {
       if (seen.has(num)) {
         const existing = seen.get(num);
@@ -55,6 +55,7 @@ async function cleanAllDuplicates() {
     }
   });
 
+  console.log(`Unique tickets identified: ${seen.size}`);
   console.log(`Duplicates to delete: ${idsToDelete.length}`);
 
   if (idsToDelete.length > 0) {
