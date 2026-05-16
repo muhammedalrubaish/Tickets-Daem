@@ -2,6 +2,9 @@
 
 * {
   font-family: 'Cairo', sans-serif !important;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
 :root {
@@ -42,19 +45,17 @@
 
 html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
   background-color: var(--background);
   color: var(--foreground);
   font-family: 'Cairo', sans-serif;
   direction: rtl;
   unicode-bidi: plaintext;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  -moz-osx-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
   scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch; /* تمرير سلس للايفون */
+  /* ملاحظة: تم إزالة overflow-x: hidden للسماح بظهور نسخة الكمبيوتر كاملة */
 }
 
 input, select, textarea, button {
@@ -62,16 +63,11 @@ input, select, textarea, button {
   direction: rtl;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
 a {
   color: inherit;
   text-decoration: none;
 }
+
 /* Custom Green Cursor */
 * {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%23217346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2" fill="%23217346"></circle></svg>') 12 12, auto !important;
@@ -79,24 +75,4 @@ a {
 
 a, button, select, input, textarea, .clickable {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%23217346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2" fill="%23217346"></circle></svg>') 12 12, pointer !important;
-}
-/* إصلاح فوري لواجهة وحدة بلدي على الآيفون */
-@media (max-width: 480px) {
-  .stats-grid, .grid-cols-3 { 
-    display: grid !important; 
-    grid-template-columns: 1fr !important; 
-    gap: 12px; 
-  }
-  .card, .stat-box { 
-    width: 100% !important; 
-    will-change: transform; /* تسريع المعالجة الرسومية */
-  }
-  h1 { font-size: 1.2rem !important; }
-  
-  /* تقليل جودة الظلال المعقدة على الجوال لزيادة السلاسة */
-  * {
-    box-shadow: none !important;
-    text-shadow: none !important;
-    transition: none !important; /* إلغاء الحركات المعقدة أثناء التمرير */
-  }
 }
