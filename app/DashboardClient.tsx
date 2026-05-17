@@ -1331,7 +1331,16 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                     <h4 style={{margin:0, fontSize:'0.9rem'}}>الإشعارات</h4>
                     <div style={{display:'flex', gap:'8px'}}>
                       <button 
-                        onClick={() => setNotifications(prev => prev.map(n => ({...n, read:true})))} 
+                        onClick={() => {
+                          setNotifications(prev => prev.map(n => {
+                            try {
+                              localStorage.setItem(`read_notif_${n.id}`, 'true');
+                            } catch (err) {
+                              console.error(err);
+                            }
+                            return { ...n, read: true };
+                          }));
+                        }} 
                         style={{background:'none', border:'none', cursor:'pointer', padding:'2px'}}
                         title="تحديد الكل كمقروء"
                       >
@@ -1358,7 +1367,31 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                   </div>
                   <div style={{maxHeight:'300px', overflowY:'auto', display:'flex', flexDirection:'column', gap:'0.75rem'}}>
                     {notifications.length === 0 ? <p style={{textAlign:'center', fontSize:'0.8rem', color:'var(--text-muted)', margin:'1rem 0'}}>لا توجد إشعارات</p> : notifications.map(n => (
-                      <div key={n.id} style={{ padding:'0.75rem', borderRadius:'8px', background: n.read ? 'transparent' : 'rgba(34, 197, 94, 0.1)', border: '1px solid var(--border)', position: 'relative' }}>
+                      <div 
+                        key={n.id} 
+                        onClick={() => {
+                          if (n.read) return;
+                          setNotifications(prev => prev.map(p => {
+                            if (p.id === n.id) {
+                              try {
+                                localStorage.setItem(`read_notif_${p.id}`, 'true');
+                              } catch (err) {
+                                console.error(err);
+                              }
+                              return { ...p, read: true };
+                            }
+                            return p;
+                          }));
+                        }}
+                        style={{ 
+                          padding:'0.75rem', 
+                          borderRadius:'8px', 
+                          background: n.read ? 'transparent' : 'rgba(34, 197, 94, 0.1)', 
+                          border: '1px solid var(--border)', 
+                          position: 'relative',
+                          cursor: n.read ? 'default' : 'pointer'
+                        }}
+                      >
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
