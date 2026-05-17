@@ -14,8 +14,9 @@ export async function POST(req: Request) {
     const databaseId = process.env.NOTION_DATABASE_ID;
     const statusDbId = process.env.NOTION_STATUS_DATABASE_ID;
 
-    // البحث الذاتي عن معرفات نويشن إذا كانت مفقودة (Self-Healing)
-    if (number && (!ticketId || !mainTicketId)) {
+    // البحث الذاتي عن معرف نويشن الحقيقي برقم البلاغ (Self-Healing)
+    // هذا البحث إلزامي لضمان عدم إرسال معرفات Supabase UUID إلى نويشن نهائياً ولتحديث السجلات القديمة تلقائياً
+    if (number) {
       console.log('Searching Notion main DB for ticket number:', number);
       const mainSearch = await notion.databases.query({
         database_id: databaseId!,
@@ -28,26 +29,21 @@ export async function POST(req: Request) {
       if (mainSearch.results.length > 0) {
         const foundMainId = mainSearch.results[0].id;
         console.log('Found main Notion page ID:', foundMainId);
-        if (!mainTicketId) mainTicketId = foundMainId;
-        if (!ticketId && !statusDbId) ticketId = foundMainId;
-      }
-    }
-
-    // إذا كانت هناك قاعدة بيانات للحالات وكنا نفتقد لمعرف صفحة الحالة، نبحث عنها
-    if (statusDbId && number && (!ticketId || ticketId === mainTicketId)) {
-      console.log('Searching Notion status DB for ticket number:', number);
-      const statusSearch = await notion.databases.query({
-        database_id: statusDbId,
-        filter: {
-          property: 'Name',
-          title: { equals: number }
-        }
-      });
-
-      if (statusSearch.results.length > 0) {
-        const foundStatusId = statusSearch.results[0].id;
-        console.log('Found status Notion page ID:', foundStatusId);
-        ticketId = foundStatusId;
+        mainTicketId = foundMainId;
+        ticketId = foundMainId;
+      } else {
+        // إذا لم يكن السجل موجوداً في نويشن نهائياً (مثلاً بلاغ قديم أو مستورد مسبقاً)، نقوم بإنشائه تلقائياً كميزة ترقيع وإصلاح ذاتي كاملة!
+        console.log('Ticket not found in Notion. Creating a new page for it...');
+        const newPage = await notion.pages.create({
+          parent: { database_id: databaseId! },
+          properties: {
+            'Name': { title: [{ text: { content: number } }] }
+          }
+        });
+        const foundMainId = newPage.id;
+        mainTicketId = foundMainId;
+        ticketId = foundMainId;
+        console.log('Successfully created missing ticket in Notion with ID:', foundMainId);
       }
     }
 
@@ -65,22 +61,17 @@ export async function POST(req: Request) {
       };
 
       try {
-        // إذا كان لدينا معرف صالح، نحاول التحديث مباشرة
         if (ticketId) {
           await notion.pages.update({
             page_id: ticketId,
             properties: properties,
           });
-        } else {
-          // إذا لم يكن هناك معرف ولكن لدينا رقم البلاغ (وقاعدة بيانات الحالات مفعلة)
-          throw new Error('No status page ID');
         }
       } catch (updateError: any) {
         // إذا فشل التحديث أو لم نملك معرفاً، وكان لدينا قاعدة بيانات حالات، نحاول البحث أو الإنشاء
         if (statusDbId && number) {
-          console.log('Page update failed or missing ID, attempting to find/create in status DB for ticket:', number);
+          console.log('Page update failed, attempting to find/create in status DB for ticket:', number);
           
-          // البحث عن السجل برقم البلاغ
           const searchRes = await notion.databases.query({
             database_id: statusDbId,
             filter: {
@@ -91,13 +82,11 @@ export async function POST(req: Request) {
 
           if (searchRes.results.length > 0) {
             ticketId = searchRes.results[0].id;
-            // السجل موجود، تحديثه
             await notion.pages.update({
               page_id: ticketId,
               properties: properties,
             });
           } else {
-            // السجل غير موجود، إنشاؤه
             const newPage = await notion.pages.create({
               parent: { database_id: statusDbId },
               properties: {
@@ -108,7 +97,6 @@ export async function POST(req: Request) {
             ticketId = newPage.id;
           }
         } else {
-          // إذا لم تكن هناك قاعدة حالات، نعيد الخطأ الأصلي
           throw updateError;
         }
       }
