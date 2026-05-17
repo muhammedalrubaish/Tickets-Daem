@@ -942,8 +942,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           if (!newTicketToast) setNewTicketToast(msg);
         }
       });
-      const currentIds = new Set(complaints.map(c => c.id));
+      const currentIds = new Set(complaints.map(c => c.id).filter(Boolean));
       Object.keys(ticketStateMap).forEach(id => {
+        if (id === 'null' || id === 'undefined' || !id) return;
         if (!currentIds.has(id) && !id.startsWith('temp-')) {
           const deletedTicket = ticketStateMap[id] as {state: string, number: string};
           const msg = `⚠️ تم حذف البلاغ رقم: ${deletedTicket.number}`;
