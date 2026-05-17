@@ -943,13 +943,16 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         }
       });
       const currentIds = new Set(complaints.map(c => c.id).filter(Boolean));
+      const dismissedIds = JSON.parse(localStorage.getItem('dismissed_notifs') || '[]');
       Object.keys(ticketStateMap).forEach(id => {
         if (id === 'null' || id === 'undefined' || !id) return;
+        const notifId = `delete-${id}`;
+        if (dismissedIds.includes(notifId)) return;
         if (!currentIds.has(id) && !id.startsWith('temp-')) {
           const deletedTicket = ticketStateMap[id] as {state: string, number: string};
           const msg = `⚠️ تم حذف البلاغ رقم: ${deletedTicket.number}`;
           newNotifications.push({
-            id: `delete-${id}-${Date.now()}`,
+            id: notifId,
             msg,
             time: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
             read: false
@@ -1335,7 +1338,17 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                       </button>
                       <button 
-                        onClick={() => setNotifications([])} 
+                        onClick={() => {
+                          const ids = notifications.map(n => n.id);
+                          try {
+                            const dismissed = JSON.parse(localStorage.getItem('dismissed_notifs') || '[]');
+                            const newDismissed = Array.from(new Set([...dismissed, ...ids]));
+                            localStorage.setItem('dismissed_notifs', JSON.stringify(newDismissed));
+                          } catch (err) {
+                            console.error(err);
+                          }
+                          setNotifications([]);
+                        }} 
                         style={{background:'none', border:'none', cursor:'pointer', padding:'2px'}}
                         title="حذف كافة الإشعارات"
                       >
@@ -1347,7 +1360,18 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                     {notifications.length === 0 ? <p style={{textAlign:'center', fontSize:'0.8rem', color:'var(--text-muted)', margin:'1rem 0'}}>لا توجد إشعارات</p> : notifications.map(n => (
                       <div key={n.id} style={{ padding:'0.75rem', borderRadius:'8px', background: n.read ? 'transparent' : 'rgba(34, 197, 94, 0.1)', border: '1px solid var(--border)', position: 'relative' }}>
                         <button 
-                          onClick={(e) => { e.stopPropagation(); setNotifications(prev => prev.filter(p => p.id !== n.id)); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setNotifications(prev => prev.filter(p => p.id !== n.id));
+                            try {
+                              const dismissed = JSON.parse(localStorage.getItem('dismissed_notifs') || '[]');
+                              if (!dismissed.includes(n.id)) {
+                                localStorage.setItem('dismissed_notifs', JSON.stringify([...dismissed, n.id]));
+                              }
+                            } catch (err) {
+                              console.error(err);
+                            }
+                          }}
                           style={{ position: 'absolute', top: '5px', left: '5px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
                         >
                           &times;
