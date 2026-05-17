@@ -924,6 +924,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           });
           if (!newTicketToast) setNewTicketToast(msg);
         }
+      });
     }
 
     const newMap: Record<string, {state: string, number: string, date?: string}> = {};
