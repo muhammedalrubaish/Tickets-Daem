@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     // البحث الذاتي عن معرف نويشن الحقيقي برقم البلاغ (Self-Healing)
     // هذا البحث إلزامي لضمان عدم إرسال معرفات Supabase UUID إلى نويشن نهائياً ولتحديث السجلات القديمة تلقائياً
     if (number) {
+      // 1. معالجة وتصحيح صفحة قاعدة البيانات الرئيسية (Main Database Page)
       console.log('Searching Notion main DB for ticket number:', number);
       const mainSearch = await notion.databases.query({
         database_id: databaseId!,
@@ -27,23 +28,52 @@ export async function POST(req: Request) {
       });
 
       if (mainSearch.results.length > 0) {
-        const foundMainId = mainSearch.results[0].id;
-        console.log('Found main Notion page ID:', foundMainId);
-        mainTicketId = foundMainId;
-        ticketId = foundMainId;
+        mainTicketId = mainSearch.results[0].id;
+        console.log('Found main Notion page ID:', mainTicketId);
       } else {
-        // إذا لم يكن السجل موجوداً في نويشن نهائياً (مثلاً بلاغ قديم أو مستورد مسبقاً)، نقوم بإنشائه تلقائياً كميزة ترقيع وإصلاح ذاتي كاملة!
-        console.log('Ticket not found in Notion. Creating a new page for it...');
+        console.log('Ticket not found in Notion main DB. Creating a new page...');
         const newPage = await notion.pages.create({
           parent: { database_id: databaseId! },
           properties: {
             'Name': { title: [{ text: { content: number } }] }
           }
         });
-        const foundMainId = newPage.id;
-        mainTicketId = foundMainId;
-        ticketId = foundMainId;
-        console.log('Successfully created missing ticket in Notion with ID:', foundMainId);
+        mainTicketId = newPage.id;
+        console.log('Successfully created missing ticket in Notion main DB with ID:', mainTicketId);
+      }
+
+      // 2. معالجة وتصحيح صفحة قاعدة بيانات الحالات (Status Database Page) إذا كانت مفعلة
+      if (statusDbId) {
+        console.log('Searching Notion status DB for ticket number:', number);
+        const statusSearch = await notion.databases.query({
+          database_id: statusDbId,
+          filter: {
+            property: 'Name',
+            title: { equals: number }
+          }
+        });
+
+        if (statusSearch.results.length > 0) {
+          ticketId = statusSearch.results[0].id;
+          console.log('Found status Notion page ID:', ticketId);
+        } else {
+          console.log('Ticket not found in Notion status DB. Creating a new page...');
+          const properties: any = {
+            'Name': { title: [{ text: { content: number } }] }
+          };
+          if (solution !== undefined) {
+            properties['الحالة'] = { select: { name: solution } };
+          }
+          const newStatusPage = await notion.pages.create({
+            parent: { database_id: statusDbId },
+            properties: properties
+          });
+          ticketId = newStatusPage.id;
+          console.log('Successfully created missing ticket in Notion status DB with ID:', ticketId);
+        }
+      } else {
+        // إذا لم تكن هناك قاعدة بيانات حالات منفصلة، تكون صفحة الحالة هي نفسها صفحة البيانات الرئيسية
+        ticketId = mainTicketId;
       }
     }
 
@@ -68,37 +98,8 @@ export async function POST(req: Request) {
           });
         }
       } catch (updateError: any) {
-        // إذا فشل التحديث أو لم نملك معرفاً، وكان لدينا قاعدة بيانات حالات، نحاول البحث أو الإنشاء
-        if (statusDbId && number) {
-          console.log('Page update failed, attempting to find/create in status DB for ticket:', number);
-          
-          const searchRes = await notion.databases.query({
-            database_id: statusDbId,
-            filter: {
-              property: 'Name',
-              title: { equals: number }
-            }
-          });
-
-          if (searchRes.results.length > 0) {
-            ticketId = searchRes.results[0].id;
-            await notion.pages.update({
-              page_id: ticketId,
-              properties: properties,
-            });
-          } else {
-            const newPage = await notion.pages.create({
-              parent: { database_id: statusDbId },
-              properties: {
-                'Name': { title: [{ text: { content: number } }] },
-                'الحالة': { select: { name: solution } }
-              }
-            });
-            ticketId = newPage.id;
-          }
-        } else {
-          throw updateError;
-        }
+        console.error('Failed to update solution property on page:', ticketId, updateError);
+        throw updateError;
       }
     }
 
