@@ -1237,6 +1237,14 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       }
     }
 
+    if (startDate) {
+      result = result.filter(c => c.date && c.date >= startDate);
+    }
+
+    if (endDate) {
+      result = result.filter(c => c.date && c.date <= endDate);
+    }
+
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
       result = result.filter(c => 
@@ -1274,7 +1282,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       }
       return true; // إظهار كل شيء آخر (بما في ذلك الإجازات) بشكل منفصل
     });
-  }, [complaints, activeFilter, searchTerm, selectedReceiver, selectedType, selectedSolution]);
+  }, [complaints, activeFilter, searchTerm, selectedReceiver, selectedType, selectedSolution, startDate, endDate]);
 
   // تأثير الظهور السلس عند التمرير
   useEffect(() => {
