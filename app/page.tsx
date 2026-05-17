@@ -36,7 +36,7 @@ async function getComplaints() {
     }
 
     return allData.map(ticket => ({
-      id: ticket.notion_id,
+      id: ticket.notion_id || ticket.id || ticket.ticket_number,
       statusPageId: ticket.notion_id,
       number: ticket.ticket_number || 'غير محدد',
       type: ticket.category_type || 'غير محدد',

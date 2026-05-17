@@ -1337,21 +1337,25 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               {isNotiOpen && (
                 <div style={{ position: 'absolute', top: '55px', left: '0', width: '300px', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', zIndex: 3000, padding: '1rem', direction: 'rtl' }}>
                   <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem', borderBottom:'1px solid var(--border)', paddingBottom:'0.5rem'}}>
-                    <h4 style={{margin:0, fontSize:'0.9rem'}}>الإشعارات</h4>
+                    <h4 style={{margin:0, fontSize:'0.9rem'}}>الرسائل وتنبيهات النظام</h4>
                     <div style={{display:'flex', gap:'8px'}}>
                       <button 
                         onClick={() => {
-                          setNotifications(prev => prev.map(n => {
-                            try {
-                              localStorage.setItem(`read_notif_${n.id}`, 'true');
-                            } catch (err) {
-                              console.error(err);
-                            }
-                            return { ...n, read: true };
-                          }));
+                          const ids = notifications.map(n => n.id);
+                          try {
+                            const dismissed = JSON.parse(localStorage.getItem('dismissed_notifs') || '[]');
+                            const newDismissed = Array.from(new Set([...dismissed, ...ids]));
+                            localStorage.setItem('dismissed_notifs', JSON.stringify(newDismissed));
+                            ids.forEach(id => {
+                              localStorage.setItem(`read_notif_${id}`, 'true');
+                            });
+                          } catch (err) {
+                            console.error(err);
+                          }
+                          setNotifications([]);
                         }} 
                         style={{background:'none', border:'none', cursor:'pointer', padding:'2px'}}
-                        title="تحديد الكل كمقروء"
+                        title="تحديد الكل كمقروء وإخفاؤها نهائياً"
                       >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                       </button>
@@ -1379,18 +1383,17 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                       <div 
                         key={n.id} 
                         onClick={() => {
-                          if (n.read) return;
-                          setNotifications(prev => prev.map(p => {
-                            if (p.id === n.id) {
-                              try {
-                                localStorage.setItem(`read_notif_${p.id}`, 'true');
-                              } catch (err) {
-                                console.error(err);
-                              }
-                              return { ...p, read: true };
+                          // إخفاء فوري وتأكيد القراءة نهائياً عند النقر لكي لا يعود أبداً
+                          setNotifications(prev => prev.filter(p => p.id !== n.id));
+                          try {
+                            localStorage.setItem(`read_notif_${n.id}`, 'true');
+                            const dismissed = JSON.parse(localStorage.getItem('dismissed_notifs') || '[]');
+                            if (!dismissed.includes(n.id)) {
+                              localStorage.setItem('dismissed_notifs', JSON.stringify([...dismissed, n.id]));
                             }
-                            return p;
-                          }));
+                          } catch (err) {
+                            console.error(err);
+                          }
                         }}
                         style={{ 
                           padding:'0.75rem', 
@@ -1398,7 +1401,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                           background: n.read ? 'transparent' : 'rgba(34, 197, 94, 0.1)', 
                           border: '1px solid var(--border)', 
                           position: 'relative',
-                          cursor: n.read ? 'default' : 'pointer'
+                          cursor: 'pointer'
                         }}
                       >
                         <button 
