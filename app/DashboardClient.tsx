@@ -812,7 +812,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   }, [complaints]);
 
   const [isNotiOpen, setIsNotiOpen] = useState(false);
-  const [ticketStateMap, setTicketStateMap] = useState<Record<string, {state: string, number: string}>>({});
+  const [ticketStateMap, setTicketStateMap] = useState<Record<string, {state: string, number: string, date?: string}>>({});
   const [isCircularsOpen, setIsCircularsOpen] = useState(false);
   const [hasNewUpdate, setHasNewUpdate] = useState(false);
   const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
@@ -949,7 +949,12 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         const notifId = `delete-${id}`;
         if (dismissedIds.includes(notifId)) return;
         if (!currentIds.has(id) && !id.startsWith('temp-')) {
-          const deletedTicket = ticketStateMap[id] as {state: string, number: string};
+          const deletedTicket = ticketStateMap[id] as {state: string, number: string, date?: string};
+          
+          // لا ترسل تنبيه حذف إلا إذا كان البلاغ بتاريخ اليوم أو بعده لمنع التنبيهات الكاذبة للبلاغات القديمة!
+          const isToday = deletedTicket.date && deletedTicket.date >= todayStr;
+          if (!isToday) return;
+
           const msg = `⚠️ تم حذف البلاغ رقم: ${deletedTicket.number}`;
           newNotifications.push({
             id: notifId,
@@ -962,10 +967,10 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       });
     }
 
-    const newMap: Record<string, {state: string, number: string}> = {};
+    const newMap: Record<string, {state: string, number: string, date?: string}> = {};
     complaints.forEach(t => {
       if (!t.id || t.id === 'null' || t.id === 'undefined') return;
-      newMap[t.id] = { state: `${t.status}-${t.solution}`, number: t.number };
+      newMap[t.id] = { state: `${t.status}-${t.solution}`, number: t.number, date: t.date };
     });
       const numberCounts: {[key: string]: number} = {};
       complaints.forEach(c => {
