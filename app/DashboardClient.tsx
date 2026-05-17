@@ -892,24 +892,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   useEffect(() => {
     const currentCount = complaints.length;
     let newNotifications: {id:string, msg:string, time:string, read:boolean}[] = [];
-    if (currentCount > prevCount && prevCount > 0) {
-      const diff = currentCount - prevCount;
-      const latestTicket = complaints[0]; 
-      const receiverName = latestTicket?.receiver || 'غير محدد';
-      if (diff < 100) {
-        const msg = diff === 1 ? `بلاغ جديد للمستقبل: ${receiverName}` : `وصل ${diff} بلاغات جديدة!`;
-        setNewTicketToast(msg);
-        newNotifications.push({
-          id: `new-${Date.now()}`,
-          msg,
-          time: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
-          read: false
-        });
-        if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification('🚨 بلاغ جديد - وحدة بلدي', { body: msg, icon: '/logo.png' });
-        }
-      }
-    }
+    
 
     const hasSeenVPNCircular = localStorage.getItem('seen_vpn_circular_v3.1');
     if (!hasSeenVPNCircular) {
@@ -941,30 +924,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           });
           if (!newTicketToast) setNewTicketToast(msg);
         }
-      });
-      const currentIds = new Set(complaints.map(c => c.id).filter(Boolean));
-      const dismissedIds = JSON.parse(localStorage.getItem('dismissed_notifs') || '[]');
-      Object.keys(ticketStateMap).forEach(id => {
-        if (id === 'null' || id === 'undefined' || !id) return;
-        const notifId = `delete-${id}`;
-        if (dismissedIds.includes(notifId)) return;
-        if (!currentIds.has(id) && !id.startsWith('temp-')) {
-          const deletedTicket = ticketStateMap[id] as {state: string, number: string, date?: string};
-          
-          // لا ترسل تنبيه حذف إلا إذا كان البلاغ بتاريخ اليوم أو بعده لمنع التنبيهات الكاذبة للبلاغات القديمة!
-          const isToday = deletedTicket.date && deletedTicket.date >= todayStr;
-          if (!isToday) return;
-
-          const msg = `⚠️ تم حذف البلاغ رقم: ${deletedTicket.number}`;
-          newNotifications.push({
-            id: notifId,
-            msg,
-            time: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
-            read: false
-          });
-          if (!newTicketToast) setNewTicketToast(msg);
-        }
-      });
     }
 
     const newMap: Record<string, {state: string, number: string, date?: string}> = {};
