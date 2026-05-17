@@ -964,6 +964,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
     const newMap: Record<string, {state: string, number: string}> = {};
     complaints.forEach(t => {
+      if (!t.id || t.id === 'null' || t.id === 'undefined') return;
       newMap[t.id] = { state: `${t.status}-${t.solution}`, number: t.number };
     });
       const numberCounts: {[key: string]: number} = {};
