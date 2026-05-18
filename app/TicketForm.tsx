@@ -135,7 +135,7 @@ ________________________________________________________________________________
     <div className={styles.formContainer}>
       <button type="button" className={styles.closeButton} onClick={onClose}>&times;</button>
       <h2 className={styles.formTitle}>
-        {mode === 'notion' ? 'إنشاء بلاغ بنوشن' : 'إنشاء بلاغ واتساب'}
+        {mode === 'notion' ? 'إدخال بلاغ بالنظام' : 'إنشاء بلاغ واتساب'}
       </h2>
 
       <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
@@ -315,7 +315,7 @@ ________________________________________________________________________________
                   <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9L21 3z"></path>
                 </svg>
               )}
-              {mode === 'notion' ? 'إرسال إلى نوشن' : 'إرسال عبر الواتساب'}
+              {mode === 'notion' ? 'حفظ في قاعدة البيانات' : 'إرسال عبر الواتساب'}
             </>
           )}
         </button>

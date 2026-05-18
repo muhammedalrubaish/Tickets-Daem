@@ -1,7 +1,4 @@
-import { Client } from '@notionhq/client';
 import { NextResponse } from 'next/server';
-
-const notion = new Client({ auth: process.env.NOTION_SECRET });
 
 export async function POST(req: Request) {
   try {
@@ -26,15 +23,18 @@ export async function POST(req: Request) {
       }
     }
 
-    // أرشفة الصفحة في نوشن (بمثابة حذف)
-    await notion.pages.update({
-      page_id: ticketId,
-      archived: true,
-    });
-
-    // الحذف من Supabase للمزامنة الفورية
+    // الحذف من Supabase للمزامنة الفورية والمستقرة
     const { supabase } = await import('../../../lib/supabase');
-    await supabase.from('tickets').delete().eq('notion_id', ticketId);
+    
+    // نحذف بمطابقة المعرف كـ UUID الخاص بسوبابيس أو notion_id لضمان العمل على السجلات القديمة والجديدة
+    const { error: dbError } = await supabase
+      .from('tickets')
+      .delete()
+      .or(`id.eq.${ticketId},notion_id.eq.${ticketId}`);
+
+    if (dbError) {
+      throw dbError;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -42,3 +42,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'حدث خطأ أثناء حذف البلاغ.' }, { status: 500 });
   }
 }
+
