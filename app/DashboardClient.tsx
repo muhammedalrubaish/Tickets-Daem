@@ -1463,22 +1463,30 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                       document.cookie = 'auth_token=viewer; path=/; max-age=604800'; 
                       window.location.reload(); 
                     }} 
-                    style={{ padding:'10px 12px', borderRadius:'10px', background:'rgba(255,255,255,0.05)', color:'var(--foreground)', border:'1px solid var(--border)', cursor:'pointer', fontWeight:'bold', fontFamily:'Cairo', transition:'all 0.2s' }}
+                    style={{ padding:'10px 12px', borderRadius:'10px', background:'rgba(255,255,255,0.05)', color:'var(--foreground)', border:'1px solid var(--border)', cursor:'pointer', fontWeight:'bold', fontFamily:'Cairo', transition:'all 0.2s', display:'flex', alignItems:'center', justifyContent:'center', gap:'10px' }}
                     onMouseOver={(e) => e.currentTarget.style.background = 'var(--primary)'}
                     onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                   >
-                    👑 بوابة المشرف
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'white'}}>
+                      <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path>
+                      <path d="M3 20h18"></path>
+                    </svg>
+                    <span>بوابة المشرف</span>
                   </button>
                   <button 
                     onClick={() => { 
                       document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'; 
                       window.location.href = '/login'; 
                     }} 
-                    style={{ padding:'10px 12px', borderRadius:'10px', background:'rgba(255,255,255,0.05)', color:'var(--foreground)', border:'1px solid var(--border)', cursor:'pointer', fontWeight:'bold', fontFamily:'Cairo', transition:'all 0.2s' }}
+                    style={{ padding:'10px 12px', borderRadius:'10px', background:'rgba(255,255,255,0.05)', color:'var(--foreground)', border:'1px solid var(--border)', cursor:'pointer', fontWeight:'bold', fontFamily:'Cairo', transition:'all 0.2s', display:'flex', alignItems:'center', justifyContent:'center', gap:'10px' }}
                     onMouseOver={(e) => e.currentTarget.style.background = 'var(--primary)'}
                     onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                   >
-                    👤 بوابة الموظف
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'white'}}>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>بوابة الموظف</span>
                   </button>
                   <button 
                     onClick={() => setIsSwitchModalOpen(false)}
