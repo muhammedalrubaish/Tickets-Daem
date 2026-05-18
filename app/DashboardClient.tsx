@@ -1521,6 +1521,24 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
         <div className={styles.mainActionsRow}>
           <div className={styles.iconsGroup}>
+            {/* 0. الانتقال لمنصة داعم الرسمية */}
+            <a 
+              href="https://daem.momah.gov.sa/sm/index.do" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className={styles.navIconButton} 
+              title="الانتقال إلى منصة داعم الرسمية للوزارة" 
+              style={{ backgroundColor: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"></path>
+                <polyline points="11 3 17 3 17 9"></polyline>
+                <line x1="8" y1="14" x2="17" y2="3"></line>
+                {/* علامة الزائد المضيئة لتعبر عن داعم بلس */}
+                <path d="M18 16h4M20 14v4" stroke="#10b981" strokeWidth="3" />
+              </svg>
+            </a>
+
             <button 
               className={styles.navIconButton}
               onClick={() => { 
