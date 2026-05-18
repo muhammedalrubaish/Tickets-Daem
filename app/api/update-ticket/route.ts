@@ -3,7 +3,7 @@ import { supabase } from '../../../lib/supabase';
 
 export async function POST(req: Request) {
   try {
-    let { ticketId, solution, status, receiver, mainTicketId, number } = await req.json();
+    let { ticketId, solution, status, receiver, mainTicketId, number, category_type } = await req.json();
 
     const updateData: any = {};
     if (solution !== undefined) {
@@ -13,6 +13,9 @@ export async function POST(req: Request) {
     }
     if (receiver !== undefined) {
       updateData.receiver = receiver;
+    }
+    if (category_type !== undefined) {
+      updateData.category_type = category_type;
     }
 
     if (Object.keys(updateData).length > 0) {
