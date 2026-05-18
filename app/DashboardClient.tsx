@@ -1444,9 +1444,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
             <div style={{position:'relative'}}>
               <button 
                 className={styles.navIconButton}
-                onClick={() => setIsSwitchModalOpen(true)} 
+                onClick={() => setIsSwitchModalOpen(!isSwitchModalOpen)} 
                 title="تبديل البوابة / الحساب" 
-                style={{background:'rgba(255,255,255,0.1)', color:'white'}}
+                style={{background: isSwitchModalOpen ? 'var(--primary)' : 'rgba(255,255,255,0.1)', color:'white', transition:'all 0.3s'}}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="16 3 21 3 21 8"></polyline>
@@ -1456,6 +1456,38 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                   <line x1="4" y1="4" x2="9" y2="9"></line>
                 </svg>
               </button>
+              {isSwitchModalOpen && (
+                <div style={{ position: 'absolute', top: '55px', left: '0', width: '220px', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '15px', padding: '1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 10000, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <button 
+                    onClick={() => { 
+                      document.cookie = 'auth_token=viewer; path=/; max-age=604800'; 
+                      window.location.reload(); 
+                    }} 
+                    style={{ padding:'10px 12px', borderRadius:'10px', background:'rgba(255,255,255,0.05)', color:'var(--foreground)', border:'1px solid var(--border)', cursor:'pointer', fontWeight:'bold', fontFamily:'Cairo', transition:'all 0.2s' }}
+                    onMouseOver={(e) => e.currentTarget.style.background = 'var(--primary)'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                  >
+                    👑 بوابة المشرف
+                  </button>
+                  <button 
+                    onClick={() => { 
+                      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'; 
+                      window.location.href = '/login'; 
+                    }} 
+                    style={{ padding:'10px 12px', borderRadius:'10px', background:'rgba(255,255,255,0.05)', color:'var(--foreground)', border:'1px solid var(--border)', cursor:'pointer', fontWeight:'bold', fontFamily:'Cairo', transition:'all 0.2s' }}
+                    onMouseOver={(e) => e.currentTarget.style.background = 'var(--primary)'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                  >
+                    👤 بوابة الموظف
+                  </button>
+                  <button 
+                    onClick={() => setIsSwitchModalOpen(false)}
+                    style={{ padding:'6px', borderRadius:'8px', background:'none', color:'var(--text-muted)', border:'none', cursor:'pointer', fontSize:'0.8rem', fontFamily:'Cairo' }}
+                  >
+                    إغلاق القائمة
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* 3. الوضع الداكن */}

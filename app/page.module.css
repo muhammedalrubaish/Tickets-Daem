@@ -1523,14 +1523,14 @@ html {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.9rem 1.2rem;
+  padding: 0.65rem 1rem;
   background: var(--background);
   border: 2px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: 'Cairo', sans-serif;
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: var(--foreground);
 }
 
@@ -1546,10 +1546,11 @@ html {
   right: 0;
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
   z-index: 100;
-  overflow: hidden;
+  max-height: 180px;
+  overflow-y: auto;
   animation: dropdownFade 0.2s ease-out;
 }
 
