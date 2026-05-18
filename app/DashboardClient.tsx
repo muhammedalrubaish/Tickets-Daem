@@ -1205,6 +1205,19 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       else if (activeFilter === 'new') result = result.filter(c => c.solution === 'بلاغ جديد');
       else if (activeFilter === 'undefined') result = result.filter(c => ['غير محدد', ''].includes((c.solution || '').trim()));
       else if (activeFilter === 'vacation') result = result.filter(c => (c.solution || '').trim() === 'مجاز');
+      else if (activeFilter === 'late') {
+        result = result.filter(c => {
+          const sol = (c.solution || '').trim();
+          const isNew = sol === 'بلاغ جديد' || sol === 'غير محدد' || sol === '';
+          if (!isNew || !c.date || c.date === 'غير محدد') return false;
+          try {
+            const ticketDate = new Date(c.date);
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            return ticketDate < oneWeekAgo;
+          } catch { return false; }
+        });
+      }
       else if (activeFilter === 'duplicate') {
         const counts: {[key: string]: number} = {};
         result.forEach(c => {
@@ -2288,7 +2301,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
       <div className={styles.listHeader} id="complaints-list">
         <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
-          <h2 style={{fontSize:'1.1rem', color:'var(--text)', margin:0}}>📑 قائمة البلاغات</h2>
+          <h2 style={{fontSize:'1.1rem', color:'var(--text)', margin:0}}>📑 قائمة البلاغات ({filteredComplaints.length})</h2>
           
           {(userRole === 'editor' || (loggedInUser && loggedInUser.includes('محمد الربيش'))) && (
             <div className={styles.quickActions}>
