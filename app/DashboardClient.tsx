@@ -797,6 +797,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     const publicNotifs = complaints
       .filter(c => c.receiver === 'الجميع' || c.type === 'تحديث نظام')
       .filter(c => !dismissedIds.includes(c.id)) // استبعاد ما تم حذفه سابقاً
+      .filter(c => !(c.number && c.number.includes('تم حذف'))) // التجاهل النهائي لسجلات الحذف الوهمية المخفية في قاعدة البيانات
       .map(c => ({
         id: c.id,
         msg: c.number, // هنا رقم البلاغ يحتوي على نص التحديث
