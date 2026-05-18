@@ -72,7 +72,7 @@ export default function LoginPage() {
   return (
     <div className={styles.loginContainer}>
       <div className={styles.loginCard} style={{maxWidth: loginMode ? '450px' : '600px'}}>
-        <img src="/logo.png" alt="شعار بلدي" className={styles.loginLogo} />
+        <img src="/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8A%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A.png" alt="شعار بلدي" className={styles.loginLogo} />
         <h1 className={styles.loginTitle}>نظام بلاغات وحدة بلدي</h1>
         
         {!loginMode ? (

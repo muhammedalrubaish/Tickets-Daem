@@ -1415,30 +1415,34 @@ html {
 
 .topUtilityRow {
   order: 2; /* وضعهم في أقصى اليسار في الكمبيوتر */
-  width: auto;
-  gap: 15px;
+  flex: 1;
   display: flex;
-  flex-direction: row-reverse; /* لعكس الترتيب إذا لزم الأمر */
+  flex-direction: row-reverse; /* الحفاظ على ترتيب الأزرار الحالي */
+  justify-content: flex-start; /* محاذاة الأزرار لليسار في الترتيب العكسي */
+  gap: 15px;
 }
 
 .mainActionsRow {
-  order: 1; /* وضعهم في اليمين */
+  order: 1; /* وضعهم في المنتصف تماماً */
   display: flex;
   flex-direction: row;
-  width: auto;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 auto;
   gap: 20px;
 }
 
 .iconsGroup {
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 12px;
 }
 
 .profileGroup {
-  width: auto;
+  order: 0; /* وضعهم في أقصى اليمين في الكمبيوتر */
+  flex: 1;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start; /* محاذاة لليمين في RTL */
 }
 
 .statsGrid {
