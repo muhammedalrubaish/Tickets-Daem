@@ -1334,7 +1334,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 className={styles.navIconButton}
                 onClick={() => setIsNotiOpen(!isNotiOpen)} 
                 title="الإشعارات" 
-                style={{background:'rgba(255,255,255,0.1)', color:'white'}}
+                style={{background:'var(--border)', color:'var(--foreground)'}}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -1446,7 +1446,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 className={styles.navIconButton}
                 onClick={() => setIsSwitchModalOpen(!isSwitchModalOpen)} 
                 title="تبديل البوابة / الحساب" 
-                style={{background: isSwitchModalOpen ? 'var(--primary)' : 'rgba(255,255,255,0.1)', color:'white', transition:'all 0.3s'}}
+                style={{background: isSwitchModalOpen ? 'var(--primary)' : 'var(--border)', color: isSwitchModalOpen ? 'white' : 'var(--foreground)', transition:'all 0.3s'}}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="16 3 21 3 21 8"></polyline>
@@ -1499,7 +1499,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
             </div>
 
             {/* 3. الوضع الداكن */}
-            <button className={styles.navIconButton} onClick={toggleTheme} title="تغيير مظهر الموقع" style={{ background: 'rgba(255,255,255,0.1)' }}>
+            <button className={styles.navIconButton} onClick={toggleTheme} title="تغيير مظهر الموقع" style={{ background: 'var(--border)', color: 'var(--foreground)' }}>
               <span style={{fontSize:'1.2rem'}}>{theme === 'light' ? '🌙' : '☀️'}</span>
             </button>
 
@@ -1571,9 +1571,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         {/* بيانات المستخدم - ممركزة فوق الشعار */}
         <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '1.5rem' }}>
           <div className={styles.profileGroup} style={{ justifyContent: 'center', width: 'auto' }}>
-            <div style={{display:'flex', alignItems:'center', gap:'10px', background:'rgba(255,255,255,0.1)', padding:'8px 18px', borderRadius:'20px', border:'1px solid var(--border)', whiteSpace:'nowrap', boxShadow: '0 4px 15px rgba(0,0,0,0.1)'}}>
-              <span style={{fontSize:'0.9rem', color:'white', fontWeight:'600', display:'flex', alignItems:'center', gap:'8px'}}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <div style={{display:'flex', alignItems:'center', gap:'10px', background:'var(--card-bg)', padding:'8px 18px', borderRadius:'20px', border:'1px solid var(--border)', whiteSpace:'nowrap', boxShadow: '0 4px 15px rgba(0,0,0,0.05)'}}>
+              <span style={{fontSize:'0.9rem', color:'var(--foreground)', fontWeight:'600', display:'flex', alignItems:'center', gap:'8px'}}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--foreground)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
                 </svg>
                 {userRole === 'super_admin' && loggedInUser ? `${loggedInUser} (المشرف)` : (userRole === 'super_admin' || userRole === 'viewer' ? 'المشرف' : (loggedInUser ? loggedInUser : 'مستخدم'))}
@@ -1898,7 +1898,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'1.2rem'}}>
                 <button 
                   onClick={() => { const d = new Date().toISOString().split('T')[0]; setStartDate(d); setEndDate(d); setIsDateMenuOpen(false); }}
-                  style={{padding:'6px', borderRadius:'6px', border:'1px solid var(--border)', background:'rgba(255,255,255,0.05)', cursor:'pointer', fontSize:'0.8rem', color:'white'}}
+                  style={{padding:'6px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--background)', cursor:'pointer', fontSize:'0.8rem', color:'var(--foreground)'}}
                 >اليوم</button>
                 <button 
                   onClick={() => { 
@@ -1906,7 +1906,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                     const s = d.toISOString().split('T')[0];
                     setStartDate(s); setEndDate(s); setIsDateMenuOpen(false); 
                   }}
-                  style={{padding:'6px', borderRadius:'6px', border:'1px solid var(--border)', background:'rgba(255,255,255,0.05)', cursor:'pointer', fontSize:'0.8rem', color:'white'}}
+                  style={{padding:'6px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--background)', cursor:'pointer', fontSize:'0.8rem', color:'var(--foreground)'}}
                 >أمس</button>
                 <button 
                   onClick={() => { 
@@ -1915,7 +1915,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                     setEndDate(new Date().toISOString().split('T')[0]); 
                     setIsDateMenuOpen(false); 
                   }}
-                  style={{padding:'6px', borderRadius:'6px', border:'1px solid var(--border)', background:'rgba(255,255,255,0.05)', cursor:'pointer', fontSize:'0.8rem', color:'white'}}
+                  style={{padding:'6px', borderRadius:'6px', border:'1px solid var(--border)', background:'var(--background)', cursor:'pointer', fontSize:'0.8rem', color:'var(--foreground)'}}
                 >آخر 7 أيام</button>
                 <button 
                   onClick={() => { setStartDate(''); setEndDate(''); setIsDateMenuOpen(false); }}
@@ -1925,12 +1925,12 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
               <div style={{display:'flex', flexDirection:'column', gap:'10px'}}>
                 <div>
-                  <label style={{fontSize:'0.75rem', display:'block', marginBottom:'4px', color:'white', opacity:0.9}}>من تاريخ:</label>
-                  <input type="date" className={styles.filterInput} value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{width:'100%', padding:'8px', color:'white'}} />
+                  <label style={{fontSize:'0.75rem', display:'block', marginBottom:'4px', color:'var(--foreground)', opacity:0.9}}>من تاريخ:</label>
+                  <input type="date" className={styles.filterInput} value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{width:'100%', padding:'8px', color:'var(--foreground)'}} />
                 </div>
                 <div>
-                  <label style={{fontSize:'0.75rem', display:'block', marginBottom:'4px', color:'white', opacity:0.9}}>إلى تاريخ:</label>
-                  <input type="date" className={styles.filterInput} value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{width:'100%', padding:'8px', color:'white'}} />
+                  <label style={{fontSize:'0.75rem', display:'block', marginBottom:'4px', color:'var(--foreground)', opacity:0.9}}>إلى تاريخ:</label>
+                  <input type="date" className={styles.filterInput} value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{width:'100%', padding:'8px', color:'var(--foreground)'}} />
                 </div>
                 <button 
                   onClick={() => setIsDateMenuOpen(false)}
