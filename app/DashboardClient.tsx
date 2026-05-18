@@ -798,6 +798,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [prevCount, setPrevCount] = useState<number>(complaints.length);
   const [notifications, setNotifications] = useState<{id:string, msg:string, time:string, read:boolean}[]>([]);
   const [circularFilter, setCircularFilter] = useState<'all' | 'circular' | 'system' | 'drive'>('all');
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [isEditReceiverOpen, setIsEditReceiverOpen] = useState(false);
   const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
