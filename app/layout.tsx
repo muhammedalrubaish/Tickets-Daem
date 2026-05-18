@@ -6,10 +6,10 @@ export const metadata: Metadata = {
   description: 'لوحة تحكم تفاعلية لعرض إحصائيات وبلاغات وحدة بلدي',
   icons: {
     icon: [
-      { url: '/logo.png', sizes: '32x32' },
-      { url: '/logo.png', sizes: '192x192' },
+      { url: '/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8A%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A.png', sizes: '32x32' },
+      { url: '/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8A%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A.png', sizes: '192x192' },
     ],
-    apple: '/logo.png',
+    apple: '/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8A%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A.png',
   },
 }
 

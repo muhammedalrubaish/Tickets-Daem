@@ -1613,7 +1613,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
             </div>
           </div>
         </div>
-        <img src="/logo.png" alt="Baladi Logo" className={styles.mainLogo} onClick={() => window.location.reload()} />
+        <img src="/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8A%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A.png" alt="Baladi Logo" className={styles.mainLogo} onClick={() => window.location.reload()} />
         <h1 className={styles.dashboardTitle}>
           لوحة التحكم للبلاغات | وحدة بلدي
         </h1>
