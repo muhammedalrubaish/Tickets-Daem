@@ -820,11 +820,24 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [userRole, setUserRole] = useState<'viewer' | 'editor' | 'super_admin' | null>(null);
   const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
 
-  // التحقق من وجود تحديثات جديدة غير مقروءة
+  // التحقق من وجود تحديثات جديدة غير مقروءة وتنظيف الذاكرة
   useEffect(() => {
     const lastSeenVersion = localStorage.getItem('last_seen_system_version');
     if (lastSeenVersion !== SYSTEM_UPDATES[0].version) {
       setHasNewUpdate(true);
+    }
+    
+    // تنظيف الذاكرة المحلية من التنبيهات الوهمية الخاصة بالحذف
+    const oldNotifs = localStorage.getItem('balaghat_notifications');
+    if (oldNotifs) {
+      try {
+        const parsed = JSON.parse(oldNotifs);
+        const cleaned = parsed.filter((n: any) => !(n.msg && n.msg.includes('تم حذف')));
+        if (cleaned.length !== parsed.length) {
+          localStorage.setItem('balaghat_notifications', JSON.stringify(cleaned));
+          setNotifications(cleaned);
+        }
+      } catch(e) {}
     }
   }, []);
 
@@ -1015,9 +1028,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         setNewTicketToast('✅ تم الحذف بنجاح');
         router.refresh();
       } else {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         setComplaints(backup);
-        alert(data.error || 'حدث خطأ أثناء الحذف');
+        alert(`خطأ من الخادم: ${data.error || data.details || 'حدث خطأ أثناء الحذف'}`);
       }
     } catch (err) {
       setComplaints(backup);
@@ -1056,8 +1069,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         setNewTicketToast('✅ تم التحديث بنجاح');
         router.refresh();
       } else {
+        const errorData = await res.json().catch(() => ({}));
         setComplaints(backup);
-        alert('حدث خطأ أثناء التحديث');
+        alert(`خطأ من الخادم: ${errorData.details || errorData.error || 'حدث خطأ أثناء التحديث'}`);
       }
     } catch (err) {
       setComplaints(backup);

@@ -26,11 +26,21 @@ export async function POST(req: Request) {
     // الحذف من Supabase للمزامنة الفورية والمستقرة
     const { supabase } = await import('../../../lib/supabase');
     
-    // نحذف بمطابقة المعرف كـ UUID الخاص بسوبابيس أو notion_id لضمان العمل على السجلات القديمة والجديدة
+    // نحذف بمطابقة المعرف كـ UUID الخاص بسوبابيس أو notion_id أو رقم البلاغ لضمان العمل على السجلات القديمة والجديدة
+    const conditions = [];
+    if (ticketId.includes('-') && ticketId.length > 20) {
+      conditions.push(`id.eq.${ticketId}`);
+    } else {
+      conditions.push(`notion_id.eq.${ticketId}`);
+    }
+    if (ticketId.startsWith('IM')) {
+      conditions.push(`ticket_number.eq.${ticketId}`);
+    }
+
     const { error: dbError } = await supabase
       .from('tickets')
       .delete()
-      .or(`id.eq.${ticketId},notion_id.eq.${ticketId}`);
+      .or(conditions.join(','));
 
     if (dbError) {
       throw dbError;

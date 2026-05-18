@@ -18,20 +18,27 @@ export async function POST(req: Request) {
     if (Object.keys(updateData).length > 0) {
       let query = supabase.from('tickets').update(updateData);
       
-      if (number) {
-        const { error } = await query.eq('ticket_number', number);
-        if (error) throw error;
-      } else if (mainTicketId) {
-        // If mainTicketId is a UUID
+      const conditions: string[] = [];
+      if (mainTicketId) {
         if (mainTicketId.includes('-') && mainTicketId.length > 20) {
-          const { error } = await query.eq('id', mainTicketId);
-          if (error) throw error;
+          conditions.push(`id.eq.${mainTicketId}`);
         } else {
-          const { error } = await query.eq('notion_id', mainTicketId);
-          if (error) throw error;
+          conditions.push(`notion_id.eq.${mainTicketId}`);
         }
-      } else if (ticketId) {
-        const { error } = await query.eq('notion_id', ticketId);
+      }
+      if (ticketId) {
+        if (ticketId.includes('-') && ticketId.length > 20) {
+          conditions.push(`id.eq.${ticketId}`);
+        } else {
+          conditions.push(`notion_id.eq.${ticketId}`);
+        }
+      }
+      if (number && number !== 'غير محدد') {
+        conditions.push(`ticket_number.eq.${number}`);
+      }
+
+      if (conditions.length > 0) {
+        const { error } = await query.or(conditions.join(','));
         if (error) throw error;
       } else {
         return NextResponse.json({ error: 'No ticket identifier provided' }, { status: 400 });
