@@ -1519,6 +1519,32 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           </div>
         </div>
 
+        {/* بيانات المستخدم - ممركزة في المنتصف بالسطر العلوي */}
+        <div className={styles.profileGroup} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{display:'flex', alignItems:'center', gap:'10px', background:'var(--card-bg)', padding:'8px 18px', borderRadius:'20px', border:'1px solid var(--border)', whiteSpace:'nowrap', boxShadow: '0 4px 15px rgba(0,0,0,0.05)'}}>
+            <span style={{fontSize:'0.9rem', color:'var(--foreground)', fontWeight:'600', display:'flex', alignItems:'center', gap:'8px'}}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--foreground)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              {userRole === 'super_admin' && loggedInUser ? `${loggedInUser} (المشرف)` : (userRole === 'super_admin' || userRole === 'viewer' ? 'المشرف' : (loggedInUser ? loggedInUser : 'مستخدم'))}
+            </span>
+            {loggedInUser && (
+              <button 
+                onClick={() => { 
+                  setSelectedReceiver(loggedInUser); 
+                  setActiveFilter('new'); 
+                  document.getElementById('complaints-list')?.scrollIntoView({ behavior: 'smooth' });
+                }} 
+                className={styles.myWorkspaceBtn} 
+                title="🎯 مساحتي"
+                style={{ marginLeft:'5px', fontSize:'0.75rem', background:'var(--primary)', color:'white', border:'none', padding:'5px 15px', borderRadius:'15px', cursor:'pointer', fontWeight:'bold', transition: 'all 0.3s ease' }}
+              >
+                🎯 مساحتي
+              </button>
+            )}
+          </div>
+        </div>
+
         <div className={styles.mainActionsRow}>
           <div className={styles.iconsGroup}>
             {/* 0. الانتقال لمنصة داعم الرسمية */}
@@ -1586,33 +1612,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         </div>
       </div>
       <header className={styles.logoHeader}>
-        {/* بيانات المستخدم - ممركزة فوق الشعار */}
-        <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '1.5rem' }}>
-          <div className={styles.profileGroup} style={{ justifyContent: 'center', width: 'auto' }}>
-            <div style={{display:'flex', alignItems:'center', gap:'10px', background:'var(--card-bg)', padding:'8px 18px', borderRadius:'20px', border:'1px solid var(--border)', whiteSpace:'nowrap', boxShadow: '0 4px 15px rgba(0,0,0,0.05)'}}>
-              <span style={{fontSize:'0.9rem', color:'var(--foreground)', fontWeight:'600', display:'flex', alignItems:'center', gap:'8px'}}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--foreground)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
-                </svg>
-                {userRole === 'super_admin' && loggedInUser ? `${loggedInUser} (المشرف)` : (userRole === 'super_admin' || userRole === 'viewer' ? 'المشرف' : (loggedInUser ? loggedInUser : 'مستخدم'))}
-              </span>
-              {loggedInUser && (
-                <button 
-                  onClick={() => { 
-                    setSelectedReceiver(loggedInUser); 
-                    setActiveFilter('new'); 
-                    document.getElementById('complaints-list')?.scrollIntoView({ behavior: 'smooth' });
-                  }} 
-                  className={styles.myWorkspaceBtn} 
-                  title="🎯 مساحتي"
-                  style={{ marginLeft:'5px', fontSize:'0.75rem', background:'var(--primary)', color:'white', border:'none', padding:'5px 15px', borderRadius:'15px', cursor:'pointer', fontWeight:'bold', transition: 'all 0.3s ease' }}
-                >
-                  🎯 مساحتي
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
         <img src="/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8A%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A.png" alt="Baladi Logo" className={styles.mainLogo} onClick={() => window.location.reload()} />
         <h1 className={styles.dashboardTitle}>
           لوحة التحكم للبلاغات | وحدة بلدي
