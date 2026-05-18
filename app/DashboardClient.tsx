@@ -730,6 +730,21 @@ const EMPLOYEES = [
   { name: 'ثامر المنصور', user: 't.almansour', phone: '966570770940' },
 ];
 
+const CATEGORIES = [
+  "الرخص التجارية", "الرخص الإنشائية", "بلدي أعمال", "مسار منصة الحفريات", 
+  "التقرير المساحي", "الإدارة الذكية للنظافة", "خدمة المواعيد الالكترونية", 
+  "الشهادات الصحية", "خدمة مرافق إيواء", "مستشارك بلدي", "نظام الصلاحيات", 
+  "تطبيق بلدي", "شكوى المستفيد منصة بلدي", "منصة الرقابة الموحدة (ممثل)", 
+  "لوحة التحكم", "خدمة الدمج والتجزئة", "خدمة تحديث الصكوك", 
+  "خدمة اعتماد المخططات الخاصة", "تصنيف مقدمي خدمات المدن", "الهوية العقارية", 
+  "شكوى المستفيد بلدي 940", "خدمة الفرص الاستثمارية", "خدمة السكن الجماعي", 
+  "خدمة السكن الجماعي للأفراد", "صفحة بلدي", "GIS Web Portal", "رمز الاستجابة", 
+  "إكرام الموتى", "التشوه البصري", "امتثال", "رقابة الصحي والأسواق", 
+  "الخرائط الجغرافية", "صوت العميل", "نظام المتاجر المتنقلة", 
+  "شؤون البلدية والقروية والإسكان", "Investment Opportunities", 
+  "امتثال المباني", "منصة رسم تقديم منتجات التبغ", "فاتورة سداد آلياً", "أخرى"
+];
+
 export default function DashboardClient({ complaints: initialComplaints }: Props) {
   const router = useRouter();
   const [complaints, setComplaints] = useState<Complaint[]>(initialComplaints);
@@ -783,9 +798,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [prevCount, setPrevCount] = useState<number>(complaints.length);
   const [notifications, setNotifications] = useState<{id:string, msg:string, time:string, read:boolean}[]>([]);
   const [circularFilter, setCircularFilter] = useState<'all' | 'circular' | 'system' | 'drive'>('all');
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [isEditReceiverOpen, setIsEditReceiverOpen] = useState(false);
+  const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
   const [ticketToDelete, setTicketToDelete] = useState<{id: string, createdAt?: string} | null>(null);
 
 
@@ -1042,11 +1057,11 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     }
   };
 
-  const handleUpdate = async (ticketId: string, newSolution: string, newReceiver?: string) => {
+  const handleUpdate = async (ticketId: string, newSolution: string, newReceiver?: string, newCategory?: string) => {
     const backup = [...complaints];
     setComplaints(prev => prev.map(c => 
       c.id === (editingTicket?.id || ticketId) 
-        ? { ...c, solution: newSolution, receiver: newReceiver || c.receiver } 
+        ? { ...c, solution: newSolution, receiver: newReceiver || c.receiver, type: newCategory || c.type } 
         : c
     ));
     setIsEditOpen(false);
@@ -1062,7 +1077,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           mainTicketId: editingTicket?.id,
           number: editingTicket?.number,
           solution: newSolution,
-          receiver: newReceiver
+          receiver: newReceiver,
+          category_type: newCategory
         }),
       });
       if (res.ok) {
@@ -2246,6 +2262,41 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               </div>
             </div>
 
+              {/* تعديل التصنيف - متاح لجميع الموظفين أجمع */}
+              <div className={styles.formGroup}>
+                <label className={styles.filterLabel}>تعديل التصنيف:</label>
+                <div className={styles.customSelectWrapper}>
+                  <div 
+                    className={styles.customSelectTrigger}
+                    onClick={() => setIsEditCategoryOpen(!isEditCategoryOpen)}
+                  >
+                    <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                      <span>{editingTicket.type || 'غير محدد'}</span>
+                    </div>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{transform: isEditCategoryOpen ? 'rotate(180deg)' : 'none', transition:'0.3s'}}><path d="M6 9l6 6 6-6"/></svg>
+                  </div>
+                  {isEditCategoryOpen && (
+                    <div className={styles.customSelectOptions} style={{maxHeight:'200px', overflowY:'auto'}}>
+                      {CATEGORIES.map(cat => (
+                        <div 
+                          key={cat} 
+                          className={styles.customOption}
+                          onClick={() => {
+                            setEditingTicket({ ...editingTicket, type: cat });
+                            setIsEditCategoryOpen(false);
+                          }}
+                        >
+                          📋 {cat}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Receiver custom dropdown */}
               {loggedInUser?.includes('محمد الربيش') && (
                 <div className={styles.formGroup}>
@@ -2289,7 +2340,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               <button 
                 className={styles.submitButton} 
                 disabled={isUpdating} 
-                onClick={() => handleUpdate(editingTicket.id, editingTicket.solution, editingTicket.receiver)}
+                onClick={() => handleUpdate(editingTicket.id, editingTicket.solution, editingTicket.receiver, editingTicket.type)}
                 style={{marginTop: '1.5rem'}}
               >
                 {isUpdating ? 'جاري الحفظ...' : 'حفظ التعديلات'}
