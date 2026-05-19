@@ -1620,7 +1620,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                       document.cookie = 'auth_token=viewer; path=/; max-age=604800'; 
                       window.location.reload(); 
                     }} 
-                    style={{ padding:'10px 12px', borderRadius:'10px', background:'', color:'var(--foreground)', border:'1px solid var(--border)', cursor:'pointer', fontWeight:'bold', fontFamily:'Cairo', transition:'all 0.2s', display:'flex', alignItems:'center', justifyContent:'center', gap:'10px' }}
+                    style={{ padding:'10px 12px', borderRadius:'10px', background:'rgba(255,255,255,0.05)', color:'var(--foreground)', border:'1px solid var(--border)', cursor:'pointer', fontWeight:'bold', fontFamily:'Cairo', transition:'all 0.2s', display:'flex', alignItems:'center', justifyContent:'center', gap:'10px' }}
                     onMouseOver={(e) => e.currentTarget.style.background = 'var(--primary)'}
                     onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                   >
