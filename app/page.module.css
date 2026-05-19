@@ -653,17 +653,30 @@
   width: 100%;
   padding: 1rem;
   border-radius: 10px;
-  border: 2px solid var(--border);
-  background: var(--background);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--foreground);
   font-size: 1rem;
   text-align: center;
   font-family: 'Cairo', sans-serif;
+  transition: all 0.3s ease;
 }
 
 .loginInput:focus {
   outline: none;
   border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.15);
+}
+
+/* تخصيص مظهر الحقول عند الملء التلقائي لمنع تلوين المتصفح المزعج */
+.loginInput:-webkit-autofill,
+.loginInput:-webkit-autofill:hover, 
+.loginInput:-webkit-autofill:focus, 
+.loginInput:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #1e2521 inset !important; /* لون داكن يتناسق مع الخلفية */
+  -webkit-text-fill-color: var(--foreground) !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .loginButton {
@@ -1471,8 +1484,8 @@
 
 .modeCard {
   flex: 1;
-  background: rgba(255, 255, 255, 0.6);
-  border: 2px solid var(--border);
+  background: rgba(45, 55, 72, 0.95) !important; /* رمادي داكن فخم ومطابق للطلب */
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: 16px;
   padding: 1.8rem 1rem;
   cursor: pointer;
@@ -1481,26 +1494,27 @@
   flex-direction: column;
   align-items: center;
   gap: 0.8rem;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  backdrop-filter: blur(10px);
 }
 
 [data-theme='dark'] .modeCard {
-  background: rgba(35, 42, 38, 0.6);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(45, 55, 72, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .modeCard:hover {
   transform: translateY(-5px);
-  border-color: var(--primary);
-  box-shadow: 0 8px 25px rgba(21, 128, 61, 0.15);
-  background: rgba(21, 128, 61, 0.05);
+  border-color: var(--primary) !important;
+  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.2);
+  background: rgba(45, 55, 72, 0.98) !important;
 }
 
 .modeIcon {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: rgba(21, 128, 61, 0.08);
+  background: rgba(34, 197, 94, 0.12) !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1508,7 +1522,7 @@
 }
 
 .modeCard:hover .modeIcon {
-  background: var(--primary);
+  background: var(--primary) !important;
   color: white !important;
   transform: scale(1.1);
 }
@@ -1518,16 +1532,41 @@
 }
 
 .modeCard h3 {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  color: var(--foreground);
+  color: #ffffff !important; /* أبيض ناصع ومقروء للمشرف والموظف */
   margin: 0;
 }
 
 .modeCard p {
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.65) !important; /* أبيض ناعم وهادئ */
   margin: 0;
+}
+
+/* زر العودة للخيارات الأنيق والأخضر بدون خلفية رصاصية */
+.backBtn {
+  background: transparent !important;
+  border: none !important;
+  color: var(--primary) !important; /* لون أخضر بلدي رائع */
+  font-weight: bold !important;
+  cursor: pointer;
+  padding: 0 !important;
+  font-size: 0.95rem;
+  font-family: 'Cairo', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 1.5rem;
+  width: fit-content;
+  margin-right: 0 !important;
+  margin-left: auto !important; /* المحاذاة لليمين المطلق */
+  transition: all 0.2s ease;
+}
+
+.backBtn:hover {
+  color: var(--primary-hover) !important;
+  transform: translateX(4px); /* حركة انسيابية ناعمة لليمين في وضع RTL */
 }
 
 /* Mobile responsive styles for login portals */
