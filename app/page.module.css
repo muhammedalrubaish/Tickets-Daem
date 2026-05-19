@@ -188,13 +188,13 @@
   right: 0;
   width: 4px;
   height: 100%;
-  background-color: var(--primary);
+  background-color: var(--status-color, var(--primary));
 }
 
-.card.status-closed::before { background-color: var(--success); }
-.card.status-inProgress::before { background-color: var(--warning); }
-.card.status-open::before { background-color: var(--danger); }
-.card.status-undefined::before { background-color: #8b5cf6; }
+.card.status-closed::before { background-color: var(--status-color, var(--success)); }
+.card.status-inProgress::before { background-color: var(--status-color, var(--warning)); }
+.card.status-open::before { background-color: var(--status-color, var(--danger)); }
+.card.status-undefined::before { background-color: var(--status-color, #8b5cf6); }
 
 .card:hover {
   box-shadow: 0 0 25px rgba(33, 115, 70, 0.4), 0 10px 15px -3px rgba(0, 0, 0, 0.1);

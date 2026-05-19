@@ -2743,7 +2743,10 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               <div 
                 key={complaint.id} 
                 className={`${styles.card} ${styles['status-' + statusClass]} ${styles.reveal}`}
-                style={{ transitionDelay: `${(index % 10) * 0.05}s`, borderRightColor: getStatusColor(complaint.solution) }}
+                style={{ 
+                  transitionDelay: `${(index % 10) * 0.05}s`, 
+                  '--status-color': getStatusColor(complaint.solution)
+                } as React.CSSProperties}
               >
                 <div className={styles.cardHeader} style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                   <span className={styles.ticketNumber}>{complaint.number}</span>
