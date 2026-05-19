@@ -1341,31 +1341,39 @@
 
 @media (min-width: 901px), (orientation: landscape) {
   .headerLayout {
+    position: relative; /* لتمكين التموضع المطلق للأيقونات بالمنتصف */
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
+    min-height: 50px;
   }
 
   .topUtilityRow {
-    order: 2; /* وضعهم في أقصى اليسار في الكمبيوتر */
+    order: 2; /* وضع أدوات النظام في أقصى اليسار */
     width: auto;
     gap: 15px;
-    flex-direction: row-reverse; /* لعكس الترتيب إذا لزم الأمر */
+    flex-direction: row-reverse;
   }
 
   .mainActionsRow {
-    order: 1; /* وضعهم في اليمين */
+    position: absolute; /* توسيط مطلق وحقيقي 100% في منتصف الشاشة */
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     flex-direction: row;
     width: auto;
     gap: 20px;
+    margin: 0;
+    z-index: 5;
   }
 
   .iconsGroup {
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   .profileGroup {
+    order: 1; /* وضع بيانات الموظف والمسارات في أقصى اليمين */
     width: auto;
   }
 }
