@@ -1135,6 +1135,14 @@
   }
 
   /* 1. �������� */
+
+  .statsGrid > div:nth-child(3) {
+    grid-column: 1 / -1 !important;
+  }
+  .statsGrid > div:nth-child(3) h3 {
+    font-size: 1.1rem !important;
+  }
+
   .statsGrid {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 0.5rem !important;
@@ -1168,13 +1176,12 @@
   /* 3 & 4. ����� �������� �������� ������� ���� ���� */
   .listHeader {
     display: flex !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    gap: 5px !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
     padding: 0 5px !important;
     margin-bottom: 1rem !important;
     align-items: center !important;
+    justify-content: space-between !important;
   }
   .listHeader h2 {
     font-size: 0.9rem !important;
@@ -1183,8 +1190,10 @@
   }
   .quickActions {
     display: flex !important;
-    flex-wrap: nowrap !important;
-    gap: 4px !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+    justify-content: center !important;
   }
   .quickBtn {
     height: 32px !important;
@@ -1354,7 +1363,7 @@
   transform: translateY(40px) scale(0.98);
   transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.reveal.active {
+.reveal:global(.active) {
   opacity: 1;
   transform: translateY(0) scale(1);
 }

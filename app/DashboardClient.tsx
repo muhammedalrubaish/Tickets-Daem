@@ -1461,9 +1461,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          entry.target.classList.add(styles.activeReveal);
+          entry.target.classList.add("active");
         } else {
-          entry.target.classList.remove(styles.activeReveal);
+          entry.target.classList.remove("active");
         }
       });
     }, observerOptions);
