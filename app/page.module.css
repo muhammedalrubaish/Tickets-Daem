@@ -69,7 +69,7 @@
   gap: 0.5rem;
   position: relative;
   transition: all 0.3s ease;
-  max-height: 120px;
+  max-height: 140px; /* زيادة الارتفاع ليتسع لكافة التعاميم داخل الإطار */
 }
 
 .notesCard:hover {
@@ -1408,10 +1408,9 @@ html {
   .headerLayout {
     display: flex;
     flex-direction: row;
-    justify-content: center; /* يتوسط الشريط العلوي بالكامل في المنتصف */
+    justify-content: space-between; /* الأطراف على الزوايا، والأوسط في المنتصف الدقيق */
     align-items: center;
-    gap: 1.5rem; /* مسافة مريحة وملمومة بين المجموعات الثلاث */
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     width: 100%;
   }
 
@@ -1427,22 +1426,22 @@ html {
   }
 
   .topUtilityRow {
-    order: 2; /* أقصى اليسار في السطر الممركز */
-    flex: 0 0 auto; /* عدم التمدد لتبقى ملمومة */
+    order: 2; /* أقصى اليسار في الزاوية */
+    flex: 1; /* التمدد لليمين لدفع الأزرار لأقصى اليسار */
     display: flex;
-    justify-content: center;
+    justify-content: flex-end; /* محاذاة الأزرار لليسار تماماً في RTL */
     align-items: center;
-    gap: 8px;
+    gap: 8px; /* تقريب أيقونات الجرس وتسجيل الخروج والوضع والتبديل من بعضها */
     width: auto; /* إلغاء العرض الموروث 100% للكمبيوتر */
   }
 
   .mainActionsRow {
     order: 1; /* في المنتصف تماماً */
-    flex: 0 0 auto;
+    flex: 0 0 auto; /* عدم التمدد لتبقى بالمنتصف الدقيق */
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 12px;
+    gap: 12px; /* تقريب الأزرار الخضراء من بعضها لتتوسط بشكل ملموم */
     width: auto; /* إلغاء العرض الموروث 100% للكمبيوتر */
   }
 
@@ -1453,10 +1452,10 @@ html {
   }
 
   .profileGroup {
-    order: 0; /* أقصى اليمين في السطر الممركز */
-    flex: 0 0 auto; /* عدم التمدد لتبقى بجوار الأيقونات الخضراء */
+    order: 0; /* أقصى اليمين في الزاوية */
+    flex: 1; /* التمدد لليسار لدفع مساحتي لأقصى اليمين */
     display: flex;
-    justify-content: center;
+    justify-content: flex-start; /* محاذاة لليمين تماماً في RTL */
     align-items: center;
     width: auto; /* إلغاء العرض الموروث 100% للكمبيوتر */
   }
