@@ -825,6 +825,64 @@
   transform: scale(1.05);
 }
 
+
+/* Custom Dropdown Filters */
+.customFilterWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.customFilterTrigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.customFilterTrigger:hover {
+  border-color: var(--primary);
+  background: rgba(33, 115, 70, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.customFilterOptions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.customFilterOption {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+  color: var(--foreground);
+  font-size: 0.9rem;
+}
+
+.customFilterOption:hover {
+  background: var(--primary);
+  color: white;
+}
+
 /* ===== RESPONSIVE MOBILE DESIGN (SCALED DOWN COMPUTER VIEW) ===== */
 @media (max-width: 768px) {
   .container {
