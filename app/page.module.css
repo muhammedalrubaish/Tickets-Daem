@@ -1591,3 +1591,21 @@
     right: 0 !important;
   }
 }
+
+
+/* List Header Inner Container for perfect mobile wrapping */
+.listHeaderInner {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .listHeaderInner {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+}

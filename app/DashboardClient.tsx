@@ -2642,7 +2642,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       )}
 
       <div className={styles.listHeader} id="complaints-list">
-        <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
+        <div className={styles.listHeaderInner} style={{display:'flex', alignItems:'center', gap:'15px'}}>
           <h2 style={{fontSize:'1.1rem', color:'var(--text)', margin:0}}>📑 قائمة البلاغات ({filteredComplaints.length})</h2>
           
           {(userRole === 'editor' || (loggedInUser && loggedInUser.includes('محمد الربيش'))) && (
