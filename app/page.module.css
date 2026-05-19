@@ -36,13 +36,13 @@
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-bottom: 2.5rem;
 }
 
 .statTodayFull {
-  grid-column: span 3;
+  grid-column: span 2;
   background: linear-gradient(135deg, var(--primary) 0%, #1a4fbb 100%) !important;
   color: white !important;
   border: none !important;
@@ -825,523 +825,94 @@
   transform: scale(1.05);
 }
 
-/* ===== RESPONSIVE MOBILE DESIGN ===== */
+/* ===== RESPONSIVE MOBILE DESIGN (SCALED DOWN COMPUTER VIEW) ===== */
 @media (max-width: 768px) {
-
-  /* الحاوية الرئيسية */
   .container {
-    padding: 1rem;
+    min-width: 1300px !important; /* ����� ������� ��� ��� ��������� ������� ���� �������� �� ����� */
+    zoom: 0.33 !important; /* ���� ����� ������ ������ ���� ������ ������� ������� �� ��������� */
+    -moz-transform: scale(0.33) !important;
+    -moz-transform-origin: top center !important;
+    padding: 0.5rem !important;
+    max-width: none !important;
   }
 
-  /* الشريط العلوي */
-  .topBarSimple {
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  /* ������ ��� ������ ������� �������� ��� ��������� ������ ���� ������ */
+  .headerLayout {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin-bottom: 1.5rem !important;
   }
 
-  .rightActions, .leftActions, .centerActions {
-    gap: 0.4rem;
+  .topUtilityRow {
+    order: 2 !important;
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: auto !important;
   }
 
-  /* الأزرار العلوية - أصغر حجماً */
-  .iconBtn, .logoutBtn {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.75rem;
+  .mainActionsRow {
+    order: 1 !important;
+    flex: 0 0 auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: auto !important;
   }
 
-  /* الشعار */
-  .mainLogo {
-    height: 80px;
-    margin-bottom: 1rem;
+  .iconsGroup {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 8px !important;
   }
 
-  /* بطاقات الإحصائيات - عمودين على الهاتف */
+  .profileGroup {
+    order: 0 !important;
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    width: auto !important;
+  }
+
+  /* ������ ��� ����� ������� �� ��� ���� */
+  .filterSection {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+  }
+
+  /* ������ ��� ������ ���������� �� 4 ����� ��� ��������� */
   .statsGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.6rem;
-    margin-bottom: 1.5rem;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 1rem !important;
   }
-
-  .statTodayFull, .notesCard {
-    grid-column: 1 / -1;
-    max-height: none;
-  }
-
 
   .statTodayFull {
-    padding: 1rem 1.2rem !important;
+    grid-column: span 2 !important;
   }
 
-  .statTodayFull .statNumber {
-    font-size: 2rem !important;
+  .notesCard {
+    grid-column: span 2 !important;
   }
 
-  /* البطاقات الإحصائية */
-  .statCard {
-    padding: 0.8rem 1rem;
-  }
-
-  /* قسم البحث والفلترة */
-  .filterSection {
-    flex-direction: column !important;
-    gap: 1rem;
-    align-items: flex-start !important;
-    padding: 1rem;
-  }
-
-  .filterRow {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .filterGroup {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0.4rem;
-    width: 100%;
-  }
-
-  .filterLabel {
-    width: 100%;
-    text-align: right;
-    font-size: 0.85rem;
-  }
-
-  .filterGroup input,
-  .filterGroup select {
-    width: 100%;
-  }
-
-  /* بطاقات البلاغات */
-  .card {
-    padding: 1rem;
-    width: 100%;
-  }
-
-  .cardHeader {
-    flex-direction: row !important;
-    gap: 0.5rem;
-    align-items: center !important;
-  }
-  
-  .reveal {
-    opacity: 1 !important;
-    transform: none !important;
-  }
-
-  /* النوافذ المنبثقة (Modals) */
-  .formContainer {
-    padding: 1rem;
-    width: 95vw;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-
-  /* نافذة ملف الأعمال */
-  .driveModal {
-    width: 95vw;
-    padding: 1rem;
-  }
-
-  /* دليل المشرفين */
-  .supGrid {
-    grid-template-columns: 1fr;
-  }
-
-  /* صفحة تسجيل الدخول */
-  .loginCard {
-    padding: 2rem 1.5rem;
-    width: 90vw;
-    margin: 1rem auto;
-  }
-
-  .loginTitle {
-    font-size: 1.2rem;
+  /* ������� �������� (Modals) */
+  .formContainer, .driveModal, .modalContent {
+    width: 90vw !important;
+    zoom: 1.5; /* ����� ������� �������� ��� ������ ������ ������� �������� */
   }
 }
 
-/* للشاشات الصغيرة جداً */
-@media (max-width: 480px) {
-  .statsGrid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .statTodayFull .statNumber {
-    font-size: 1.8rem !important;
-  }
-
-  .container {
-    padding: 0.75rem;
-  }
-}
-
-/* Toast Notification */
-.toast {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: var(--primary);
-  color: white;
-  padding: 1rem 2rem;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  z-index: 9999;
-  animation: slideIn 0.3s ease-out;
-  direction: rtl;
-}
-
-@keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-/* AI Chat Assistant Styles */
-.aiChatWrapper {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  z-index: 5000;
-}
-
-.chatToggleButton {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: white;
-  border: 4px solid var(--card-bg);
-  cursor: pointer;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.chatToggleButton:hover {
-  transform: scale(1.1) rotate(5deg);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.4);
-}
-
-.chatOpen {
-  background: #ef4444;
-}
-
-.chatWindow {
-  position: absolute;
-  bottom: 80px;
-  right: 0;
-  width: 350px;
-  height: 500px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: chatFadeIn 0.3s ease-out;
-  direction: rtl;
-}
-
-@keyframes chatFadeIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.9); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.chatHeader {
-  padding: 1.25rem;
-  background: var(--primary);
-  color: white;
-}
-
-.chatHeaderInfo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.aiAvatar {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-}
-
-.chatTitle {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.chatStatus {
-  font-size: 0.75rem;
-  opacity: 0.8;
-}
-
-.chatMessages {
-  flex: 1;
-  padding: 1.25rem;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  background: var(--background);
-}
-
-.messageWrapper {
-  display: flex;
-  width: 100%;
-}
-
-.userWrapper { justify-content: flex-start; }
-.assistantWrapper { justify-content: flex-end; }
-
-.messageBubble {
-  max-width: 80%;
-  padding: 0.75rem 1rem;
-  border-radius: 15px;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.userBubble {
-  background: var(--primary);
-  color: white;
-  border-bottom-right-radius: 2px;
-}
-
-.assistantBubble {
-  background: var(--card-bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-bottom-left-radius: 2px;
-}
-
-.chatInputArea {
-  padding: 1rem;
-  background: var(--card-bg);
-  border-top: 1px solid var(--border);
-  display: flex;
-  gap: 8px;
-}
-
-.chatInput {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: 25px;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 0.9rem;
-}
-
-.chatSendBtn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: white;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.chatSendBtn:hover {
-  transform: scale(1.1);
-  background: var(--primary-hover);
-}
-
-@media (max-width: 480px) {
-  .chatWindow {
-    width: 90vw;
-    right: -10px;
-    bottom: 70px;
-    height: 450px;
-  }
-  .aiChatWrapper {
-    bottom: 1rem;
-    right: 1rem;
-  }
-}
-.loginModesGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-top: 2rem;
-}
-
-.modeCard {
-  background: rgba(33, 115, 70, 0.05);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 2rem 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: var(--foreground);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 1rem;
-}
-
-.modeCard:hover {
-  background: rgba(33, 115, 70, 0.12);
-  transform: translateY(-5px);
-  border-color: var(--primary);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-}
-
-.modeIcon {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.modeCard h3 {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
-.modeCard p {
-  margin: 0;
-  font-size: 0.8rem;
-  opacity: 0.7;
-}
-
-.loginFormContainer {
-  width: 100%;
-  animation: fadeIn 0.4s ease;
-}
-
-.backBtn {
-  background: none;
-  border: none;
-  color: var(--primary);
-  cursor: pointer;
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0;
-}
-
-.eyeBtn {
-  position: absolute;
-  left: 0.75rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--foreground);
-  opacity: 0.7;
-  display: flex;
-  align-items: center;
-}
-
-.eyeBtn:hover {
-  opacity: 1;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.modalContent {
-  background: var(--card-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(33, 115, 70, 0.15);
-  border-radius: 24px;
-  padding: 2rem;
-  position: relative;
-  animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Glass effect for light/dark mode with pure gray tint */
-[data-theme='dark'] .modalContent {
-  background: rgba(35, 35, 35, 0.85); /* رمادي نقي داكن */
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-[data-theme='light'] .modalContent {
-  background: rgba(220, 220, 220, 0.85); /* رمادي نقي فاتح */
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.editForm {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1rem 0;
-}
-
-.submitButton {
-  background: linear-gradient(135deg, var(--primary) 0%, #1a4fbb 100%);
-  color: white;
-  border: none;
-  padding: 1rem;
-  border-radius: 12px;
-  font-weight: 800;
-  font-size: 1.05rem;
-  cursor: pointer;
-  width: 100%;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 8px 20px rgba(26, 79, 187, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.submitButton:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 25px rgba(26, 79, 187, 0.4);
-  filter: brightness(1.1);
-}
-
-.submitButton:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.submitButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  filter: grayscale(0.5);
-}
-
-.reveal {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity;
-}
-
-.activeReveal {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* تحسين حركة التمرير الكلية */
-html {
-  scroll-behavior: smooth;
-}
-
-/* تحسينات واجهة الجوال للأزرار والقائمة */
-.listHeader {
+/* .listHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1440,53 +1011,3 @@ html {
   }
 }
 
-@media (max-width: 768px) {
-  .container {
-    padding: 1rem;
-  }
-
-  .topBarSimple {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  .rightActions, .leftActions {
-    justify-content: center;
-    width: 100%;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .navIconButton {
-    width: 38px !important;
-    height: 38px !important;
-  }
-
-  .listHeader {
-    flex-direction: row; /* الحفاظ على السطر الواحد */
-    justify-content: space-between;
-    gap: 5px;
-  }
-
-  .listHeader h2 {
-    font-size: 0.95rem !important;
-    white-space: nowrap;
-  }
-
-  .quickActions {
-    gap: 5px;
-  }
-
-  .quickBtn {
-    height: 36px !important;
-    padding: 0 8px !important;
-    font-size: 0.75rem !important;
-    border-radius: 8px !important;
-  }
-
-  .quickBtn svg {
-    width: 16px !important;
-    height: 16px !important;
-  }
-}
