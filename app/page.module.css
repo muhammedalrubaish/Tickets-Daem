@@ -809,147 +809,57 @@
   transform: scale(1.05);
 }
 
-/* ===== RESPONSIVE MOBILE DESIGN ===== */
+/* ===== RESPONSIVE MOBILE DESIGN (SCALED DOWN COMPUTER VIEW) ===== */
 @media (max-width: 768px) {
-
-  /* الحاوية الرئيسية */
   .container {
-    padding: 1rem;
+    zoom: 0.48; /* تصغير وتكبير الواجهة بالكامل لتظهر كنسخة الكمبيوتر تماماً */
+    -moz-transform: scale(0.48);
+    -moz-transform-origin: top center;
+    padding: 0.5rem;
+    max-width: 100vw;
   }
 
-  /* الشريط العلوي */
-  .topBarSimple {
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  /* الحفاظ على الهيدر في سطر واحد على الهاتف */
+  .headerLayout {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    margin-bottom: 1rem !important;
+    width: 100% !important;
   }
 
-  .rightActions, .leftActions, .centerActions {
-    gap: 0.4rem;
+  /* الحفاظ على أزرار التصفية في سطر واحد */
+  .filterSection {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
   }
 
-  /* الأزرار العلوية - أصغر حجماً */
-  .iconBtn, .logoutBtn {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.75rem;
-  }
-
-  /* الشعار */
-  .mainLogo {
-    height: 80px;
-    margin-bottom: 1rem;
-  }
-
-  /* بطاقات الإحصائيات - عمودين على الهاتف */
+  /* الحفاظ على بطاقات الإحصائيات في 4 أعمدة مثل الكمبيوتر */
   .statsGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.6rem;
-    margin-bottom: 1.5rem;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 0.5rem !important;
   }
 
   .statTodayFull, .notesCard {
-    grid-column: 1 / -1;
-    max-height: none;
-  }
-
-
-  .statTodayFull {
-    padding: 1rem 1.2rem !important;
-  }
-
-  .statTodayFull .statNumber {
-    font-size: 2rem !important;
-  }
-
-  /* البطاقات الإحصائية */
-  .statCard {
-    padding: 0.8rem 1rem;
-  }
-
-  /* قسم البحث والفلترة */
-  .filterSection {
-    flex-direction: column !important;
-    gap: 1rem;
-    align-items: flex-start !important;
-    padding: 1rem;
-  }
-
-  .filterRow {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .filterGroup {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0.4rem;
-    width: 100%;
-  }
-
-  .filterLabel {
-    width: 100%;
-    text-align: right;
-    font-size: 0.85rem;
-  }
-
-  .filterGroup input,
-  .filterGroup select {
-    width: 100%;
-  }
-
-  /* بطاقات البلاغات */
-  .ticketCard {
-    padding: 0.8rem 1rem;
-  }
-
-  .ticketHeader {
-    flex-direction: column;
-    gap: 0.4rem;
-    align-items: flex-start;
+    grid-column: span 2 !important;
   }
 
   /* النوافذ المنبثقة (Modals) */
-  .formContainer {
-    padding: 1rem;
-    width: 95vw;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-
-  /* نافذة ملف الأعمال */
-  .driveModal {
-    width: 95vw;
-    padding: 1rem;
-  }
-
-  /* دليل المشرفين */
-  .supGrid {
-    grid-template-columns: 1fr;
-  }
-
-  /* صفحة تسجيل الدخول */
-  .loginCard {
-    padding: 2rem 1.5rem;
-    width: 90vw;
-    margin: 1rem auto;
-  }
-
-  .loginTitle {
-    font-size: 1.2rem;
+  .formContainer, .driveModal, .modalContent {
+    width: 90vw !important;
+    zoom: 1.5; /* تكبير النوافذ المنبثقة على الجوال لتسهيل القراءة والكتابة */
   }
 }
 
-/* للشاشات الصغيرة جداً */
 @media (max-width: 480px) {
-  .statsGrid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .statTodayFull .statNumber {
-    font-size: 1.8rem !important;
-  }
-
   .container {
-    padding: 0.75rem;
+    zoom: 0.42; /* تصغير أكثر للشاشات الصغيرة جداً لتناسب العرض بالكامل */
+    -moz-transform: scale(0.42);
+    -moz-transform-origin: top center;
   }
 }
 

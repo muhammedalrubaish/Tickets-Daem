@@ -804,6 +804,149 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
   const [ticketToDelete, setTicketToDelete] = useState<{id: string, createdAt?: string} | null>(null);
 
+  // نظام التعاميم الإدارية الديناميكي
+  const [circulars, setCirculars] = useState<{id:string, title:string, number:string, description:string, file:string, date:string, color:string}[]>([]);
+  const [isAddCircularOpen, setIsAddCircularOpen] = useState(false);
+  const [newCircTitle, setNewCircTitle] = useState('');
+  const [newCircNumber, setNewCircNumber] = useState('');
+  const [newCircDesc, setNewCircDesc] = useState('');
+  const [newCircFile, setNewCircFile] = useState<File | null>(null);
+  const [isUploadingCirc, setIsUploadingCirc] = useState(false);
+
+  useEffect(() => {
+    const cached = localStorage.getItem('balady_circulars');
+    if (cached) {
+      setCirculars(JSON.parse(cached));
+    } else {
+      const defaultCirculars = [
+        {
+          id: 'circ_1',
+          title: 'تعميم الرخص الإنشائية (الأحدث)',
+          number: '7.01',
+          description: 'بشأن إطلاق تحسينات الرخص الإنشائية 7.01 - تحديثات العمل الجديدة',
+          file: '/الملفات/التعاميم/7.01 الرخص الإنشائية _ إطلاق تحسينات.pdf',
+          date: '19-05-2026',
+          color: '#a855f7'
+        },
+        {
+          id: 'circ_2',
+          title: 'تعميم التقارير المساحية (جديد)',
+          number: '6.19',
+          description: 'بشأن إعفاء الجهات الحكومية من الرسوم البلدية لخدمة التقارير المساحية 6.19',
+          file: '/الملفات/التعاميم/6.19 التقارير المساحية _ إعفاء الجهات الحكومية من الرسوم البلدية.pdf',
+          date: '19-05-2026',
+          color: '#3b82f6'
+        },
+        {
+          id: 'circ_3',
+          title: 'تعميم الشهادات الصحية',
+          number: '6.15',
+          description: 'بشأن إطلاق تحسينات الشهادات الصحية 6.15 - تحديثات العمل الجديدة',
+          file: '/الملفات/التعاميم/6.15 الشهادات الصحية _ إطلاق تحسينات.pdf',
+          date: '12-05-2026',
+          color: '#10b981'
+        },
+        {
+          id: 'circ_4',
+          title: 'تعميم رقم 1445/02 (VPN)',
+          number: '6.18',
+          description: 'بشأن تغيير نطاق 6.18 VPN - تحديثات الأمان الجديدة',
+          file: '/الملفات/التعاميم/6.18 VPN  تغيير نطاق.pdf',
+          date: '10-05-2026',
+          color: '#ef4444'
+        },
+        {
+          id: 'circ_5',
+          title: 'تعميم رقم 1445/01',
+          number: '1445/01',
+          description: 'بشأن تنظيم آلية استقبال البلاغات لعام 2026',
+          file: '',
+          date: '07-05-2026',
+          color: '#94a3b8'
+        },
+        {
+          id: 'circ_6',
+          title: 'قرار إداري داخلي',
+          number: 'إداري',
+          description: 'تحديث قائمة المشرفين والمسؤولين في البلديات الفرعية',
+          file: '',
+          date: '01-05-2026',
+          color: '#eab308'
+        }
+      ];
+      localStorage.setItem('balady_circulars', JSON.stringify(defaultCirculars));
+      setCirculars(defaultCirculars);
+    }
+  }, []);
+
+  const handleAddCircular = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCircTitle || !newCircNumber || !newCircDesc) {
+      alert('يرجى ملء جميع الحقول المطلوبة.');
+      return;
+    }
+
+    setIsUploadingCirc(true);
+    let filePath = '';
+
+    try {
+      if (newCircFile) {
+        const formData = new FormData();
+        formData.append('file', newCircFile);
+        
+        const originalName = newCircFile.name;
+        const sanitizedName = `${newCircNumber}_${originalName.replace(/\s+/g, '_')}`;
+        formData.append('fileName', sanitizedName);
+
+        const uploadRes = await fetch('/api/upload-circular', {
+          method: 'POST',
+          body: formData
+        });
+
+        const uploadData = await uploadRes.json();
+        if (uploadData.success) {
+          filePath = uploadData.path || `/الملفات/التعاميم/${sanitizedName}`;
+          if (uploadData.warning) {
+            alert(uploadData.warning);
+          }
+        } else {
+          throw new Error(uploadData.error || 'فشل رفع الملف.');
+        }
+      }
+
+      const colors = ['#a855f7', '#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#ec4899', '#06b6d4'];
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+      const newCirc = {
+        id: 'circ_' + Date.now(),
+        title: newCircTitle,
+        number: newCircNumber,
+        description: newCircDesc,
+        file: filePath,
+        date: new Date().toLocaleDateString('en-GB').replace(/\//g, '-'),
+        color: randomColor
+      };
+
+      const updated = [newCirc, ...circulars];
+      localStorage.setItem('balady_circulars', JSON.stringify(updated));
+      setCirculars(updated);
+
+      setNewCircTitle('');
+      setNewCircNumber('');
+      setNewCircDesc('');
+      setNewCircFile(null);
+      setIsAddCircularOpen(false);
+
+      setNewTicketToast(`📢 تم إضافة التعميم الجديد "${newCircTitle}" بنجاح!`);
+      setTimeout(() => setNewTicketToast(null), 5000);
+
+    } catch (err: any) {
+      console.error(err);
+      alert(`حدث خطأ أثناء إضافة التعميم: ${err.message}`);
+    } finally {
+      setIsUploadingCirc(false);
+    }
+  };
 
   // مزامنة التنبيهات من البلاغات العامة (المستقبل: الجميع) - مع تجنب المكرر والمحذوف
   useEffect(() => {
@@ -1663,11 +1806,20 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               </div>
             ))}
             
-            {/* أحدث تعميم إداري مثبت */}
-            <div className={styles.noteItem} style={{borderColor:'#3b82f6', background:'rgba(59, 130, 246, 0.05)'}}>
-              <span style={{color:'#3b82f6'}}>🆕</span>
-              <span style={{fontSize:'0.8rem'}}>تعميم 6.19 بشأن التقارير المساحية</span>
-            </div>
+            {/* أحدث تعميم إداري مثبت ديناميكياً */}
+            {circulars.length > 0 ? (
+              circulars.slice(0, 1).map(circ => (
+                <div key={circ.id} className={styles.noteItem} style={{borderColor: circ.color, background: circ.color + '0d'}}>
+                  <span style={{color: circ.color}}>🆕</span>
+                  <span style={{fontSize:'0.8rem'}}>{circ.title} ({circ.number})</span>
+                </div>
+              ))
+            ) : (
+              <div className={styles.noteItem} style={{borderColor:'#a855f7', background:'rgba(168, 85, 247, 0.05)'}}>
+                <span style={{color:'#a855f7'}}>🆕</span>
+                <span style={{fontSize:'0.8rem'}}>تعميم 7.01 بشأن الرخص الإنشائية</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -2041,71 +2193,129 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               </span>
             </div>
 
-            <div className={styles.driveListSimple} style={{maxHeight:'400px', overflowY:'auto'}}>
-              {(circularFilter === 'all' || circularFilter === 'system') && SYSTEM_UPDATES.map((update, idx) => (
-                <div key={idx} className={styles.driveItemSimple} style={{textAlign:'right', borderRight:`4px solid ${idx === 0 ? '#3b82f6' : '#94a3b8'}`, cursor:'default', background: idx === 0 ? 'rgba(59, 130, 246, 0.05)' : 'transparent', marginBottom:'1rem'}}>
-                  <div style={{fontWeight:'800', marginBottom:'5px', color: idx === 0 ? '#3b82f6' : 'inherit'}}>{update.version} — {update.title}</div>
-                  {update.points.map((p, pIdx) => (
-                    <div key={pIdx} style={{fontSize:'0.85rem', opacity:0.8}}>• {p}</div>
+            {isAddCircularOpen ? (
+              <form onSubmit={handleAddCircular} style={{textAlign:'right', padding:'0.5rem 0'}}>
+                <h3 style={{fontSize:'1rem', color:'var(--primary)', marginBottom:'1rem', display:'flex', alignItems:'center', gap:'5px'}}>
+                  <span>➕ إضافة تعميم إداري جديد</span>
+                </h3>
+                
+                <div style={{marginBottom:'1rem'}}>
+                  <label style={{display:'block', fontSize:'0.85rem', marginBottom:'5px', fontWeight:'bold'}}>عنوان التعميم</label>
+                  <input 
+                    type="text" 
+                    placeholder="مثال: تعميم الرخص الإنشائية" 
+                    value={newCircTitle} 
+                    onChange={(e) => setNewCircTitle(e.target.value)}
+                    style={{width:'100%', padding:'8px 12px', borderRadius:'8px', border:'1px solid var(--border)', background:'var(--card-bg)', color:'var(--foreground)'}}
+                    required
+                  />
+                </div>
+
+                <div style={{marginBottom:'1rem'}}>
+                  <label style={{display:'block', fontSize:'0.85rem', marginBottom:'5px', fontWeight:'bold'}}>رقم التعميم</label>
+                  <input 
+                    type="text" 
+                    placeholder="مثال: 7.01" 
+                    value={newCircNumber} 
+                    onChange={(e) => setNewCircNumber(e.target.value)}
+                    style={{width:'100%', padding:'8px 12px', borderRadius:'8px', border:'1px solid var(--border)', background:'var(--card-bg)', color:'var(--foreground)'}}
+                    required
+                  />
+                </div>
+
+                <div style={{marginBottom:'1rem'}}>
+                  <label style={{display:'block', fontSize:'0.85rem', marginBottom:'5px', fontWeight:'bold'}}>وصف وتفاصيل التعميم</label>
+                  <textarea 
+                    placeholder="اكتب تفاصيل وبنود التعميم هنا..." 
+                    value={newCircDesc} 
+                    onChange={(e) => setNewCircDesc(e.target.value)}
+                    style={{width:'100%', height:'80px', padding:'8px 12px', borderRadius:'8px', border:'1px solid var(--border)', background:'var(--card-bg)', color:'var(--foreground)', fontFamily:'inherit'}}
+                    required
+                  />
+                </div>
+
+                <div style={{marginBottom:'1.5rem'}}>
+                  <label style={{display:'block', fontSize:'0.85rem', marginBottom:'5px', fontWeight:'bold'}}>ملف التعميم (PDF) - اختياري</label>
+                  <input 
+                    type="file" 
+                    accept=".pdf" 
+                    onChange={(e) => setNewCircFile(e.target.files?.[0] || null)}
+                    style={{width:'100%', color:'var(--foreground)'}}
+                  />
+                  <small style={{display:'block', color:'var(--text-muted)', fontSize:'0.7rem', marginTop:'5px'}}>
+                    سيتم حفظ الملف في مجلد المشروع ورفعه تلقائياً.
+                  </small>
+                </div>
+
+                <div style={{display:'flex', gap:'10px', marginTop:'1.5rem'}}>
+                  <button 
+                    type="submit" 
+                    className={styles.submitButton} 
+                    disabled={isUploadingCirc}
+                    style={{flex:1, background:'var(--primary)'}}
+                  >
+                    {isUploadingCirc ? 'جاري الحفظ والرفع...' : 'حفظ ونشر التعميم'}
+                  </button>
+                  <button 
+                    type="button" 
+                    className={styles.submitButton} 
+                    onClick={() => setIsAddCircularOpen(false)}
+                    style={{flex:1, background:'var(--border)', color:'var(--foreground)'}}
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem'}}>
+                  <span style={{fontSize:'0.8rem', color:'var(--text-muted)'}}>انقر على التعميم لفتح الملف مباشرة</span>
+                  <button 
+                    onClick={() => setIsAddCircularOpen(true)}
+                    style={{background:'rgba(34, 197, 94, 0.1)', color:'#22c55e', border:'1px solid rgba(34, 197, 94, 0.3)', padding:'6px 14px', borderRadius:'20px', fontSize:'0.75rem', fontWeight:'bold', cursor:'pointer', display:'flex', alignItems:'center', gap:'5px', transition:'all 0.2s'}}
+                  >
+                    ➕ أضف تعميم جديد
+                  </button>
+                </div>
+
+                <div className={styles.driveListSimple} style={{maxHeight:'400px', overflowY:'auto'}}>
+                  {(circularFilter === 'all' || circularFilter === 'system') && SYSTEM_UPDATES.map((update, idx) => (
+                    <div key={idx} className={styles.driveItemSimple} style={{textAlign:'right', borderRight:`4px solid ${idx === 0 ? '#3b82f6' : '#94a3b8'}`, cursor:'default', background: idx === 0 ? 'rgba(59, 130, 246, 0.05)' : 'transparent', marginBottom:'1rem'}}>
+                      <div style={{fontWeight:'800', marginBottom:'5px', color: idx === 0 ? '#3b82f6' : 'inherit'}}>{update.version} — {update.title}</div>
+                      {update.points.map((p, pIdx) => (
+                        <div key={pIdx} style={{fontSize:'0.85rem', opacity:0.8}}>• {p}</div>
+                      ))}
+                      <div style={{fontSize:'0.75rem', marginTop:'10px', opacity:0.6}}>{update.date}</div>
+                    </div>
                   ))}
-                  <div style={{fontSize:'0.75rem', marginTop:'10px', opacity:0.6}}>{update.date}</div>
+
+                  {(circularFilter === 'all' || circularFilter === 'drive') && complaints.filter(c => c.type === 'تحديث نظام' && c.receiver === 'الجميع').map(update => (
+                    <div key={update.id} className={styles.driveItemSimple} style={{textAlign:'right', borderRight:'4px solid #eab308', cursor:'default', background: 'rgba(234, 179, 8, 0.05)', marginBottom:'1rem'}}>
+                       <div style={{fontWeight:'800', marginBottom:'5px', color:'#eab308'}}>🟡 تحديث من الموظفين</div>
+                       <div style={{fontSize:'0.85rem', opacity:0.8}}>{update.number}</div>
+                       <div style={{fontSize:'0.75rem', marginTop:'10px', opacity:0.6}}>{update.date}</div>
+                    </div>
+                  ))}
+
+                  {(circularFilter === 'all' || circularFilter === 'circular') && circulars.map(circ => (
+                    <div key={circ.id} className={styles.driveItemSimple} style={{textAlign:'right', borderRight:`4px solid ${circ.color}`, cursor:'default', background: `${circ.color}05`, marginBottom:'1rem'}}>
+                      <div style={{fontWeight:'800', marginBottom:'5px', color: circ.color}}>📋 {circ.title}</div>
+                      <div style={{fontSize:'0.85rem', opacity:0.8}}>{circ.description}</div>
+                      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'10px'}}>
+                        <span style={{fontSize:'0.75rem', color:'var(--primary)'}}>{circ.date} — رقم {circ.number}</span>
+                        {circ.file && (
+                          <a href={circ.file} target="_blank" rel="noopener noreferrer" style={{fontSize:'0.75rem', background: circ.color, color:'white', padding:'2px 8px', borderRadius:'4px', textDecoration:'none', fontWeight:'bold'}}>عرض الملف</a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
 
-              {(circularFilter === 'all' || circularFilter === 'drive') && complaints.filter(c => c.type === 'تحديث نظام' && c.receiver === 'الجميع').map(update => (
-                <div key={update.id} className={styles.driveItemSimple} style={{textAlign:'right', borderRight:'4px solid #eab308', cursor:'default', background: 'rgba(234, 179, 8, 0.05)', marginBottom:'1rem'}}>
-                   <div style={{fontWeight:'800', marginBottom:'5px', color:'#eab308'}}>🟡 تحديث من الموظفين</div>
-                   <div style={{fontSize:'0.85rem', opacity:0.8}}>{update.number}</div>
-                   <div style={{fontSize:'0.75rem', marginTop:'10px', opacity:0.6}}>{update.date}</div>
-                </div>
-              ))}
-
-              {(circularFilter === 'all' || circularFilter === 'circular') && (
-                <>
-                  <div className={styles.driveItemSimple} style={{textAlign:'right', borderRight:'4px solid #3b82f6', cursor:'default', background: 'rgba(59, 130, 246, 0.05)', marginBottom:'1rem'}}>
-                    <div style={{fontWeight:'800', marginBottom:'5px', color:'#3b82f6'}}>📋 تعميم التقارير المساحية (جديد)</div>
-                    <div style={{fontSize:'0.85rem', opacity:0.8}}>بشأن إعفاء الجهات الحكومية من الرسوم البلدية لخدمة التقارير المساحية 6.19</div>
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'10px'}}>
-                      <span style={{fontSize:'0.75rem', color:'var(--primary)'}}>19-05-2026</span>
-                      <a href="/الملفات/التعاميم/6.19 التقارير المساحية _ إعفاء الجهات الحكومية من الرسوم البلدية.pdf" target="_blank" style={{fontSize:'0.75rem', background:'#3b82f6', color:'white', padding:'2px 8px', borderRadius:'4px', textDecoration:'none'}}>عرض الملف</a>
-                    </div>
-                  </div>
-
-                  <div className={styles.driveItemSimple} style={{textAlign:'right', borderRight:'4px solid #10b981', cursor:'default', background: 'rgba(16, 185, 129, 0.05)', marginBottom:'1rem'}}>
-                    <div style={{fontWeight:'800', marginBottom:'5px', color:'#10b981'}}>📋 تعميم الشهادات الصحية</div>
-                    <div style={{fontSize:'0.85rem', opacity:0.8}}>بشأن إطلاق تحسينات الشهادات الصحية 6.15 - تحديثات العمل الجديدة</div>
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'10px'}}>
-                      <span style={{fontSize:'0.75rem', color:'var(--primary)'}}>12-05-2026</span>
-                      <a href="/الملفات/التعاميم/6.15 الشهادات الصحية _ إطلاق تحسينات.pdf" target="_blank" style={{fontSize:'0.75rem', background:'#10b981', color:'white', padding:'2px 8px', borderRadius:'4px', textDecoration:'none'}}>عرض الملف</a>
-                    </div>
-                  </div>
-
-                  <div className={styles.driveItemSimple} style={{textAlign:'right', borderRight:'4px solid #ef4444', cursor:'default', background: 'rgba(239, 68, 68, 0.05)', marginBottom:'1rem'}}>
-                    <div style={{fontWeight:'800', marginBottom:'5px', color:'#ef4444'}}>🆕 تعميم رقم 1445/02 (هام)</div>
-                    <div style={{fontSize:'0.85rem', opacity:0.8}}>بشأن تغيير نطاق 6.18 VPN - تحديثات الأمان الجديدة</div>
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'10px'}}>
-                      <span style={{fontSize:'0.75rem', color:'var(--primary)'}}>10-05-2026</span>
-                      <a href="/الملفات/التعاميم/6.18 VPN  تغيير نطاق.pdf" target="_blank" style={{fontSize:'0.75rem', background:'var(--primary)', color:'white', padding:'2px 8px', borderRadius:'4px', textDecoration:'none'}}>عرض الملف</a>
-                    </div>
-                  </div>
-
-                  <div className={styles.driveItemSimple} style={{textAlign:'right', borderRight:'4px solid var(--primary)', cursor:'default', marginBottom:'1rem'}}>
-                    <div style={{fontWeight:'800', marginBottom:'5px'}}>📌 تعميم رقم 1445/01</div>
-                    <div style={{fontSize:'0.85rem', opacity:0.8}}>بشأن تنظيم آلية استقبال البلاغات لعام 2026</div>
-                    <div style={{fontSize:'0.75rem', marginTop:'10px', color:'var(--primary)'}}>07-05-2026</div>
-                  </div>
-                  <div className={styles.driveItemSimple} style={{textAlign:'right', borderRight:'4px solid var(--warning)', cursor:'default', marginBottom:'1rem'}}>
-                    <div style={{fontWeight:'800', marginBottom:'5px'}}>📢 قرار إداري داخلي</div>
-                    <div style={{fontSize:'0.85rem', opacity:0.8}}>تحديث قائمة المشرفين والمسؤولين في البلديات الفرعية</div>
-                    <div style={{fontSize:'0.75rem', marginTop:'10px', color:'var(--primary)'}}>تاريخ النشر: 01-05-2026</div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <button className={styles.submitButton} onClick={() => setIsCircularsOpen(false)} style={{marginTop:'1.5rem'}}>
-              إغلاق النافذة
-            </button>
+                <button className={styles.submitButton} onClick={() => setIsCircularsOpen(false)} style={{marginTop:'1.5rem'}}>
+                  إغلاق النافذة
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
