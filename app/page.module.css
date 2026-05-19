@@ -883,90 +883,122 @@
   color: white;
 }
 
-/* ===== RESPONSIVE MOBILE DESIGN (SCALED DOWN COMPUTER VIEW) ===== */
+
+/* ===== UNIFIED GLASSMORPHISM FILTERS (Light Green) ===== */
+.filterInput,
+.filterSelect,
+.customFilterTrigger {
+  background: rgba(46, 204, 113, 0.1) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(46, 204, 113, 0.25) !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  color: var(--foreground) !important;
+  font-size: 0.95rem !important;
+  transition: all 0.3s ease !important;
+  box-sizing: border-box !important;
+}
+
+.filterInput {
+  padding: 0 1.2rem !important;
+  width: 100% !important;
+  outline: none !important;
+}
+
+.filterSelect,
+.customFilterTrigger {
+  padding: 0 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.filterInput:focus,
+.filterSelect:hover,
+.customFilterTrigger:hover {
+  background: rgba(46, 204, 113, 0.18) !important;
+  border-color: rgba(46, 204, 113, 0.5) !important;
+  box-shadow: 0 8px 24px rgba(46, 204, 113, 0.15) !important;
+}
+
+.customFilterOptions {
+  background: rgba(20, 25, 22, 0.95) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(46, 204, 113, 0.2) !important;
+}
+
+.customFilterOption:hover {
+  background: rgba(46, 204, 113, 0.25) !important;
+  color: #fff !important;
+}
+/* ======================================================== */
+/* ===== RESPONSIVE MOBILE DESIGN (NATIVE & BEAUTIFUL) ===== */
 @media (max-width: 768px) {
   .container {
-    min-width: 1300px !important; /* ����� ������� ��� ��� ��������� ������� ���� �������� �� ����� */
-    zoom: 0.33 !important; /* ���� ����� ������ ������ ���� ������ ������� ������� �� ��������� */
-    -moz-transform: scale(0.33) !important;
-    -moz-transform-origin: top center !important;
-    padding: 0.5rem !important;
-    max-width: none !important;
+    padding: 1rem !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    zoom: 1 !important;
+    -moz-transform: none !important;
+    -webkit-text-size-adjust: 100%;
   }
 
-  /* ������ ��� ������ ������� �������� ��� ��������� ������ ���� ������ */
   .headerLayout {
     display: flex !important;
-    flex-direction: row !important;
-    justify-content: space-between !important;
+    flex-direction: column !important;
     align-items: center !important;
+    gap: 1rem !important;
     width: 100% !important;
     margin-bottom: 1.5rem !important;
   }
 
-  .topUtilityRow {
-    order: 2 !important;
-    flex: 1 !important;
-    display: flex !important;
-    justify-content: flex-end !important;
-    align-items: center !important;
-    gap: 8px !important;
-    width: auto !important;
+  .topUtilityRow, .mainActionsRow, .profileGroup {
+    width: 100% !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
   }
 
   .mainActionsRow {
-    order: 1 !important;
-    flex: 0 0 auto !important;
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: center !important;
-    align-items: center !important;
-    gap: 12px !important;
-    width: auto !important;
+    gap: 10px !important;
   }
 
   .iconsGroup {
-    display: flex !important;
+    flex-wrap: wrap !important;
     justify-content: center !important;
-    gap: 8px !important;
   }
 
-  .profileGroup {
-    order: 0 !important;
-    flex: 1 !important;
-    display: flex !important;
-    justify-content: flex-start !important;
-    align-items: center !important;
-    width: auto !important;
-  }
-
-  /* ������ ��� ����� ������� �� ��� ���� */
-  .filterSection {
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    gap: 0.5rem !important;
-  }
-
-  /* ������ ��� ������ ���������� �� 4 ����� ��� ��������� */
   .statsGrid {
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 1rem !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.8rem !important;
+  }
+
+  .statTodayFull, .notesCard {
+    grid-column: 1 / -1 !important;
   }
 
   .statTodayFull {
-    grid-column: span 2 !important;
+    padding: 1.5rem 1rem !important;
   }
 
-  .notesCard {
-    grid-column: span 2 !important;
+  .filterSection {
+    flex-direction: column !important;
+    gap: 1rem !important;
   }
 
-  /* ������� �������� (Modals) */
+  .filterGroup {
+    width: 100% !important;
+  }
+
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
   .formContainer, .driveModal, .modalContent {
-    width: 90vw !important;
-    zoom: 1.5; /* ����� ������� �������� ��� ������ ������ ������� �������� */
+    width: 95vw !important;
+    zoom: 1 !important;
+    padding: 1.2rem !important;
   }
 }
 
