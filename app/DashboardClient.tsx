@@ -755,6 +755,20 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   }, [initialComplaints]);
 
   // دالة لتوليد لون فريد لكل تصنيف
+  
+  const getStatusColor = (status) => {
+    switch (status) {
+      case '���� ����': return '#a855f7';
+      case '������� ��������': return '#ec4899';
+      case '��� �������': return '#eab308';
+      case '����� ����': return '#0ea5e9';
+      case '�� ��� ����': return '#ef4444';
+      case '�� ����': return '#10b981';
+      case '����': return '#6b7280';
+      default: return 'var(--primary)';
+    }
+  };
+
   const getCategoryColor = (type: string) => {
     if (!type || type === 'غير محدد') return 'var(--primary)';
     const colors = [
