@@ -976,7 +976,7 @@
 
 .modalHeader h2 {
   font-size: 1.3rem;
-  color: var(--foreground);
+  color: var(--primary);
   margin: 0;
 }
 
@@ -1100,6 +1100,27 @@
 .modalContent svg {
   max-width: 24px;
   max-height: 24px;
+}
+/* ======================== */
+
+/* ===== SUBMIT BUTTON (Edit Modal) ===== */
+.submitBtn {
+  background: linear-gradient(135deg, var(--primary) 0%, #2ecc71 100%) !important;
+  color: white !important;
+  border: none !important;
+  padding: 1.1rem !important;
+  border-radius: 12px !important;
+  font-size: 1.1rem !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  width: 100% !important;
+  box-shadow: 0 4px 15px rgba(33, 115, 70, 0.3) !important;
+}
+
+.submitBtn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(33, 115, 70, 0.5) !important;
 }
 /* ======================== */
 /* ===== RESPONSIVE MOBILE DESIGN (ULTIMATE FIX) ===== */
@@ -1325,3 +1346,16 @@
   }
 }
 
+
+
+/* ===== SCROLL REVEAL ANIMATION ===== */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px) scale(0.98);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+/* =================================== */
