@@ -2812,9 +2812,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                         }
                         return null;
                       })()}
-                        }
-                        return null;
-                      })()}
                     </div>
                   )}
                 </div>
