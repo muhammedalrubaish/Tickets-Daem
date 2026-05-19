@@ -1520,7 +1520,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         </div>
 
         {/* بيانات المستخدم - ممركزة في المنتصف بالسطر العلوي */}
-        <div className={styles.profileGroup} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div className={styles.profileGroup}>
           <div style={{display:'flex', alignItems:'center', gap:'10px', background:'var(--card-bg)', padding:'8px 18px', borderRadius:'20px', border:'1px solid var(--border)', whiteSpace:'nowrap', boxShadow: '0 4px 15px rgba(0,0,0,0.05)'}}>
             <span style={{fontSize:'0.9rem', color:'var(--foreground)', fontWeight:'600', display:'flex', alignItems:'center', gap:'8px'}}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--foreground)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
