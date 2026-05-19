@@ -1582,3 +1582,12 @@
     order: 2 !important; /* Logout goes left */
   }
 }
+
+
+/* Mobile-only safe positioning for switch role dropdown */
+@media (max-width: 768px) {
+  .switchDropdownMobileSafe {
+    left: auto !important;
+    right: 0 !important;
+  }
+}

@@ -1614,7 +1614,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 </svg>
               </button>
               {isSwitchModalOpen && (
-                <div style={{ position: 'absolute', top: '55px', left: '0', width: '220px', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '15px', padding: '1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 10000, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className={styles.switchDropdownMobileSafe} style={{ position: 'absolute', top: '55px', left: '0', width: '220px', background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '15px', padding: '1rem', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 10000, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <button 
                     onClick={() => { 
                       document.cookie = 'auth_token=viewer; path=/; max-age=604800'; 
