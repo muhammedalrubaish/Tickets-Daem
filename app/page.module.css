@@ -1676,45 +1676,50 @@
   }
 }
 
+
 /* ���� ������ ������ ������ ������� */
 .actionBar {
+  position: absolute;
+  top: 14px;
+  left: 14px;
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  padding: 1px 3px;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  border-radius: 24px;
+  padding: 3px 5px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
+  z-index: 10;
 }
 
 .actionBarBtn {
   background: transparent !important;
   border: none !important;
-  padding: 5px 8px !important;
+  padding: 6px 11px !important; /* ��� ���� ���� ����� */
   color: rgba(255, 255, 255, 0.5) !important;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  border-radius: 16px !important;
+  border-radius: 20px !important;
   margin: 0 !important;
 }
 
 .actionBarBtn:hover {
-  transform: scale(1.1);
+  transform: scale(1.12);
 }
 
 .actionBarBtnCopy:hover {
-  color: #3b82f6 !important; /* ���� ������ */
-  background: rgba(59, 130, 246, 0.12) !important;
+  color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.15) !important;
 }
 
 .actionBarBtnEdit:hover {
-  color: #10b981 !important; /* ����� */
-  background: rgba(16, 185, 129, 0.12) !important;
+  color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.15) !important;
 }
 
 .actionBarBtnDelete {
@@ -1722,13 +1727,13 @@
 }
 
 .actionBarBtnDelete:hover {
-  color: #ef4444 !important; /* ���� ���� */
-  background: rgba(239, 68, 68, 0.12) !important;
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.15) !important;
 }
 
 .actionBarDivider {
   width: 1px;
-  height: 12px;
+  height: 14px;
   background: rgba(255, 255, 255, 0.08);
   margin: 0 1px;
 }

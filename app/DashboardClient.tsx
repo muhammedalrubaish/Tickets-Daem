@@ -2765,7 +2765,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                         }}
                         title="نسخ تفاصيل البلاغ"
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                           <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                         </svg>
@@ -2778,7 +2778,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                         onClick={() => { setEditingTicket(complaint); setIsEditOpen(true); }} 
                         title="تحديث حالة البلاغ"
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
                         </svg>
                       </button>
@@ -2800,7 +2800,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                                 onClick={() => handleDeleteClick(complaint.id, complaint.createdAt)} 
                                 title="حذف البلاغ"
                               >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                   <polyline points="3 6 5 6 21 6"></polyline>
                                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path>
                                   <line x1="10" y1="11" x2="10" y2="17"></line>
