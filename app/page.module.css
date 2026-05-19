@@ -933,75 +933,130 @@
   color: #fff !important;
 }
 /* ======================================================== */
-/* ===== RESPONSIVE MOBILE DESIGN (NATIVE & BEAUTIFUL) ===== */
+/* ===== RESPONSIVE MOBILE DESIGN (ULTIMATE FIX) ===== */
 @media (max-width: 768px) {
   .container {
-    padding: 1rem !important;
-    width: 100% !important;
+    padding: 0.5rem !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
     min-width: 0 !important;
-    zoom: 1 !important;
-    -moz-transform: none !important;
+    overflow-x: hidden !important;
     -webkit-text-size-adjust: 100%;
   }
 
-  .headerLayout {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    gap: 1rem !important;
-    width: 100% !important;
-    margin-bottom: 1.5rem !important;
-  }
-
-  .topUtilityRow, .mainActionsRow, .profileGroup {
-    width: 100% !important;
-    justify-content: center !important;
-    flex-wrap: wrap !important;
-  }
-
-  .mainActionsRow {
-    gap: 10px !important;
-  }
-
-  .iconsGroup {
-    flex-wrap: wrap !important;
-    justify-content: center !important;
-  }
-
+  /* 1. �������� */
   .statsGrid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.8rem !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+  .statCard {
+    padding: 0.8rem 0.5rem !important;
+    min-height: auto !important;
+  }
+  .statCard h3 {
+    font-size: 0.85rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  .circleWrap {
+    width: 45px !important;
+    height: 45px !important;
+  }
+  .circleValue {
+    font-size: 0.9rem !important;
   }
 
+  /* 2. �������� ������� */
   .statTodayFull, .notesCard {
     grid-column: 1 / -1 !important;
+    padding: 1rem !important;
+  }
+  .statTodayFull h3 { font-size: 1.1rem !important; }
+  .statTodayFull .bigNumber { font-size: 2.2rem !important; }
+  .notesCard h2 { font-size: 1rem !important; }
+
+  /* 3 & 4. ����� �������� �������� ������� ���� ���� */
+  .listHeader {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 5px !important;
+    padding: 0 5px !important;
+    margin-bottom: 1rem !important;
+    align-items: center !important;
+  }
+  .listHeader h2 {
+    font-size: 0.9rem !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+  }
+  .quickActions {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 4px !important;
+  }
+  .quickBtn {
+    height: 32px !important;
+    padding: 0 0.5rem !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap !important;
+  }
+  .quickBtn svg {
+    width: 14px !important;
+    height: 14px !important;
   }
 
-  .statTodayFull {
-    padding: 1.5rem 1rem !important;
+  /* 5. ����� ������� (����� ������ ���� ������ ������� ��������) */
+  .modalContent, .formContainer {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    padding: 1rem !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+  .modalContent h2, .formContainer h2 {
+    font-size: 1.1rem !important;
+  }
+  .modalContent label, .formContainer label {
+    font-size: 0.85rem !important;
+  }
+  .modalContent select, .modalContent input, .modalContent textarea,
+  .formContainer select, .formContainer input, .formContainer textarea {
+    font-size: 0.9rem !important;
+    padding: 0.5rem !important;
+  }
+  /* ��� ��������� �� ������ */
+  .modalContent svg, .formContainer svg, .closeBtn svg {
+    max-width: 24px !important;
+    max-height: 24px !important;
+  }
+  .closeBtn {
+    width: 30px !important;
+    height: 30px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
+  /* ������� */
   .filterSection {
     flex-direction: column !important;
-    gap: 1rem !important;
+    gap: 0.5rem !important;
   }
-
   .filterGroup {
     width: 100% !important;
   }
 
+  /* ������ ������� */
   .grid {
     grid-template-columns: 1fr !important;
-    gap: 1rem !important;
+    gap: 0.8rem !important;
   }
-
-  .formContainer, .driveModal, .modalContent {
-    width: 95vw !important;
-    zoom: 1 !important;
-    padding: 1.2rem !important;
+  .card {
+    padding: 1rem !important;
   }
 }
-
 .listHeader {
   display: flex;
   justify-content: space-between;
