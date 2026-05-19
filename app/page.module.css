@@ -1181,7 +1181,7 @@
 
   /* 2. �������� ������� */
   .statTodayFull, .notesCard {
-    grid-column: 1 / -1 !important;
+    grid-column: span 2 !important;
     padding: 1rem !important;
   }
   .statTodayFull h3 { font-size: 1.1rem !important; }
