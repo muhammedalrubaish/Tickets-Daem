@@ -756,15 +756,15 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
   // دالة لتوليد لون فريد لكل تصنيف
   
-  const getStatusColor = (status) => {
+    const getStatusColor = (status: string) => {
     switch (status) {
-      case '���� ����': return '#a855f7';
-      case '������� ��������': return '#ec4899';
-      case '��� �������': return '#eab308';
-      case '����� ����': return '#0ea5e9';
-      case '�� ��� ����': return '#ef4444';
-      case '�� ����': return '#10b981';
-      case '����': return '#6b7280';
+      case 'بلاغ جحديؾ': return '#a855f7';
+      case 'بانتظار المستفید': return '#ec4899';
+      case 'لدی الوزارآ': return '#eab308';
+      case 'مشك؄ة عامh�': return '#0ea5e9';
+      case 'لم يتم الحل': return '#ef4444';
+      case 'ڪم الحل': return '#10b981';
+      case 'مجاز': return '#6b7280';
       default: return 'var(--primary)';
     }
   };
