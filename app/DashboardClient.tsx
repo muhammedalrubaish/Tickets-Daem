@@ -1288,7 +1288,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       waitingStatus: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'بانتظار المستفيد').length,
       newTickets: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'بلاغ جديد').length,
       generalStatus: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'مشكلة عامة').length,
-      lateStatus: baseComplaints.filter((c) => {
+      lateStatus: userFilteredComplaints.filter((c) => {
         const sol = (c.solution || '').trim();
         const isNew = sol === 'بلاغ جديد' || sol === 'غير محدد' || sol === '';
         if (!isNew || !c.date || c.date === 'غير محدد') return false;
@@ -1299,11 +1299,11 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           return ticketDate < oneWeekAgo;
         } catch { return false; }
       }).length,
-      undefinedStatus: baseComplaints.filter((c) => {
+      undefinedStatus: userFilteredComplaints.filter((c) => {
         const sol = (c.solution || '').trim();
         return sol === 'غير محدد' || sol === '';
       }).length,
-      vacationStatus: baseComplaints.filter((c) => {
+      vacationStatus: userFilteredComplaints.filter((c) => {
         const sol = (c.solution || '').trim();
         return sol === 'مجاز';
       }).length,
