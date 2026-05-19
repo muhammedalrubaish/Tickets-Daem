@@ -2755,34 +2755,34 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                     // معالجة فروق الأسماء البسيطة
                     (loggedInUser && complaint.receiver.includes(loggedInUser.split(' ')[0]))
                   ))) && (
-                    <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
+                    <div className={styles.actionBar}>
                       <button 
-                        className={styles.editBtn} 
+                        className={`${styles.actionBarBtn} ${styles.actionBarBtnCopy}`}
                         onClick={() => {
                           navigator.clipboard.writeText(`رقم البلاغ: ${complaint.number}\nالمستقبل: ${complaint.receiver}\nالحالة: ${complaint.solution}\nالتاريخ: ${complaint.date}`);
                           setNewTicketToast('تم نسخ تفاصيل البلاغ بنجاح!');
                           setTimeout(() => setNewTicketToast(null), 3000);
                         }}
                         title="نسخ تفاصيل البلاغ"
-                        style={{background: 'rgba(255, 255, 255, 0.15)', color: 'white'}}
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                           <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                         </svg>
                       </button>
+                      
+                      <div className={styles.actionBarDivider} />
+                      
                       <button 
-                        className={styles.editBtn} 
+                        className={`${styles.actionBarBtn} ${styles.actionBarBtnEdit}`}
                         onClick={() => { setEditingTicket(complaint); setIsEditOpen(true); }} 
                         title="تحديث حالة البلاغ"
-                        style={{marginRight: '0', marginLeft: '0'}}
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
                         </svg>
                       </button>
                       
-                      {/* زر الحذف - يظهر فقط للبلاغات الجديدة (أقل من ساعتين) أو للمشرف محمد الربيش دائماً */}
                       {(() => {
                         const isMainAdmin = loggedInUser && loggedInUser.includes('محمد الربيش');
                         if (!complaint.createdAt && !isMainAdmin) return null;
@@ -2793,20 +2793,25 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                         
                         if (isMainAdmin || diffInHours < 2) {
                           return (
-                            <button 
-                              className={styles.editBtn} 
-                              onClick={() => handleDeleteClick(complaint.id, complaint.createdAt)} 
-                              title="حذف البلاغ"
-                              style={{background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444'}}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                <line x1="10" y1="11" x2="10" y2="17"></line>
-                                <line x1="14" y1="11" x2="14" y2="17"></line>
-                              </svg>
-                            </button>
+                            <>
+                              <div className={styles.actionBarDivider} />
+                              <button 
+                                className={`${styles.actionBarBtn} ${styles.actionBarBtnDelete}`}
+                                onClick={() => handleDeleteClick(complaint.id, complaint.createdAt)} 
+                                title="حذف البلاغ"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6"></polyline>
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path>
+                                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                                </svg>
+                              </button>
+                            </>
                           );
+                        }
+                        return null;
+                      })()}
                         }
                         return null;
                       })()}
