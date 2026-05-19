@@ -1,5 +1,5 @@
 .container {
-  max-width: 96%;
+  max-width: 1380px;
   margin: 0 auto;
   padding: 1.5rem 2rem;
   min-height: 100vh;
@@ -1394,7 +1394,7 @@ html {
 .container {
   width: 100%;
   padding: 1rem;
-  max-width: 1600px;
+  max-width: 1380px;
   margin: 0 auto;
 }
 
@@ -1428,7 +1428,7 @@ html {
     display: flex;
     flex-direction: row-reverse; /* الحفاظ على ترتيب الأزرار الحالي */
     justify-content: flex-start; /* محاذاة الأزرار لليسار في الترتيب العكسي */
-    gap: 15px;
+    gap: 8px; /* تقريب أيقونات الجرس وتسجيل الخروج والوضع والتبديل من بعضها */
   }
 
   .mainActionsRow {
@@ -1438,13 +1438,13 @@ html {
     justify-content: center;
     align-items: center;
     flex: 0 0 auto;
-    gap: 20px;
+    gap: 12px; /* تقريب الأزرار الخضراء من بعضها لتتوسط بشكل ملموم */
   }
 
   .iconsGroup {
     display: flex;
     justify-content: center;
-    gap: 12px;
+    gap: 8px; /* تقريب الأيقونات الخضراء الداخلية */
   }
 
   .profileGroup {
