@@ -55,7 +55,7 @@ body {
   margin: 0;
   padding: 0;
   scroll-behavior: smooth;
-  /* ملاحظة: تم إزالة overflow-x: hidden للسماح بظهور نسخة الكمبيوتر كاملة */
+  overflow-x: hidden; /* منع وقفل أي تمدد أو تمرير أفقي على مستوى الشاشة بالكامل */
 }
 
 input, select, textarea, button {
