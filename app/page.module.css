@@ -1087,6 +1087,21 @@
   box-shadow: 0 4px 15px rgba(33, 115, 70, 0.4);
 }
 /* ======================== */
+
+/* ===== ICON FIXES ===== */
+.optionIcon {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Ensure no SVG inside the modal explodes on desktop either */
+.modalContent svg {
+  max-width: 24px;
+  max-height: 24px;
+}
+/* ======================== */
 /* ===== RESPONSIVE MOBILE DESIGN (ULTIMATE FIX) ===== */
 @media (max-width: 768px) {
   .container {
