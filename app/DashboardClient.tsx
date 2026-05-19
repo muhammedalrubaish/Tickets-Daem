@@ -2815,10 +2815,10 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 </div>
                 <div className={styles.cardBody}>
                   <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.5rem'}}>
-                    <p style={{margin:0}}><strong>المستقبل:</strong> {complaint.receiver}</p>
+                    <p style={{margin:0, color:'#ffffff'}}><strong>المستقبل:</strong> {complaint.receiver}</p>
                   </div>
                   <p><strong>الحل المقترح:</strong> <span style={{ color: getStatusColor(complaint.solution), fontWeight: 'bold' }}>{complaint.solution}</span></p>
-                  <p><strong>التاريخ:</strong> {complaint.date}</p>
+                  <p style={{color:'#ffffff'}}><strong>التاريخ:</strong> {complaint.date}</p>
                   <div className={styles.cardFooter} style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'1rem'}}>
                     <span className={styles.typeBadge} style={{ backgroundColor: getCategoryColor(complaint.type) }}>
                       {complaint.type}
