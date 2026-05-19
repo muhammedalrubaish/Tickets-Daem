@@ -1664,9 +1664,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
             ))}
             
             {/* أحدث تعميم إداري مثبت */}
-            <div className={styles.noteItem} style={{borderColor:'#ef4444', background:'rgba(239, 68, 68, 0.05)'}}>
-              <span style={{color:'#ef4444'}}>🆕</span>
-              <span style={{fontSize:'0.8rem'}}>تعميم رقم 1445/02 بشأن VPN</span>
+            <div className={styles.noteItem} style={{borderColor:'#3b82f6', background:'rgba(59, 130, 246, 0.05)'}}>
+              <span style={{color:'#3b82f6'}}>🆕</span>
+              <span style={{fontSize:'0.8rem'}}>تعميم 6.19 بشأن التقارير المساحية</span>
             </div>
           </div>
         </div>
@@ -2062,6 +2062,15 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
               {(circularFilter === 'all' || circularFilter === 'circular') && (
                 <>
+                  <div className={styles.driveItemSimple} style={{textAlign:'right', borderRight:'4px solid #3b82f6', cursor:'default', background: 'rgba(59, 130, 246, 0.05)', marginBottom:'1rem'}}>
+                    <div style={{fontWeight:'800', marginBottom:'5px', color:'#3b82f6'}}>📋 تعميم التقارير المساحية (جديد)</div>
+                    <div style={{fontSize:'0.85rem', opacity:0.8}}>بشأن إعفاء الجهات الحكومية من الرسوم البلدية لخدمة التقارير المساحية 6.19</div>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'10px'}}>
+                      <span style={{fontSize:'0.75rem', color:'var(--primary)'}}>19-05-2026</span>
+                      <a href="/الملفات/التعاميم/6.19 التقارير المساحية _ إعفاء الجهات الحكومية من الرسوم البلدية.pdf" target="_blank" style={{fontSize:'0.75rem', background:'#3b82f6', color:'white', padding:'2px 8px', borderRadius:'4px', textDecoration:'none'}}>عرض الملف</a>
+                    </div>
+                  </div>
+
                   <div className={styles.driveItemSimple} style={{textAlign:'right', borderRight:'4px solid #10b981', cursor:'default', background: 'rgba(16, 185, 129, 0.05)', marginBottom:'1rem'}}>
                     <div style={{fontWeight:'800', marginBottom:'5px', color:'#10b981'}}>📋 تعميم الشهادات الصحية</div>
                     <div style={{fontSize:'0.85rem', opacity:0.8}}>بشأن إطلاق تحسينات الشهادات الصحية 6.15 - تحديثات العمل الجديدة</div>
