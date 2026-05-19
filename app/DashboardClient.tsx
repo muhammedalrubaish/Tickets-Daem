@@ -1778,13 +1778,13 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       <div className={styles.statsGrid}>
         {/* بطاقة اليوم - شريط تقدم */}
         <div className={`${styles.statCard} ${styles.statTodayFull}`}>
-          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', gap:'1rem', flexWrap:'wrap'}}>
+          <div className={styles.statTodayFullWrapper} style={{display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', gap:'1rem', flexWrap:'wrap'}}>
             <div>
               <h3 style={{margin:0, opacity:0.9, fontSize: '1.1rem', whiteSpace:'nowrap'}}>إجمالي بلاغات اليوم</h3>
               <p className={styles.statValueLarge} style={{margin:'0.5rem 0 0'}}>{stats.today}</p>
             </div>
             
-            <div style={{display:'flex', gap:'1rem', flexWrap:'wrap', justifyContent:'center'}}>
+            <div className={styles.statTodayFullStats} style={{display:'flex', gap:'1rem', flexWrap:'wrap', justifyContent:'center'}}>
               {/* آخر بلاغ تم استقباله */}
               {stats.lastComplaint && (
                 <div style={{textAlign:'right', borderRight:'2px solid rgba(255,255,255,0.3)', paddingRight:'1rem'}}>
