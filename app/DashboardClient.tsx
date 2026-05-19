@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import TicketForm from './TicketForm';
 import SupervisorsSearch from './SupervisorsSearch';
-import AIChat from './AIChat';
+
 
 type Complaint = {
   id: string;
@@ -2883,7 +2883,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         </div>
       )}
 
-      <AIChat />
+
       
       {/* تم نقل نافذة تبديل البوابة لتكون تحت الأيقونة مباشرة في الهيدر العلوي */}
 
