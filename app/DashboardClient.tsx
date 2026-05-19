@@ -758,12 +758,12 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   
     const getStatusColor = (status: string) => {
     switch (status) {
-      case 'بلاغ جحديؾ': return '#a855f7';
-      case 'بانتظار المستفید': return '#ec4899';
-      case 'لدی الوزارآ': return '#eab308';
-      case 'مشك؄ة عامh�': return '#0ea5e9';
+      case 'بلاغ جديد': return '#8b5cf6';
+      case 'بانتظار المستفيد': return '#ec4899';
+      case 'لدى الوزارة': return '#f59e0b';
+      case 'مشكلة عامة': return '#0ea5e9';
       case 'لم يتم الحل': return '#ef4444';
-      case 'ڪم الحل': return '#10b981';
+      case 'تم الحل': return '#10b981';
       case 'مجاز': return '#6b7280';
       default: return 'var(--primary)';
     }
