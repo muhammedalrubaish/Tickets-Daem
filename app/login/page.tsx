@@ -123,7 +123,7 @@ export default function LoginPage() {
                   />
                 </div>
               )}
-              <div style={{position: 'relative', display: 'flex', alignItems: 'center'}}>
+              <div style={{position: 'relative', width: '100%'}}>
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
@@ -133,7 +133,7 @@ export default function LoginPage() {
                   className={styles.loginInput}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  style={{paddingLeft: '2.5rem'}}
+                  style={{paddingLeft: '3rem'}}
                   required
                 />
                 <button 
