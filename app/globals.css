@@ -1,24 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap");
 
 * {
-  font-family: 'Cairo', sans-serif !important;
+  font-family: "Cairo", sans-serif !important;
   box-sizing: border-box;
   padding: 0;
   margin: 0;
 }
 
 :root {
-  --background: #f8f9fa; /* خلفية فاتحة جداً */
-  --foreground: #1c1c1e; /* نص داكن */
-  --primary: #217346; /* الأخضر الأساسي لمنصة بلدي */
-  --primary-hover: #1e6b3e; /* أخضر داكن للتأثيرات */
-  --secondary: #A67C52; /* البني الفاتح */
-  --card-bg: #ffffff; /* بطاقات بيضاء ناصعة */
-  --border: #e2e8f0; /* حدود رمادية خفيفة */
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --text-muted: #64748b;
+  --background: #edf2f7;
+  --foreground: #0f172a;
+  --primary: #15803d;
+  --primary-hover: #166534;
+  --secondary: #b45309;
+  --card-bg: #ffffff;
+  --border: #cbd5e1;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --text-muted: #475569;
 }
 
 [data-theme='dark'] {
@@ -47,7 +47,7 @@ html,
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Cairo', sans-serif;
+  font-family: "Cairo", sans-serif;
   direction: rtl;
   unicode-bidi: plaintext;
   -webkit-font-smoothing: antialiased;
@@ -55,11 +55,11 @@ body {
   margin: 0;
   padding: 0;
   scroll-behavior: smooth;
-  overflow-x: hidden; /* منع وقفل أي تمدد أو تمرير أفقي على مستوى الشاشة بالكامل */
+  overflow-x: hidden;
 }
 
 input, select, textarea, button {
-  font-family: 'Cairo', sans-serif;
+  font-family: "Cairo", sans-serif;
   direction: rtl;
 }
 
@@ -70,9 +70,9 @@ a {
 
 /* Custom Green Cursor */
 * {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%23217346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2" fill="%23217346"></circle></svg>') 12 12, auto !important;
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23217346' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='6'></circle><circle cx='12' cy='12' r='2' fill='%23217346'></circle></svg>") 12 12, auto !important;
 }
 
 a, button, select, input, textarea, .clickable {
-  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%23217346" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2" fill="%23217346"></circle></svg>') 12 12, pointer !important;
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23217346' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='6'></circle><circle cx='12' cy='12' r='2' fill='%23217346'></circle></svg>") 12 12, pointer !important;
 }
