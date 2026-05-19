@@ -1408,9 +1408,11 @@ html {
   .headerLayout {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: center; /* يتوسط الشريط العلوي بالكامل في المنتصف */
     align-items: center;
-    margin-bottom: 1.5rem;
+    gap: 1.5rem; /* مسافة مريحة وملمومة بين المجموعات الثلاث */
+    margin-bottom: 1rem;
+    width: 100%;
   }
 
   .mainLogo {
@@ -1425,22 +1427,23 @@ html {
   }
 
   .topUtilityRow {
-    order: 2; /* وضعهم في أقصى اليسار في الكمبيوتر */
-    flex: 1;
+    order: 2; /* أقصى اليسار في السطر الممركز */
+    flex: 0 0 auto; /* عدم التمدد لتبقى ملمومة */
     display: flex;
-    justify-content: flex-end; /* محاذاة الأزرار لأقصى اليسار بشكل صحيح في RTL */
+    justify-content: center;
     align-items: center;
-    gap: 8px; /* تقريب أيقونات الجرس وتسجيل الخروج والوضع والتبديل من بعضها */
+    gap: 8px;
+    width: auto; /* إلغاء العرض الموروث 100% للكمبيوتر */
   }
 
   .mainActionsRow {
-    order: 1; /* وضعهم في المنتصف تماماً */
+    order: 1; /* في المنتصف تماماً */
+    flex: 0 0 auto;
     display: flex;
-    flex-direction: row;
     justify-content: center;
     align-items: center;
-    flex: 0 0 auto;
-    gap: 12px; /* تقريب الأزرار الخضراء من بعضها لتتوسط بشكل ملموم */
+    gap: 12px;
+    width: auto; /* إلغاء العرض الموروث 100% للكمبيوتر */
   }
 
   .iconsGroup {
@@ -1450,10 +1453,12 @@ html {
   }
 
   .profileGroup {
-    order: 0; /* وضعهم في أقصى اليمين في الكمبيوتر */
-    flex: 1;
+    order: 0; /* أقصى اليمين في السطر الممركز */
+    flex: 0 0 auto; /* عدم التمدد لتبقى بجوار الأيقونات الخضراء */
     display: flex;
-    justify-content: flex-start; /* محاذاة لليمين في RTL */
+    justify-content: center;
+    align-items: center;
+    width: auto; /* إلغاء العرض الموروث 100% للكمبيوتر */
   }
 
   .statsGrid {
