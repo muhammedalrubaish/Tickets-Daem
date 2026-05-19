@@ -1368,3 +1368,53 @@
   transform: translateY(0) scale(1);
 }
 /* =================================== */
+
+
+/* ===== ULTIMATE MOBILE FIX ===== */
+@media (max-width: 768px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+  
+  .statTodayFull, .notesCard {
+    grid-column: 1 / -1 !important;
+  }
+  
+  /* ������ �������� */
+  .statsGrid > div:nth-child(3) {
+    grid-column: 1 / -1 !important;
+  }
+  .statsGrid > div:nth-child(3) h3 {
+    font-size: 1.1rem !important;
+  }
+
+  .listHeader {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    padding: 0 5px !important;
+    margin-bottom: 1rem !important;
+    justify-content: center !important;
+  }
+
+  .quickActions {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 8px !important;
+  }
+
+  .statCard {
+    padding: 0.8rem !important;
+  }
+  
+  .statCard h3 {
+    font-size: 0.8rem !important;
+  }
+  
+  .statValue {
+    font-size: 1.5rem !important;
+  }
+}
+/* =============================== */
