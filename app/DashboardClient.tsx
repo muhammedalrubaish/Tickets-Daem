@@ -1215,11 +1215,11 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     }
   };
 
-  const handleUpdate = async (ticketId: string, newSolution: string, newReceiver?: string, newCategory?: string) => {
+  const handleUpdate = async (ticketId: string, newSolution: string, newReceiver?: string, newCategory?: string, newDate?: string) => {
     const backup = [...complaints];
     setComplaints(prev => prev.map(c => 
       c.id === (editingTicket?.id || ticketId) 
-        ? { ...c, solution: newSolution, receiver: newReceiver || c.receiver, type: newCategory || c.type } 
+        ? { ...c, solution: newSolution, receiver: newReceiver || c.receiver, type: newCategory || c.type, date: newDate || c.date } 
         : c
     ));
     setIsEditOpen(false);
@@ -1236,7 +1236,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           number: editingTicket?.number,
           solution: newSolution,
           receiver: newReceiver,
-          category_type: newCategory
+          category_type: newCategory,
+          date: newDate
         }),
       });
       if (res.ok) {
@@ -2466,9 +2467,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         <div className={styles.modalOverlay} onClick={() => setIsEditOpen(false)}>
           <div className={styles.modalContent} style={{maxWidth: '500px'}} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2 style={{display:'flex', alignItems:'center', gap:'8px'}}>
+              <h2 style={{display:'flex', alignItems:'center', gap:'8px', color: 'var(--primary)'}}>
                 تحديث حالة البلاغ 
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
@@ -2616,11 +2617,27 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 </div>
               )}
 
+              {/* تعديل التاريخ */}
+              <div className={styles.formGroup} style={{marginTop: '1rem'}}>
+                <label className={styles.filterLabel}>تعديل التاريخ:</label>
+                <input 
+                  type="date" 
+                  className={styles.loginInput}
+                  value={editingTicket.date && editingTicket.date.includes('-') && editingTicket.date.split('-')[0].length === 2 ? editingTicket.date.split('-').reverse().join('-') : editingTicket.date || ''}
+                  onChange={(e) => {
+                    const dateVal = e.target.value; 
+                    const formatted = dateVal ? dateVal.split('-').reverse().join('-') : '';
+                    setEditingTicket({ ...editingTicket, date: formatted || dateVal });
+                  }}
+                  style={{ padding: '0.9rem 1.2rem', textAlign: 'right', width: '100%', boxSizing: 'border-box' }}
+                />
+              </div>
+
               <button 
-                className={styles.submitButton} 
+                className={styles.loginButton} 
                 disabled={isUpdating} 
-                onClick={() => handleUpdate(editingTicket.id, editingTicket.solution, editingTicket.receiver, editingTicket.type)}
-                style={{marginTop: '1.5rem'}}
+                onClick={() => handleUpdate(editingTicket.id, editingTicket.solution, editingTicket.receiver, editingTicket.type, editingTicket.date)}
+                style={{marginTop: '1.5rem', width: '100%'}}
               >
                 {isUpdating ? 'جاري الحفظ...' : 'حفظ التعديلات'}
               </button>
