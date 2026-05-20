@@ -2063,19 +2063,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           </button>
 
           {isDateMenuOpen && (
-            <div style={{
-              position: 'absolute',
-              top: '55px',
-              left: '0',
-              width: '280px',
-              background: 'var(--card-bg)',
-              border: '1px solid var(--border)',
-              borderRadius: '12px',
-              boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-              zIndex: 3000,
-              padding: '1.2rem',
-              direction: 'rtl'
-            }}>
+            <div className={styles.dateMenu}>
               <h4 style={{margin:'0 0 1rem', fontSize:'0.9rem', borderBottom:'1px solid var(--border)', paddingBottom:'0.5rem'}}>فلترة التاريخ</h4>
               
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'1.2rem'}}>
@@ -2109,11 +2097,11 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               <div style={{display:'flex', flexDirection:'column', gap:'10px'}}>
                 <div>
                   <label style={{fontSize:'0.75rem', display:'block', marginBottom:'4px', color:'var(--foreground)', opacity:0.9}}>من تاريخ:</label>
-                  <input type="date" className={styles.filterInput} value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{width:'100%', padding:'8px', color:'var(--foreground)'}} />
+                  <input type="date" className={styles.filterInput} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
                 </div>
                 <div>
                   <label style={{fontSize:'0.75rem', display:'block', marginBottom:'4px', color:'var(--foreground)', opacity:0.9}}>إلى تاريخ:</label>
-                  <input type="date" className={styles.filterInput} value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{width:'100%', padding:'8px', color:'var(--foreground)'}} />
+                  <input type="date" className={styles.filterInput} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
                 </div>
                 <button 
                   onClick={() => setIsDateMenuOpen(false)}
