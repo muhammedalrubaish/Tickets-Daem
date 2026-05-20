@@ -33,9 +33,21 @@ if errorlevel 1 (
     exit /b
 )
 
+chcp 65001 >nul
+
+:: Determine commit message
+set "commit_msg=%~1"
+if "%commit_msg%"=="" (
+    echo.
+    set /p "commit_msg=الرجاء إدخال اسم/وصف هذا التحديث بالعربي: "
+)
+if "%commit_msg%"=="" (
+    set "commit_msg=تحديث تلقائي للنظام"
+)
+
 :: Execute Git commands
 git add .
-git commit -m "Auto-sync update"
+git commit -m "%commit_msg%"
 git push
 
 echo ==================================================
