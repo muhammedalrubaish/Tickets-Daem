@@ -25,7 +25,7 @@ export default function Loading() {
         <img 
           src="/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8A%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A.png" 
           alt="شعار بلدي" 
-          style={{ width: '150px', height: 'auto', dropShadow: '0 10px 15px rgba(34, 197, 94, 0.2)' }} 
+          style={{ width: '150px', height: 'auto', filter: 'drop-shadow(0 10px 15px rgba(34, 197, 94, 0.2))' }} 
         />
       </div>
       
