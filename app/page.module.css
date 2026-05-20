@@ -399,6 +399,7 @@
   z-index: 2000;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  animation: macOverlayFadeIn 0.3s ease-out;
 }
 
 
@@ -411,12 +412,60 @@
   position: relative;
   box-shadow: 0 20px 40px rgba(0,0,0,0.3);
   border: 1px solid var(--border);
-  animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: macModalSpring 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes modalSlideUp {
-  from { transform: translateY(30px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+/* ===== macOS-style Spring Animations ===== */
+@keyframes macOverlayFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(10px);
+  }
+}
+
+@keyframes macModalSpring {
+  0% {
+    opacity: 0;
+    transform: scale(0.75);
+    filter: blur(8px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.02);
+    filter: blur(0px);
+  }
+  80% {
+    transform: scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+}
+
+@keyframes macPopoverSpring {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(-8px);
+    filter: blur(4px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(0px);
+  }
+  70% {
+    transform: scale(1.015) translateY(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0px);
+  }
 }
 
 .formTitle {
@@ -974,6 +1023,7 @@
   justify-content: center;
   z-index: 9999;
   padding: 1rem;
+  animation: macOverlayFadeIn 0.3s ease-out;
 }
 
 .modalContent {
@@ -992,6 +1042,7 @@
   gap: 1.5rem;
   max-height: 90vh;
   overflow-y: auto;
+  animation: macModalSpring 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .modalHeader {
@@ -1863,6 +1914,8 @@
   z-index: 3000;
   padding: 1.2rem;
   direction: rtl;
+  animation: macPopoverSpring 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: top left;
 }
 
 .filterInput {
@@ -1909,3 +1962,357 @@
     background: rgba(35, 42, 38, 0.98) !important; /* Elegant rich dark green-charcoal glassmorphism */
   }
 }
+
+/* ==========================================================================
+   Daem Plus Premium - Floating Indicators Widget Styles (RTL Supported)
+   ========================================================================== */
+
+/* 1. Launcher Button Styles */
+.extLauncherBtn {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 50px;
+  color: #f8fafc;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 
+              0 0 15px rgba(56, 189, 248, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  direction: rtl;
+}
+
+.extLauncherBtn:hover {
+  transform: translateY(-4px) scale(1.03);
+  border-color: rgba(56, 189, 248, 0.7);
+  box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.5), 
+              0 0 20px rgba(56, 189, 248, 0.3);
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+.extLauncherIcon {
+  font-size: 1.2rem;
+  display: inline-block;
+  animation: extPulsePuzzle 2.5s infinite ease-in-out;
+}
+
+.extLauncherText {
+  letter-spacing: 0.2px;
+}
+
+.extLauncherPulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50px;
+  border: 2px solid #38bdf8;
+  opacity: 0;
+  animation: extWavePulse 2s infinite;
+  pointer-events: none;
+}
+
+/* 2. Popup Card Styles */
+.extPopupCard {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  width: 340px;
+  max-width: calc(100vw - 48px);
+  z-index: 1600;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 
+              0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+              0 0 30px rgba(56, 189, 248, 0.07);
+  direction: rtl;
+  text-align: right;
+  color: #f1f5f9;
+  animation: extCardFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.extCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.extHeaderTitleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.extCardTitle {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #38bdf8, #4ade80);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 10px rgba(56, 189, 248, 0.15);
+}
+
+.extPremiumBadge {
+  background: linear-gradient(90deg, #d97706, #f59e0b);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.extCloseBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.extCloseBtn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+  transform: rotate(90deg);
+}
+
+.extCardSubtitle {
+  margin: 0 0 16px 0;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+/* 3. Indicators List and Row Styles */
+.extIndicatorsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.extIndicatorRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.extIndicatorRow:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateX(-4px);
+}
+
+.extIndicatorRow:active {
+  transform: scale(0.98) translateX(-4px);
+}
+
+.activeRow {
+  background: rgba(56, 189, 248, 0.08) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.12),
+              0 0 0 1px rgba(56, 189, 248, 0.1) inset;
+}
+
+.extRowRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.extDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.extDot::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.35;
+  filter: blur(2px);
+  animation: extPulseGlow 2s infinite ease-in-out;
+}
+
+.extDotBlue {
+  background: #3b82f6;
+  box-shadow: 0 0 8px #3b82f6;
+}
+
+.extDotPink {
+  background: #ec4899;
+  box-shadow: 0 0 8px #ec4899;
+}
+
+.extDotYellow {
+  background: #fbbf24;
+  box-shadow: 0 0 8px #fbbf24;
+}
+
+.extDotCyan {
+  background: #06b6d4;
+  box-shadow: 0 0 8px #06b6d4;
+}
+
+.extDotRed {
+  background: #f87171;
+  box-shadow: 0 0 8px #f87171;
+}
+
+.extLabel {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #e2e8f0;
+  transition: color 0.2s ease;
+}
+
+.extIndicatorRow:hover .extLabel {
+  color: #ffffff;
+}
+
+.extCount {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #38bdf8;
+  padding-left: 2px;
+}
+
+/* 4. Footer section */
+.extCardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.extResetBtn {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.extResetBtn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+.extFooterLink {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.extFooterLink:hover {
+  color: #38bdf8;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+}
+
+/* 5. Keyframes & Animations */
+@keyframes extCardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes extPulsePuzzle {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(15deg) scale(1.1);
+  }
+}
+
+@keyframes extWavePulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes extPulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.65;
+  }
+}
+
+/* Responsive adjustment for Mobile screens */
+@media (max-width: 480px) {
+  .extLauncherBtn {
+    left: 16px;
+    bottom: 16px;
+    padding: 10px 16px;
+    font-size: 0.85rem;
+  }
+  .extPopupCard {
+    left: 16px;
+    bottom: 16px;
+    width: calc(100vw - 32px);
+    padding: 16px;
+  }
+}
+

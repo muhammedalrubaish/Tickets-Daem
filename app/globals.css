@@ -76,3 +76,56 @@ a {
 a, button, select, input, textarea, .clickable {
   cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23217346' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='6'></circle><circle cx='12' cy='12' r='2' fill='%23217346'></circle></svg>") 12 12, pointer !important;
 }
+
+/* ===== macOS-style Global Spring Animations ===== */
+@keyframes macPopoverSpring {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(-8px);
+    filter: blur(4px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(0px);
+  }
+  70% {
+    transform: scale(1.015) translateY(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0px);
+  }
+}
+
+@keyframes macModalSpring {
+  0% {
+    opacity: 0;
+    transform: scale(0.75);
+    filter: blur(8px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.02);
+    filter: blur(0px);
+  }
+  80% {
+    transform: scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+}
+
+@keyframes macOverlayFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(10px);
+  }
+}
