@@ -2629,7 +2629,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                     const formatted = dateVal ? dateVal.split('-').reverse().join('-') : '';
                     setEditingTicket({ ...editingTicket, date: formatted || dateVal });
                   }}
-                  style={{ padding: '0.9rem 1.2rem', textAlign: 'right', width: '100%', boxSizing: 'border-box' }}
+                  style={{ padding: '0.9rem 1.2rem', textAlign: 'right', width: '100%', boxSizing: 'border-box', colorScheme: 'dark' }}
                 />
               </div>
 
