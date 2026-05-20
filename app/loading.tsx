@@ -75,20 +75,20 @@ export default function Loading() {
       <style jsx global>{`
         @keyframes loadingBarFlow {
           0% {
-            transform: translateX(-100%);
-            background-position: 0% 50%;
+            transform: translateX(100%);
+            background-position: 200% 50%;
           }
           50% {
             background-position: 100% 50%;
           }
           100% {
-            transform: translateX(100%);
-            background-position: 200% 50%;
+            transform: translateX(-100%);
+            background-position: 0% 50%;
           }
         }
         @keyframes textShimmer {
-          0% { background-position: 0% 50%; }
-          100% { background-position: 200% 50%; }
+          0% { background-position: 200% 50%; }
+          100% { background-position: 0% 50%; }
         }
         @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 10px 20px rgba(0, 116, 113, 0.25)); }

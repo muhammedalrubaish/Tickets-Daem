@@ -1715,7 +1715,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               style={{ background: 'none', border: 'none', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
             >
               <img 
-                src="/%D8%A7%D9%8A%D9%82%D9%88%D9%86%D8%A9%20%D8%AF%D8%A7%D8%B9%D9%85%20%D8%A8%D8%A7%D9%84%D8%A3%D8%A8%D9%8A%D8%B6.png" 
+                src="/daem-white.png" 
                 alt="شعار داعم" 
                 style={{ width: '45px', height: '45px', objectFit: 'contain' }} 
               />
