@@ -1712,15 +1712,13 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               rel="noopener noreferrer" 
               className={styles.navIconButton} 
               title="الانتقال إلى منصة داعم الرسمية للوزارة" 
-              style={{ backgroundColor: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ background: 'none', border: 'none', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"></path>
-                <polyline points="11 3 17 3 17 9"></polyline>
-                <line x1="8" y1="14" x2="17" y2="3"></line>
-                {/* علامة الزائد المضيئة لتعبر عن داعم بلس */}
-                <path d="M18 16h4M20 14v4" stroke="#10b981" strokeWidth="3" />
-              </svg>
+              <img 
+                src="/%D8%A7%D9%8A%D9%82%D9%88%D9%86%D8%A9%20%D8%AF%D8%A7%D8%B9%D9%85%20%D8%A8%D8%A7%D9%84%D8%A3%D8%A8%D9%8A%D8%B6.png" 
+                alt="شعار داعم" 
+                style={{ width: '45px', height: '45px', objectFit: 'contain' }} 
+              />
             </a>
 
             <button 
