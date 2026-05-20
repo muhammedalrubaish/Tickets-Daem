@@ -2643,7 +2643,10 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
       <div className={styles.listHeader} id="complaints-list">
         <div className={styles.listHeaderInner} style={{display:'flex', alignItems:'center', gap:'15px'}}>
-          <h2 style={{fontSize:'1.1rem', color:'var(--text)', margin:0}}>📑 قائمة البلاغات ({filteredComplaints.length})</h2>
+          <h2 style={{fontSize:'1.1rem', color:'var(--text)', margin:0, display:'flex', alignItems:'center', gap:'8px'}}>
+            <span>📑</span>
+            <span>قائمة البلاغات ({filteredComplaints.length})</span>
+          </h2>
           
           {(userRole === 'editor' || (loggedInUser && loggedInUser.includes('محمد الربيش'))) && (
             <div className={styles.quickActions}>
