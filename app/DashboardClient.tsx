@@ -1712,12 +1712,12 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               rel="noopener noreferrer" 
               className={styles.navIconButton} 
               title="الانتقال إلى منصة داعم الرسمية للوزارة" 
-              style={{ background: 'none', border: 'none', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+              style={{ backgroundColor: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s ease' }}
             >
               <img 
                 src="/daem-white.png" 
                 alt="شعار داعم" 
-                style={{ width: '45px', height: '45px', objectFit: 'contain' }} 
+                style={{ width: '28px', height: '28px', objectFit: 'contain' }} 
               />
             </a>
 
