@@ -1728,6 +1728,39 @@
     border-top: none !important;
     padding-top: 0 !important;
   }
+
+  /* Enforce perfect layout of wide and full-width cards on mobile */
+  .wideCard, .fullWidthCard {
+    grid-column: span 2 !important;
+  }
+
+  /* Gorgeous symmetrical layout for mobile quick actions buttons */
+  .quickActions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+  
+  /* notions new ticket button stays square and fits on row 1 */
+  .quickActions > *:nth-child(1) {
+    width: 42px !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+  }
+  
+  /* WhatsApp button takes up the remaining space on row 1 */
+  .quickActions > *:nth-child(2) {
+    flex-grow: 1 !important;
+  }
+  
+  /* Contact button and review button take up exactly half of row 2 each */
+  .quickActions > *:nth-child(3),
+  .quickActions > *:nth-child(4) {
+    width: calc(50% - 4px) !important;
+    flex-grow: 1 !important;
+  }
 }
 
 

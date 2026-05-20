@@ -1865,7 +1865,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           return (
             <div
               key={filter}
-              className={`${styles.statCard} ${activeFilter === filter ? styles.active : ''}`}
+              className={`${styles.statCard} ${activeFilter === filter ? styles.active : ''} ${wide ? styles.wideCard : ''} ${fullWidth ? styles.fullWidthCard : ''}`}
               onClick={() => setActiveFilter(filter)}
               style={{
                 display:'flex', 
