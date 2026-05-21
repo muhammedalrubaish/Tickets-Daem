@@ -3464,25 +3464,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                       setReportLoading(true);
                       
                       setTimeout(() => {
-                        // 1. Generate and download CSV locally so they can attach it
-                        const headers = ['رقم البلاغ', 'التصنيف/النوع', 'حالة الحل', 'التاريخ', 'المستقبل'];
-                        const rows = filtered.map(c => [c.number, c.type, c.solution, c.date, c.receiver]);
-                        let csvContent = '\uFEFF'; 
-                        csvContent += headers.join(',') + '\n';
-                        rows.forEach(row => {
-                          csvContent += row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',') + '\n';
-                        });
-
-                        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.setAttribute('href', url);
-                        link.setAttribute('download', `تقرير_بلاغات_${reportIndicator}_${new Date().toISOString().split('T')[0]}.csv`);
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-
-                        // 2. Open email client with pre-filled content
+                        // 1. Open Gmail web interface with pre-filled content (No local download)
                         let arabicIndicator = 'كل البلاغات';
                         if (reportIndicator === 'closed') arabicIndicator = 'تم الحل';
                         else if (reportIndicator === 'open') arabicIndicator = 'لم يتم الحل';
@@ -3491,19 +3473,23 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                         else if (reportIndicator === 'new') arabicIndicator = 'بلاغ جديد';
                         else if (reportIndicator === 'general') arabicIndicator = 'مشكلة عامة';
 
-                        const subjectText = `تقرير بلاغات وحدة بلدي - مؤشر: ${arabicIndicator}`;
-                        const emailBodyText = `السلام عليكم ورحمة الله وبركاته،\n\nتجدون مرفقاً تقرير بلاغات وحدة بلدي المفلتر حسب المؤشر: (${arabicIndicator}).\n\nإحصائيات سريعة للتقرير:\n- إجمالي البلاغات في التقرير: ${filtered.length} بلاغ\n- تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')}\n\n(فضلاً قم بإرفاق ملف الـ CSV المحمل تلقائياً في هذا البريد قبل الإرسال).\n\nمع التحيات،\nنظام بلاغات وحدة بلدي`;
+                        // 2. Generate a clean formatted plain-text table of the report
+                        let reportTable = 'رقم البلاغ | التصنيف/النوع | حالة الحل | التاريخ | المستقبل\n';
+                        reportTable += '------------------------------------------------------------\n';
+                        filtered.forEach(c => {
+                          reportTable += `${c.number} | ${c.type} | ${c.solution} | ${c.date} | ${c.receiver}\n`;
+                        });
+                        reportTable += '------------------------------------------------------------';
 
-                        const mailtoUrl = `mailto:${reportEmail}?subject=${encodeURIComponent(subjectText)}&body=${encodeURIComponent(emailBodyText)}`;
+                        const subjectText = `تقرير بلاغات وحدة بلدي - مؤشر: ${arabicIndicator}`;
+                        const emailBodyText = `السلام عليكم ورحمة الله وبركاته،\n\nتجدون أدناه تقرير بلاغات وحدة بلدي المفلتر حسب المؤشر: (${arabicIndicator}).\n\n📊 إحصائيات التقرير:\n- إجمالي البلاغات: ${filtered.length} بلاغ\n- تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')}\n\n📋 تفاصيل التقرير:\n${reportTable}\n\nمع التحيات،\nنظام بلاغات وحدة بلدي`;
+
+                        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${reportEmail}&su=${encodeURIComponent(subjectText)}&body=${encodeURIComponent(emailBodyText)}`;
                         
-                        const mailLink = document.createElement('a');
-                        mailLink.setAttribute('href', mailtoUrl);
-                        document.body.appendChild(mailLink);
-                        mailLink.click();
-                        document.body.removeChild(mailLink);
+                        window.open(gmailUrl, '_blank');
 
                         setReportLoading(false);
-                        setNewTicketToast(`📧 تم فتح البريد وتنزيل التقرير بنجاح! فضلاً أرفق الملف وأرسله.`);
+                        setNewTicketToast(`📧 تم إنشاء التقرير بنجاح وفتح Gmail لإرساله!`);
                         setTimeout(() => setNewTicketToast(null), 6000);
                       }, 1000);
                     }
