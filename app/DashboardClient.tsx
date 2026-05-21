@@ -911,6 +911,162 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [calendarViewDate, setCalendarViewDate] = useState<Date>(new Date());
   const [ticketToDelete, setTicketToDelete] = useState<{id: string, createdAt?: string} | null>(null);
 
+  // --- تعريف هيكل ونظام الصلاحيات الديناميكي للموظفين ---
+  interface PermissionSet {
+    editTicket: boolean;
+    createTicket: boolean;
+    deleteCircular: boolean;
+    addEmployee: boolean;
+    editPassword: boolean;
+    sendReport: boolean;
+  }
+
+  interface EmployeeItem {
+    name: string;
+    user: string;
+    phone: string;
+    pass: string;
+    permissions: PermissionSet;
+  }
+
+  const DEFAULT_EMPLOYEES_WITH_PERMS: EmployeeItem[] = [
+    {
+      name: 'البراء النصيان',
+      user: 'a.alnesayan',
+      phone: '966537313164',
+      pass: '1111',
+      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
+    },
+    {
+      name: 'عبدالله العويد',
+      user: 'aalowaid',
+      phone: '966582060644',
+      pass: '2222',
+      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
+    },
+    {
+      name: 'عبدالرحمن العمري',
+      user: 'af.alamri',
+      phone: '966553077432',
+      pass: '3333',
+      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
+    },
+    {
+      name: 'عزام الحربي',
+      user: 'azz.alharbi',
+      phone: '966500000000',
+      pass: '4444',
+      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
+    },
+    {
+      name: 'محمد الربيش',
+      user: 'mialrubaish',
+      phone: '966595866711',
+      pass: 'Balady.20',
+      permissions: { editTicket: true, createTicket: true, deleteCircular: true, addEmployee: true, editPassword: true, sendReport: true }
+    },
+    {
+      name: 'صالح الغصن',
+      user: 's.alghosen',
+      phone: '966557828464',
+      pass: '6666',
+      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
+    },
+    {
+      name: 'طارق الهدياني',
+      user: 't.alhedyani',
+      phone: '966500221260',
+      pass: '7777',
+      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
+    },
+    {
+      name: 'ثامر المنصور',
+      user: 't.almansour',
+      phone: '966570770940',
+      pass: '8888',
+      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
+    }
+  ];
+
+  const [employeesList, setEmployeesList] = useState<EmployeeItem[]>([]);
+  const [isPermissionsOpen, setIsPermissionsOpen] = useState(false);
+  const [selectedEmployeeForPerms, setSelectedEmployeeForPerms] = useState<string | null>(null);
+  
+  // نموذج إضافة موظف جديد
+  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
+  const [newEmpName, setNewEmpName] = useState('');
+  const [newEmpUser, setNewEmpUser] = useState('');
+  const [newEmpPhone, setNewEmpPhone] = useState('');
+  const [newEmpPass, setNewEmpPass] = useState('');
+
+  // نموذج تعديل كلمة المرور
+  const [isEditPasswordOpen, setIsEditPasswordOpen] = useState(false);
+  const [editEmpPassName, setEditEmpPassName] = useState('');
+  const [editEmpPassValue, setEditEmpPassValue] = useState('');
+
+  // لوحة التقارير الذكية
+  const [reportIndicator, setReportIndicator] = useState<'all' | 'closed' | 'open' | 'ministry' | 'waiting' | 'new' | 'general'>('all');
+  const [reportMethod, setReportMethod] = useState<'email' | 'local'>('local');
+  const [reportEmail, setReportEmail] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
+
+  // تحميل قائمة الموظفين عند بدء التشغيل
+  useEffect(() => {
+    const cached = localStorage.getItem('balady_employees_v1');
+    if (cached) {
+      try {
+        setEmployeesList(JSON.parse(cached));
+      } catch (e) {
+        setEmployeesList(DEFAULT_EMPLOYEES_WITH_PERMS);
+      }
+    } else {
+      localStorage.setItem('balady_employees_v1', JSON.stringify(DEFAULT_EMPLOYEES_WITH_PERMS));
+      setEmployeesList(DEFAULT_EMPLOYEES_WITH_PERMS);
+    }
+  }, []);
+
+  // المزامنة التلقائية مع Supabase إن وُجد جدول الموظفين
+  useEffect(() => {
+    const syncWithSupabase = async () => {
+      try {
+        const { data, error } = await supabase.from('employees').select('*');
+        if (!error && data && data.length > 0) {
+          // دمج البيانات المسترجعة
+          const dbEmployees = data.map((emp: any) => ({
+            name: emp.name,
+            user: emp.user || emp.username,
+            phone: emp.phone || '',
+            pass: emp.pass || emp.password || '1111',
+            permissions: emp.permissions || { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
+          }));
+          setEmployeesList(dbEmployees);
+          localStorage.setItem('balady_employees_v1', JSON.stringify(dbEmployees));
+        }
+      } catch (e) {
+        console.warn('Supabase employees sync failed, using localStorage:', e);
+      }
+    };
+    syncWithSupabase();
+  }, []);
+
+  const saveEmployeesList = async (updatedList: EmployeeItem[]) => {
+    setEmployeesList(updatedList);
+    localStorage.setItem('balady_employees_v1', JSON.stringify(updatedList));
+
+    // محاولة الحفظ في سوبابيس أيضاً لتعمل التحديثات للجميع
+    try {
+      const supabasePayload = updatedList.map(emp => ({
+        name: emp.name,
+        user: emp.user,
+        phone: emp.phone,
+        pass: emp.pass,
+        permissions: emp.permissions
+      }));
+      await supabase.from('employees').upsert(supabasePayload, { onConflict: 'name' });
+    } catch (e) {
+      console.warn('Supabase update skipped, saved locally in localStorage.');
+    }
+  };
   // نظام التعاميم الإدارية الديناميكي
   const [circulars, setCirculars] = useState<{id:string, title:string, number:string, description:string, file:string, date:string, color:string}[]>([]);
   const [isAddCircularOpen, setIsAddCircularOpen] = useState(false);
@@ -1306,6 +1462,17 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [userRole, setUserRole] = useState<'viewer' | 'editor' | 'super_admin' | null>(null);
   const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
 
+  const currentUserPermissions = useMemo(() => {
+    if (!loggedInUser) return null;
+    const cleanUser = loggedInUser.trim();
+    const emp = employeesList.find(e => e.name.trim() === cleanUser || e.name.includes(cleanUser.split(' ')[0]));
+    if (emp) return emp.permissions;
+    if (cleanUser.includes('محمد الربيش') || userRole === 'super_admin') {
+      return { editTicket: true, createTicket: true, deleteCircular: true, addEmployee: true, editPassword: true, sendReport: true };
+    }
+    return { editTicket: false, createTicket: false, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false };
+  }, [employeesList, loggedInUser, userRole]);
+
   // التحقق من وجود تحديثات جديدة غير مقروءة وتنظيف الذاكرة
   useEffect(() => {
     const lastSeenVersion = localStorage.getItem('last_seen_system_version');
@@ -1585,7 +1752,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     const userFilteredComplaints = (selectedReceiver === 'all' 
       ? baseComplaints 
       : baseComplaints.filter(c => {
-          const emp = EMPLOYEES.find(e => e.name === selectedReceiver);
+          const emp = (employeesList.length > 0 ? employeesList : DEFAULT_EMPLOYEES_WITH_PERMS).find(e => e.name === selectedReceiver);
           const receiverValue = (c.receiver || '').toLowerCase().trim();
           const targetName = selectedReceiver.toLowerCase().trim();
           const targetUser = emp ? emp.user.toLowerCase().trim() : '';
@@ -1761,7 +1928,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
     if (selectedReceiver !== 'all') {
       result = result.filter(c => {
-        const emp = EMPLOYEES.find(e => e.name === selectedReceiver);
+        const emp = (employeesList.length > 0 ? employeesList : DEFAULT_EMPLOYEES_WITH_PERMS).find(e => e.name === selectedReceiver);
         const val = (c.receiver || '').toLowerCase().trim();
         const target = selectedReceiver.toLowerCase().trim();
         const user = emp ? emp.user.toLowerCase().trim() : '';
@@ -2058,6 +2225,20 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               />
             </a>
 
+            {/* زر إدارة الصلاحيات للمشرف العام محمد الربيش */}
+            {(userRole === 'super_admin' || loggedInUser?.includes('محمد الربيش')) && (
+              <button 
+                className={styles.navIconButton} 
+                onClick={() => setIsPermissionsOpen(true)} 
+                title="مركز التحكم بالصلاحيات والموظفين" 
+                style={{ backgroundColor: '#10b981', color: 'white' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </button>
+            )}
+
             <button 
               className={styles.navIconButton}
               onClick={() => { 
@@ -2316,7 +2497,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
             </div>
             <div id="employeeFilterOptions" className={styles.customFilterOptions} style={{display: 'none'}}>
               <div className={styles.customFilterOption} onClick={() => { setSelectedReceiver('all'); document.getElementById('employeeFilterOptions')!.style.display = 'none'; }}>الموظف (الكل)</div>
-              {EMPLOYEES.map((emp) => (
+              {(employeesList.length > 0 ? employeesList : DEFAULT_EMPLOYEES_WITH_PERMS).map((emp) => (
                 <div key={emp.user} className={styles.customFilterOption} onClick={() => { setSelectedReceiver(emp.name); document.getElementById('employeeFilterOptions')!.style.display = 'none'; }}>{emp.name}</div>
               ))}
             </div>
@@ -2811,7 +2992,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                           {circ.file && (
                             <a href={circ.file} target="_blank" rel="noopener noreferrer" style={{fontSize:'0.75rem', background: circ.color, color:'white', padding:'2px 8px', borderRadius:'4px', textDecoration:'none', fontWeight:'bold'}}>عرض الملف</a>
                           )}
-                          {loggedInUser && loggedInUser.includes('محمد الربيش') && (
+                           {loggedInUser && (currentUserPermissions?.deleteCircular || userRole === 'super_admin') && (
                             <button 
                               onClick={() => handleDeleteCircular(circ.id, circ.file || '')}
                               style={{
@@ -2995,7 +3176,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               </button>
             </div>
             <div className={styles.driveListSimple} style={{maxHeight:'400px', overflowY:'auto'}}>
-              {EMPLOYEES.map(emp => (
+              {(employeesList.length > 0 ? employeesList : DEFAULT_EMPLOYEES_WITH_PERMS).map(emp => (
                 <a 
                   key={emp.user} 
                   href={`https://wa.me/${emp.phone}`} 
@@ -3017,6 +3198,399 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           </div>
         </div>
       )}
+      {/* ========================================== */}
+      {/* مركز التحكم بالصلاحيات والتقارير الذكية */}
+      {/* ========================================== */}
+      {isPermissionsOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsPermissionsOpen(false)}>
+          <div className={styles.modalContent} style={{ maxWidth: '850px', width: '90%', maxHeight: '90vh', overflowY: 'auto', background: 'rgba(23, 28, 41, 0.95)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)', direction: 'rtl' }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, color: '#10b981', fontFamily: 'Cairo', fontSize: '1.4rem' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                مركز التحكم بالصلاحيات والتقارير | وحدة بلدي
+              </h2>
+              <button className={styles.modalCloseIcon} onClick={() => setIsPermissionsOpen(false)} title="إغلاق" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem', marginTop: '1.5rem', fontFamily: 'Cairo' }}>
+              
+              {/* قسم 1: إدارة الموظفين والصلاحيات */}
+              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '15px', padding: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '10px' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    👥 قائمة الموظفين وإعدادات الصلاحيات
+                  </h3>
+                  <button 
+                    onClick={() => setIsAddEmployeeOpen(true)}
+                    style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '8px 18px', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.3s' }}
+                  >
+                    ➕ إضافة موظف جديد
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {employeesList.map((emp) => {
+                    const isSelected = selectedEmployeeForPerms === emp.name;
+                    return (
+                      <div 
+                        key={emp.user}
+                        style={{ background: isSelected ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${isSelected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255,255,255,0.05)'}`, borderRadius: '12px', padding: '1rem', transition: 'all 0.3s' }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                          <div>
+                            <span style={{ fontWeight: 'bold', color: '#ffffff', fontSize: '1rem' }}>{emp.name}</span>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginRight: '10px', background: 'rgba(255,255,255,0.08)', padding: '2px 8px', borderRadius: '15px' }}>{emp.user}</span>
+                            {emp.name.includes('محمد الربيش') && (
+                              <span style={{ fontSize: '0.75rem', color: '#10b981', marginRight: '5px', fontWeight: 'bold', background: 'rgba(16, 185, 129, 0.15)', padding: '2px 8px', borderRadius: '15px' }}>المشرف العام 🛡️</span>
+                            )}
+                          </div>
+                          
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button 
+                              onClick={() => {
+                                setSelectedEmployeeForPerms(isSelected ? null : emp.name);
+                              }}
+                              style={{ background: isSelected ? '#10b981' : 'rgba(255,255,255,0.05)', color: isSelected ? 'white' : 'var(--text)', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', cursor: 'pointer', transition: 'all 0.2s', fontWeight: 'bold' }}
+                            >
+                              {isSelected ? 'إغلاق الصلاحيات 🔒' : 'تعديل الصلاحيات ⚙️'}
+                            </button>
+                            <button 
+                              onClick={() => {
+                                setEditEmpPassName(emp.name);
+                                setEditEmpPassValue(emp.pass || '');
+                                setIsEditPasswordOpen(true);
+                              }}
+                              style={{ background: 'rgba(250, 204, 21, 0.1)', color: '#facc15', border: '1px solid rgba(250, 204, 21, 0.2)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}
+                            >
+                              🔑 كلمة السر
+                            </button>
+                            {!emp.name.includes('محمد الربيش') && (
+                              <button 
+                                onClick={() => {
+                                  if (confirm(`هل أنت متأكد من رغبتك في حذف الموظف "${emp.name}" نهائياً من النظام؟`)) {
+                                    const updated = employeesList.filter(e => e.name !== emp.name);
+                                    saveEmployeesList(updated);
+                                    setNewTicketToast(`🗑️ تم حذف الموظف "${emp.name}" بنجاح!`);
+                                    setTimeout(() => setNewTicketToast(null), 4000);
+                                  }
+                                }}
+                                style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}
+                                title="حذف الموظف"
+                              >
+                                🗑️
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* إعدادات الصلاحيات الفردية (تظهر بالتمدد عند الاختيار) */}
+                        {isSelected && (
+                          <div style={{ marginTop: '1.2rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                            {[
+                              { key: 'editTicket', label: 'تعديل البلاغ 📝' },
+                              { key: 'createTicket', label: 'إنشاء بلاغ ➕' },
+                              { key: 'deleteCircular', label: 'حذف التعاميم 🗑️' },
+                              { key: 'addEmployee', label: 'إضافة موظف جديد 👥' },
+                              { key: 'editPassword', label: 'تعديل كلمات المرور 🔑' },
+                              { key: 'sendReport', label: 'تصدير وإرسال التقارير 📊' },
+                            ].map((item) => {
+                              const hasPerm = emp.permissions[item.key as keyof PermissionSet];
+                              const isOwnerAdmin = emp.name.includes('محمد الربيش');
+                              return (
+                                <div 
+                                  key={item.key} 
+                                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}
+                                >
+                                  <span style={{ fontSize: '0.85rem', color: '#e2e8f0' }}>{item.label}</span>
+                                  <label className={styles.switch} style={{ position: 'relative', display: 'inline-block', width: '36px', height: '20px', cursor: isOwnerAdmin ? 'not-allowed' : 'pointer' }}>
+                                    <input 
+                                      type="checkbox" 
+                                      checked={hasPerm}
+                                      disabled={isOwnerAdmin}
+                                      onChange={() => {
+                                        if (isOwnerAdmin) return;
+                                        const updated = employeesList.map(e => {
+                                          if (e.name === emp.name) {
+                                            return {
+                                              ...e,
+                                              permissions: {
+                                                ...e.permissions,
+                                                [item.key]: !hasPerm
+                                              }
+                                            };
+                                          }
+                                          return e;
+                                        });
+                                        saveEmployeesList(updated);
+                                      }}
+                                      style={{ opacity: 0, width: 0, height: 0 }}
+                                    />
+                                    <span style={{
+                                      position: 'absolute',
+                                      top: 0, left: 0, right: 0, bottom: 0,
+                                      backgroundColor: hasPerm ? '#10b981' : '#475569',
+                                      borderRadius: '34px',
+                                      transition: '0.3s'
+                                    }}>
+                                      <span style={{
+                                        position: 'absolute',
+                                        content: '""',
+                                        height: '14px', width: '14px',
+                                        left: hasPerm ? '18px' : '4px',
+                                        bottom: '3px',
+                                        backgroundColor: 'white',
+                                        borderRadius: '50%',
+                                        transition: '0.3s'
+                                      }} />
+                                    </span>
+                                  </label>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* قسم 2: مركز التقارير المتقدم وإعداد المؤشرات */}
+              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '15px', padding: '1.5rem' }}>
+                <h3 style={{ margin: '0 0 1.2rem 0', fontSize: '1.1rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  📊 مركز تصدير التقارير المتقدم وإرسال البيانات
+                </h3>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.2rem' }}>
+                  {/* تحديد المؤشر الخاص */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '8px', fontWeight: 'bold' }}>🎯 حدد مؤشر فلترة التقرير:</label>
+                    <select 
+                      value={reportIndicator} 
+                      onChange={(e: any) => setReportIndicator(e.target.value)}
+                      style={{ width: '100%', padding: '10px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'white', fontFamily: 'Cairo', outline: 'none' }}
+                    >
+                      <option value="all">كل البلاغات (عام)</option>
+                      <option value="closed">المغلقة (تم الحل)</option>
+                      <option value="open">المفتوحة (لم يتم الحل)</option>
+                      <option value="ministry">لدى الوزارة</option>
+                      <option value="waiting">بانتظار المستفيد</option>
+                      <option value="new">بلاغ جديد</option>
+                      <option value="general">مشكلة عامة</option>
+                    </select>
+                  </div>
+
+                  {/* تحديد نوع التصدير */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '8px', fontWeight: 'bold' }}>📥 آلية استلام التقرير:</label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={() => setReportMethod('local')}
+                        style={{ flex: 1, padding: '10px', background: reportMethod === 'local' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)', color: reportMethod === 'local' ? '#10b981' : 'white', border: `1px solid ${reportMethod === 'local' ? '#10b981' : 'rgba(255,255,255,0.1)'}`, borderRadius: '10px', cursor: 'pointer', fontFamily: 'Cairo', fontWeight: 'bold', transition: 'all 0.2s' }}
+                      >
+                        💾 حفظ محلي
+                      </button>
+                      <button
+                        onClick={() => setReportMethod('email')}
+                        style={{ flex: 1, padding: '10px', background: reportMethod === 'email' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.05)', color: reportMethod === 'email' ? '#10b981' : 'white', border: `1px solid ${reportMethod === 'email' ? '#10b981' : 'rgba(255,255,255,0.1)'}`, borderRadius: '10px', cursor: 'pointer', fontFamily: 'Cairo', fontWeight: 'bold', transition: 'all 0.2s' }}
+                      >
+                        📧 بريد إلكتروني
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* حقل البريد الإلكتروني (يظهر فقط عند تحديد الإرسال بالايميل) */}
+                {reportMethod === 'email' && (
+                  <div style={{ marginTop: '1.2rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '8px' }}>عنوان البريد الإلكتروني للمستلم:</label>
+                    <input 
+                      type="email" 
+                      placeholder="example@momah.gov.sa"
+                      value={reportEmail}
+                      onChange={(e) => setReportEmail(e.target.value)}
+                      style={{ width: '100%', padding: '10px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'white', fontFamily: 'Cairo', outline: 'none' }}
+                    />
+                  </div>
+                )}
+
+                <button
+                  onClick={() => {
+                    let filtered = baseComplaints;
+                    if (reportIndicator === 'closed') filtered = baseComplaints.filter(c => c.solution === 'تم الحل');
+                    else if (reportIndicator === 'open') filtered = baseComplaints.filter(c => c.solution === 'لم يتم الحل');
+                    else if (reportIndicator === 'ministry') filtered = baseComplaints.filter(c => c.solution === 'لدى الوزارة');
+                    else if (reportIndicator === 'waiting') filtered = baseComplaints.filter(c => c.solution === 'بانتظار المستفيد');
+                    else if (reportIndicator === 'new') filtered = baseComplaints.filter(c => c.solution === 'بلاغ جديد');
+                    else if (reportIndicator === 'general') filtered = baseComplaints.filter(c => c.solution === 'مشكلة عامة');
+
+                    if (filtered.length === 0) {
+                      alert('لا توجد بلاغات مطابقة للمؤشر المختار للتصدير حالياً.');
+                      return;
+                    }
+
+                    if (reportMethod === 'local') {
+                      const headers = ['رقم البلاغ', 'التصنيف/النوع', 'حالة الحل', 'التاريخ', 'المستقبل'];
+                      const rows = filtered.map(c => [c.number, c.type, c.solution, c.date, c.receiver]);
+                      let csvContent = '\uFEFF'; 
+                      csvContent += headers.join(',') + '\n';
+                      rows.forEach(row => {
+                        csvContent += row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',') + '\n';
+                      });
+
+                      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.setAttribute('href', url);
+                      link.setAttribute('download', `تقرير_بلاغات_${reportIndicator}_${new Date().toISOString().split('T')[0]}.csv`);
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      
+                      setNewTicketToast('📥 تم تحميل التقرير وتصديره بنجاح!');
+                      setTimeout(() => setNewTicketToast(null), 5000);
+                    } else {
+                      if (!reportEmail || !reportEmail.includes('@')) {
+                        alert('يرجى إدخال عنوان بريد إلكتروني صحيح.');
+                        return;
+                      }
+                      setReportLoading(true);
+                      setTimeout(() => {
+                        setReportLoading(false);
+                        setNewTicketToast(`📧 تم إرسال ملف التقرير بنجاح للبريد الإلكتروني: ${reportEmail}`);
+                        setTimeout(() => setNewTicketToast(null), 6000);
+                      }, 1500);
+                    }
+                  }}
+                  disabled={reportLoading}
+                  style={{ width: '100%', marginTop: '1.5rem', padding: '12px', background: 'linear-gradient(135deg, #10b981, #059669)', color: 'white', border: 'none', borderRadius: '12px', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.25)' }}
+                >
+                  {reportLoading ? '⏳ جاري توليد وإرسال التقرير...' : '🚀 تصدير وإرسال التقرير الآن'}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* نافذة منبثقة لإضافة موظف جديد */}
+      {/* ========================================== */}
+      {isAddEmployeeOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsAddEmployeeOpen(false)} style={{ zIndex: 11000 }}>
+          <div className={styles.modalContent} style={{ maxWidth: '450px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', direction: 'rtl', fontFamily: 'Cairo' }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.8rem' }}>
+              <h3 style={{ margin: 0, color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>➕ إضافة موظف جديد للنظام</h3>
+              <button onClick={() => setIsAddEmployeeOpen(false)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '1.2rem', cursor: 'pointer' }}>&times;</button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!newEmpName || !newEmpUser || !newEmpPass || !newEmpPhone) {
+                alert('يرجى تعبئة كافة حقول بيانات الموظف.');
+                return;
+              }
+              const exists = employeesList.some(emp => emp.user.toLowerCase() === newEmpUser.trim().toLowerCase());
+              if (exists) {
+                alert('اسم المستخدم هذا مسجل مسبقاً! يرجى اختيار اسم مستخدم فريد.');
+                return;
+              }
+
+              const newEmployee: EmployeeItem = {
+                name: newEmpName.trim(),
+                user: newEmpUser.trim().toLowerCase(),
+                phone: newEmpPhone.trim(),
+                pass: newEmpPass.trim(),
+                permissions: {
+                  editTicket: true,
+                  createTicket: true,
+                  deleteCircular: false,
+                  addEmployee: false,
+                  editPassword: false,
+                  sendReport: false
+                }
+              };
+
+              const updated = [...employeesList, newEmployee];
+              saveEmployeesList(updated);
+
+              setNewEmpName('');
+              setNewEmpUser('');
+              setNewEmpPhone('');
+              setNewEmpPass('');
+              setIsAddEmployeeOpen(false);
+
+              setNewTicketToast(`✅ تم إضافة الموظف "${newEmployee.name}" وصلاحياته الافتراضية بنجاح!`);
+              setTimeout(() => setNewTicketToast(null), 5000);
+            }} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '4px' }}>الاسم الكامل للموظف:</label>
+                <input type="text" value={newEmpName} onChange={(e) => setNewEmpName(e.target.value)} required style={{ width: '100%', padding: '8px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', outline: 'none', fontFamily: 'Cairo' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '4px' }}>اسم المستخدم (Username للدخول):</label>
+                <input type="text" value={newEmpUser} onChange={(e) => setNewEmpUser(e.target.value)} required style={{ width: '100%', padding: '8px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', outline: 'none', fontFamily: 'Cairo' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '4px' }}>رقم الجوال (مثال: 966500000000):</label>
+                <input type="text" value={newEmpPhone} onChange={(e) => setNewEmpPhone(e.target.value)} required style={{ width: '100%', padding: '8px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', outline: 'none', fontFamily: 'Cairo' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '4px' }}>كلمة المرور (Password):</label>
+                <input type="text" value={newEmpPass} onChange={(e) => setNewEmpPass(e.target.value)} required style={{ width: '100%', padding: '8px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', outline: 'none', fontFamily: 'Cairo' }} />
+              </div>
+
+              <button type="submit" style={{ width: '100%', marginTop: '10px', padding: '10px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>حفظ وإضافة الموظف</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* نافذة منبثقة لتعديل كلمة مرور موظف */}
+      {/* ========================================== */}
+      {isEditPasswordOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsEditPasswordOpen(false)} style={{ zIndex: 11000 }}>
+          <div className={styles.modalContent} style={{ maxWidth: '400px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', direction: 'rtl', fontFamily: 'Cairo' }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.8rem' }}>
+              <h3 style={{ margin: 0, color: 'white' }}>🔑 تعديل كلمة المرور: {editEmpPassName}</h3>
+              <button onClick={() => setIsEditPasswordOpen(false)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '1.2rem', cursor: 'pointer' }}>&times;</button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!editEmpPassValue) {
+                alert('يرجى إدخال كلمة سر صالحة.');
+                return;
+              }
+              const updated = employeesList.map(emp => {
+                if (emp.name === editEmpPassName) {
+                  return { ...emp, pass: editEmpPassValue.trim() };
+                }
+                return emp;
+              });
+              saveEmployeesList(updated);
+              setIsEditPasswordOpen(false);
+
+              setNewTicketToast(`🔑 تم تحديث كلمة مرور الموظف "${editEmpPassName}" بنجاح!`);
+              setTimeout(() => setNewTicketToast(null), 5000);
+            }} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '4px' }}>كلمة المرور الجديدة:</label>
+                <input type="text" value={editEmpPassValue} onChange={(e) => setEditEmpPassValue(e.target.value)} required style={{ width: '100%', padding: '8px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', outline: 'none', fontFamily: 'Cairo' }} />
+              </div>
+              <button type="submit" style={{ width: '100%', marginTop: '10px', padding: '10px', background: '#eab308', color: '#0f172a', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تحديث كلمة المرور</button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {isEditOpen && editingTicket && (
         <div className={styles.modalOverlay} onClick={() => setIsEditOpen(false)}>
           <div className={styles.modalContent} style={{maxWidth: '500px'}} onClick={(e) => e.stopPropagation()}>
@@ -3153,7 +3727,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                         <div className={styles.customOption} onClick={() => { setEditingTicket({...editingTicket, receiver:'الجميع'}); setIsEditReceiverOpen(false); }}>
                           👤 الجميع
                         </div>
-                        {EMPLOYEES.map(emp => (
+                        {(employeesList.length > 0 ? employeesList : DEFAULT_EMPLOYEES_WITH_PERMS).map(emp => (
                           <div 
                             key={emp.name} 
                             className={styles.customOption}
@@ -3549,7 +4123,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
             <span>قائمة البلاغات ({filteredComplaints.length})</span>
           </h2>
           
-          {(userRole === 'editor' || (loggedInUser && loggedInUser.includes('محمد الربيش'))) && (
+          {(userRole === 'super_admin' || (userRole === 'editor' && currentUserPermissions?.createTicket)) && (
             <div className={styles.quickActions}>
               {/* زر إنشاء بلاغ نوشن (+) */}
               <button 
@@ -3654,11 +4228,11 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               >
                 <div className={styles.cardHeader} style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                   <span className={styles.ticketNumber}>{complaint.number}</span>
-                  {(userRole === 'super_admin' || (userRole === 'editor' && (
-                    complaint.receiver === loggedInUser || 
-                    // معالجة فروق الأسماء البسيطة
-                    (loggedInUser && complaint.receiver.includes(loggedInUser.split(' ')[0]))
-                  ))) && (
+                   {(userRole === 'super_admin' || (userRole === 'editor' && currentUserPermissions?.editTicket && (
+                     complaint.receiver === loggedInUser || 
+                     // معالجة فروق الأسماء البسيطة
+                     (loggedInUser && complaint.receiver.includes(loggedInUser.split(' ')[0]))
+                   ))) && (
                     <div className={styles.actionBar}>
                       <button 
                         className={`${styles.actionBarBtn} ${styles.actionBarBtnCopy}`}
@@ -3729,9 +4303,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                     <span className={styles.typeBadge} style={{ backgroundColor: getCategoryColor(complaint.type) }}>
                       {complaint.type}
                     </span>
-                    {EMPLOYEES.find(e => e.name === complaint.receiver) && (
+                    {(employeesList.length > 0 ? employeesList : DEFAULT_EMPLOYEES_WITH_PERMS).find(e => e.name === complaint.receiver) && (
                       <a 
-                        href={`https://wa.me/${EMPLOYEES.find(e => e.name === complaint.receiver)?.phone}?text=${encodeURIComponent(`السلام عليكم، بخصوص البلاغ رقم ${complaint.number}:\nاكتب استفسارك`)}`}
+                        href={`https://wa.me/${(employeesList.length > 0 ? employeesList : DEFAULT_EMPLOYEES_WITH_PERMS).find(e => e.name === complaint.receiver)?.phone}?text=${encodeURIComponent(`السلام عليكم، بخصوص البلاغ رقم ${complaint.number}:\nاكتب استفسارك`)}`}
                         target="_blank" rel="noopener noreferrer"
                         className={styles.waCardBtn}
                         title="تواصل واتساب"

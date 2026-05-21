@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from '../page.module.css';
 
 const EMPLOYEES = [
@@ -22,6 +22,18 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
+  const [employeesList, setEmployeesList] = useState(EMPLOYEES);
+
+  useEffect(() => {
+    const cached = localStorage.getItem('balady_employees_v1');
+    if (cached) {
+      try {
+        setEmployeesList(JSON.parse(cached));
+      } catch (e) {
+        console.error('Failed to parse cached employees list', e);
+      }
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +57,7 @@ export default function LoginPage() {
         }
       } else {
         const cleanUsername = username.trim().toLowerCase();
-        const emp = EMPLOYEES.find(e => e.user.toLowerCase() === cleanUsername && e.pass === password.trim());
+        const emp = employeesList.find(e => e.user.toLowerCase() === cleanUsername && e.pass === password.trim());
         if (emp) {
           // جميع الموظفين يحصلون على توكن باسمائهم لضمان التعرف عليهم
           document.cookie = `auth_token=editor_${encodeURIComponent(emp.name)}; path=/; max-age=604800`;
