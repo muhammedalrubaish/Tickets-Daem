@@ -1097,26 +1097,62 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
     try {
       if (newCircFile) {
-        const formData = new FormData();
-        formData.append('file', newCircFile);
-        
         const originalName = newCircFile.name;
-        const sanitizedName = `${newCircNumber}_${originalName.replace(/\s+/g, '_')}`;
-        formData.append('fileName', sanitizedName);
+        const fileExtension = originalName.split('.').pop() || 'pdf';
+        
+        // تنظيف رقم التعميم ليكون متوافقاً مع مفاتيح التخزين السحابي (أرقام وحروف إنجليزية ونقاط وخطوط فقط)
+        const safeNumber = String(newCircNumber).replace(/[^a-zA-Z0-9._-]/g, '');
+        // اسم ملف آمن وخالٍ من الأحرف العربية لتجنب مشكلة Invalid key في Supabase Storage
+        const safeFileName = `circular_${safeNumber || 'doc'}_${Date.now()}.${fileExtension}`;
 
-        const uploadRes = await fetch('/api/upload-circular', {
-          method: 'POST',
-          body: formData
-        });
+        console.log('Uploading file safe name:', safeFileName);
 
-        const uploadData = await uploadRes.json();
-        if (uploadData.success) {
-          filePath = uploadData.path || `/الملفات/التعاميم/${sanitizedName}`;
-          if (uploadData.warning) {
-            alert(uploadData.warning);
+        let uploadSuccess = false;
+
+        // 1. محاولة الرفع السحابي المباشر من المتصفح لضمان الفاعلية والسرعة وتجاوز قيود Vercel
+        try {
+          const { data, error } = await supabase.storage
+            .from('circulars')
+            .upload(safeFileName, newCircFile, {
+              cacheControl: '3600',
+              upsert: true
+            });
+
+          if (!error && data) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('circulars')
+              .getPublicUrl(safeFileName);
+            
+            filePath = publicUrl;
+            uploadSuccess = true;
+            console.log('Direct browser upload to Supabase storage succeeded:', filePath);
+          } else {
+            console.warn('Direct browser upload failed, trying fallback API route:', error);
           }
-        } else {
-          throw new Error(uploadData.error || 'فشل رفع الملف.');
+        } catch (sbErr) {
+          console.warn('Exception during direct browser upload, trying fallback API route:', sbErr);
+        }
+
+        // 2. خيار احتياطي: الرفع عبر خادم API (إذا كان هناك مشكلة بالاتصال المباشر)
+        if (!uploadSuccess) {
+          const formData = new FormData();
+          formData.append('file', newCircFile);
+          formData.append('fileName', safeFileName);
+
+          const uploadRes = await fetch('/api/upload-circular', {
+            method: 'POST',
+            body: formData
+          });
+
+          const uploadData = await uploadRes.json();
+          if (uploadData.success) {
+            filePath = uploadData.path || `/الملفات/التعاميم/${safeFileName}`;
+            if (uploadData.warning) {
+              console.warn('API upload warning:', uploadData.warning);
+            }
+          } else {
+            throw new Error(uploadData.error || 'فشل رفع الملف من خلال الخادم أيضاً.');
+          }
         }
       }
 

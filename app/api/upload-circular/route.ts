@@ -13,6 +13,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'لم يتم توفير الملف أو اسم الملف.' }, { status: 400 });
     }
 
+    // تعقيم اسم الملف في الخادم ليكون متوافقاً تماماً مع Supabase Storage (حروف إنجليزية، أرقام، نقاط، شرطات فقط)
+    const originalExt = fileName.split('.').pop() || 'pdf';
+    const baseNameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
+    // إبقاء الأحرف الآمنة واستبدال الباقي بشرطة سفلية
+    const safeBaseName = baseNameWithoutExt.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const safeFileName = `${safeBaseName}.${originalExt}`;
+
     // تحويل الملف إلى Buffer
     const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -20,7 +27,7 @@ export async function POST(req: Request) {
     try {
       const { data, error } = await supabase.storage
         .from('circulars')
-        .upload(fileName, buffer, {
+        .upload(safeFileName, buffer, {
           contentType: file.type || 'application/pdf',
           upsert: true
         });
@@ -29,7 +36,7 @@ export async function POST(req: Request) {
         // الحصول على الرابط العام المباشر والدائم للملف
         const { data: { publicUrl } } = supabase.storage
           .from('circulars')
-          .getPublicUrl(fileName);
+          .getPublicUrl(safeFileName);
 
         return NextResponse.json({ success: true, path: publicUrl });
       } else {
@@ -47,12 +54,12 @@ export async function POST(req: Request) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    const filePath = path.join(uploadDir, fileName);
+    const filePath = path.join(uploadDir, safeFileName);
     fs.writeFileSync(filePath, buffer);
 
     return NextResponse.json({ 
       success: true, 
-      path: `/الملفات/التعاميم/${fileName}`,
+      path: `/الملفات/التعاميم/${safeFileName}`,
       warning: 'تنبيه: تم الحفظ محلياً على جهازك. لجعل الملف يعمل مباشرة سحابياً دون الحاجة لرفعه برمجياً، يرجى تفعيل مجلد "circulars" وجعله عاماً (Public) في لوحة تحكم Supabase.'
     });
   } catch (error: any) {
