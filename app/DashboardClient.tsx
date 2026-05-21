@@ -791,7 +791,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   };
 
   const [activeFilter, setActiveFilter] = useState<'all' | 'open' | 'closed' | 'inProgress' | 'undated' | 'undefined' | 'general' | 'late' | 'waiting' | 'vacation' | 'duplicate' | 'ministry' | 'new' | 'ext_new' | 'ext_recent' | 'ext_old' | 'ext_very_old' | 'ext_unassigned'>('all');
-  const [isExtensionWidgetOpen, setIsExtensionWidgetOpen] = useState(false);
   const [showSupervisorTools, setShowSupervisorTools] = useState(false);
   const [selectedReceiver, setSelectedReceiver] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -1269,36 +1268,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       !c.number.includes('📢')
     );
   }, [complaints]);
- 
-  const extensionStats = useMemo(() => {
-    const userFilteredComplaints = (selectedReceiver === 'all' 
-      ? baseComplaints 
-      : baseComplaints.filter(c => {
-          const emp = EMPLOYEES.find(e => e.name === selectedReceiver);
-          const receiverValue = (c.receiver || '').toLowerCase().trim();
-          const targetName = selectedReceiver.toLowerCase().trim();
-          const targetUser = emp ? emp.user.toLowerCase().trim() : '';
-          return receiverValue.includes(targetName.split(' ')[0]) || (targetUser && receiverValue.includes(targetUser));
-        }));
-
-    return {
-      new: userFilteredComplaints.filter(c => (c.solution || '').trim() === 'بلاغ جديد').length,
-      recent: userFilteredComplaints.filter(c => (c.solution || '').trim() === 'بانتظار المستفيد').length,
-      veryOld: userFilteredComplaints.filter(c => (c.solution || '').trim() === 'لدى الوزارة').length,
-      old: userFilteredComplaints.filter(c => (c.solution || '').trim() === 'مشكلة عامة').length,
-      unassigned: userFilteredComplaints.filter(c => {
-        const sol = (c.solution || '').trim();
-        const isNew = sol === 'بلاغ جديد' || sol === 'غير محدد' || sol === '';
-        if (!isNew || !c.date || c.date === 'غير محدد') return false;
-        try {
-          const ticketDate = new Date(c.date);
-          const oneWeekAgo = new Date();
-          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-          return ticketDate < oneWeekAgo;
-        } catch { return false; }
-      }).length
-    };
-  }, [baseComplaints, selectedReceiver]);
 
   const stats = useMemo(() => {
     const userFilteredComplaints = (selectedReceiver === 'all' 
@@ -2948,115 +2917,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           <div className={styles.spinnerSmall}></div>
           <span>جاري معالجة طلبك...</span>
         </div>
-      )}
-
-
-      
-      {/* لوحة مؤشرات داعم بلس Premium التفاعلية */}
-      {isExtensionWidgetOpen ? (
-        <div className={styles.extPopupCard}>
-          <div className={styles.extCardHeader}>
-            <div className={styles.extHeaderTitleWrapper}>
-              <h3 className={styles.extCardTitle}>داعم بلس Premium</h3>
-              <span className={styles.extPremiumBadge}>PRO</span>
-            </div>
-            <button 
-              className={styles.extCloseBtn} 
-              onClick={() => setIsExtensionWidgetOpen(false)}
-              title="إغلاق"
-            >
-              ×
-            </button>
-          </div>
-          
-          <p className={styles.extCardSubtitle}>إحصائيات مؤشرات الأداء الحية</p>
-          
-          <div className={styles.extIndicatorsList}>
-            <div 
-              className={`${styles.extIndicatorRow} ${activeFilter === 'ext_new' ? styles.activeRow : ''}`}
-              onClick={() => setActiveFilter(activeFilter === 'ext_new' ? 'all' : 'ext_new')}
-            >
-              <div className={styles.extRowRight}>
-                <span className={`${styles.extDot} ${styles.extDotBlue}`}></span>
-                <span className={styles.extLabel}>بلاغات جديدة (بالموقع)</span>
-              </div>
-              <span className={styles.extCount}>{extensionStats.new}</span>
-            </div>
-
-            <div 
-              className={`${styles.extIndicatorRow} ${activeFilter === 'ext_recent' ? styles.activeRow : ''}`}
-              onClick={() => setActiveFilter(activeFilter === 'ext_recent' ? 'all' : 'ext_recent')}
-            >
-              <div className={styles.extRowRight}>
-                <span className={`${styles.extDot} ${styles.extDotPink}`}></span>
-                <span className={styles.extLabel}>بانتظار المستفيد (بالموقع)</span>
-              </div>
-              <span className={styles.extCount}>{extensionStats.recent}</span>
-            </div>
-
-            <div 
-              className={`${styles.extIndicatorRow} ${activeFilter === 'ext_very_old' ? styles.activeRow : ''}`}
-              onClick={() => setActiveFilter(activeFilter === 'ext_very_old' ? 'all' : 'ext_very_old')}
-            >
-              <div className={styles.extRowRight}>
-                <span className={`${styles.extDot} ${styles.extDotYellow}`}></span>
-                <span className={styles.extLabel}>لدى الوزارة (بالموقع)</span>
-              </div>
-              <span className={styles.extCount}>{extensionStats.veryOld}</span>
-            </div>
-
-            <div 
-              className={`${styles.extIndicatorRow} ${activeFilter === 'ext_old' ? styles.activeRow : ''}`}
-              onClick={() => setActiveFilter(activeFilter === 'ext_old' ? 'all' : 'ext_old')}
-            >
-              <div className={styles.extRowRight}>
-                <span className={`${styles.extDot} ${styles.extDotCyan}`}></span>
-                <span className={styles.extLabel}>مشكلة عامة (بالموقع)</span>
-              </div>
-              <span className={styles.extCount}>{extensionStats.old}</span>
-            </div>
-
-            <div 
-              className={`${styles.extIndicatorRow} ${activeFilter === 'ext_unassigned' ? styles.activeRow : ''}`}
-              onClick={() => setActiveFilter(activeFilter === 'ext_unassigned' ? 'all' : 'ext_unassigned')}
-            >
-              <div className={styles.extRowRight}>
-                <span className={`${styles.extDot} ${styles.extDotRed}`}></span>
-                <span className={styles.extLabel}>متأخر أكثر من أسبوع</span>
-              </div>
-              <span className={styles.extCount}>{extensionStats.unassigned}</span>
-            </div>
-          </div>
-
-          <div className={styles.extCardFooter}>
-            {activeFilter.startsWith('ext_') && (
-              <button 
-                className={styles.extResetBtn}
-                onClick={() => setActiveFilter('all')}
-              >
-                إعادة تعيين الفلترة
-              </button>
-            )}
-            <a 
-              href="https://tickets-daem.vercel.app/" 
-              target="_blank" 
-              rel="noreferrer" 
-              className={styles.extFooterLink}
-            >
-              مزامنة حية نشطة ⚡
-            </a>
-          </div>
-        </div>
-      ) : (
-        <button
-          className={styles.extLauncherBtn}
-          onClick={() => setIsExtensionWidgetOpen(true)}
-          title="مؤشرات داعم بلس Premium"
-        >
-          <span className={styles.extLauncherPulse}></span>
-          <span className={styles.extLauncherIcon}>🧩</span>
-          <span className={styles.extLauncherText}>داعم بلس</span>
-        </button>
       )}
 
       {/* تم نقل نافذة تبديل البوابة لتكون تحت الأيقونة مباشرة في الهيدر العلوي */}
