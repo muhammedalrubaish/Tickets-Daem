@@ -1127,6 +1127,12 @@
   color: white;
 }
 
+.calendarDayCell:hover {
+  background: rgba(127, 188, 3, 0.12) !important;
+  border-color: rgba(127, 188, 3, 0.4) !important;
+  transform: scale(1.08);
+}
+
 .primaryBtn {
   background: var(--primary);
   color: white;

@@ -745,6 +745,96 @@ const CATEGORIES = [
   "امتثال المباني", "منصة رسم تقديم منتجات التبغ", "فاتورة سداد آلياً", "أخرى"
 ];
 
+// --- دالة تحليل التاريخ المرن لدعم كافة التنسيقات ---
+const parseFlexibleDate = (str: string): Date => {
+  if (!str || str === 'غير محدد') return new Date();
+  const parts = str.split('-');
+  if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      // تنسيق YYYY-MM-DD
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      const parsed = new Date(y, m, d);
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
+    } else {
+      // تنسيق DD-MM-YYYY
+      const d = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const y = parseInt(parts[2], 10);
+      const parsed = new Date(y, m, d);
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
+    }
+  }
+  const parsed = new Date(str);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
+};
+
+// --- دالة حساب وعرض الفارق الزمني باللغة العربية بديناميكية تامة ---
+const getArabicRelativeDateText = (dateStr: string) => {
+  if (!dateStr || dateStr === 'غير محدد') return null;
+  const targetDate = parseFlexibleDate(dateStr);
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  targetDate.setHours(0, 0, 0, 0);
+  
+  const diffTime = targetDate.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const absDays = Math.abs(diffDays);
+  
+  let dayText = '';
+  if (absDays === 1) {
+    dayText = 'يوم';
+  } else if (absDays === 2) {
+    dayText = 'يومين';
+  } else if (absDays >= 3 && absDays <= 10) {
+    dayText = `${absDays} أيام`;
+  } else {
+    dayText = `${absDays} يوماً`;
+  }
+  
+  if (diffDays === 0) {
+    return { text: '✨ اليوم', type: 'today', color: '#7fbc03', bg: 'rgba(127, 188, 3, 0.12)' };
+  } else if (diffDays < 0) {
+    return { 
+      text: `⏰ منذ ${dayText}`, 
+      type: 'past', 
+      color: '#e74c3c', 
+      bg: 'rgba(231, 76, 60, 0.12)' 
+    };
+  } else {
+    return { 
+      text: `📅 متبقي ${dayText}`, 
+      type: 'future', 
+      color: '#3498db', 
+      bg: 'rgba(52, 152, 219, 0.12)' 
+    };
+  }
+};
+
+// --- دالة تنسيق التاريخ باللغة العربية الكاملة للأيقونة والعرض الفاخر ---
+const formatArabicFullDate = (dateStr: string): string => {
+  if (!dateStr || dateStr === 'غير محدد') return 'غير محدد';
+  const date = parseFlexibleDate(dateStr);
+  const day = date.getDate().toLocaleString('ar-EG');
+  const monthNames = [
+    'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+  ];
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear().toLocaleString('ar-EG', { useGrouping: false });
+  return `${day} ${month} ${year}`;
+};
+
+// --- دالة تحويل التاريخ الكائن لـ DD-MM-YYYY للحفظ البرمجي المتوافق ---
+const formatDateToDDMMYYYY = (d: Date): string => {
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
 export default function DashboardClient({ complaints: initialComplaints }: Props) {
   const router = useRouter();
   const [complaints, setComplaints] = useState<Complaint[]>(initialComplaints);
@@ -816,6 +906,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [isEditReceiverOpen, setIsEditReceiverOpen] = useState(false);
   const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
+  const [isEditDateOpen, setIsEditDateOpen] = useState(false);
+  const [calendarViewDate, setCalendarViewDate] = useState<Date>(new Date());
   const [ticketToDelete, setTicketToDelete] = useState<{id: string, createdAt?: string} | null>(null);
 
   // نظام التعاميم الإدارية الديناميكي
@@ -2641,19 +2733,361 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               )}
 
               {/* تعديل التاريخ */}
-              <div className={styles.formGroup} style={{marginTop: '1rem'}}>
+              <div className={styles.formGroup} style={{marginTop: '1rem', position: 'relative'}}>
                 <label className={styles.filterLabel}>تعديل التاريخ:</label>
-                <input 
-                  type="date" 
-                  className={styles.loginInput}
-                  value={editingTicket.date && editingTicket.date.includes('-') && editingTicket.date.split('-')[0].length === 2 ? editingTicket.date.split('-').reverse().join('-') : editingTicket.date || ''}
-                  onChange={(e) => {
-                    const dateVal = e.target.value; 
-                    const formatted = dateVal ? dateVal.split('-').reverse().join('-') : '';
-                    setEditingTicket({ ...editingTicket, date: formatted || dateVal });
-                  }}
-                  style={{ padding: '0.9rem 1.2rem', textAlign: 'right', width: '100%', boxSizing: 'border-box', colorScheme: 'dark' }}
-                />
+                <div className={styles.customSelectWrapper}>
+                  <div 
+                    className={styles.customSelectTrigger}
+                    onClick={() => {
+                      setIsEditDateOpen(!isEditDateOpen);
+                      if (editingTicket.date && editingTicket.date !== 'غير محدد') {
+                        setCalendarViewDate(parseFlexibleDate(editingTicket.date));
+                      } else {
+                        setCalendarViewDate(new Date());
+                      }
+                    }}
+                  >
+                    <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                      </svg>
+                      <span style={{fontWeight: 500}}>{formatArabicFullDate(editingTicket.date)}</span>
+                    </div>
+
+                    {/* Relative Days Badge */}
+                    <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                      {editingTicket.date && editingTicket.date !== 'غير محدد' && (() => {
+                        const rel = getArabicRelativeDateText(editingTicket.date);
+                        return rel ? (
+                          <span 
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '8px',
+                              fontSize: '0.78rem',
+                              fontWeight: 'bold',
+                              backgroundColor: rel.bg,
+                              color: rel.color,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                              border: `1px solid ${rel.color}25`
+                            }}
+                          >
+                            {rel.text}
+                          </span>
+                        ) : null;
+                      })()}
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{transform: isEditDateOpen ? 'rotate(180deg)' : 'none', transition:'0.3s'}}><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                  </div>
+
+                  {/* Custom Calendar Dropdown */}
+                  {isEditDateOpen && (
+                    <div 
+                      className={styles.customSelectOptions} 
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        marginTop: '0.5rem',
+                        padding: '1rem',
+                        zIndex: 2000,
+                        maxHeight: 'none',
+                        overflowY: 'visible',
+                        background: 'rgba(28, 35, 31, 0.98)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        backdropFilter: 'blur(20px)',
+                        borderRadius: '16px',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1)'
+                      }}
+                    >
+                      {/* Calendar Header */}
+                      <div style={{
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        marginBottom: '1rem',
+                        direction: 'rtl'
+                      }}>
+                        {/* Month/Year selector */}
+                        <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const d = new Date(calendarViewDate);
+                              d.setMonth(d.getMonth() - 1);
+                              setCalendarViewDate(d);
+                            }}
+                            style={{
+                              background: 'rgba(255,255,255,0.06)',
+                              border: 'none',
+                              color: '#fff',
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 'bold',
+                              fontSize: '1rem'
+                            }}
+                          >
+                            →
+                          </button>
+                          
+                          <span style={{
+                            fontSize: '1.05rem', 
+                            fontWeight: 'bold', 
+                            color: '#fff',
+                            minWidth: '105px',
+                            textAlign: 'center',
+                            fontFamily: 'Cairo'
+                          }}>
+                            {calendarViewDate.toLocaleString('ar-EG', { month: 'long', year: 'numeric' })}
+                          </span>
+
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const d = new Date(calendarViewDate);
+                              d.setMonth(d.getMonth() + 1);
+                              setCalendarViewDate(d);
+                            }}
+                            style={{
+                              background: 'rgba(255,255,255,0.06)',
+                              border: 'none',
+                              color: '#fff',
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 'bold',
+                              fontSize: '1rem'
+                            }}
+                          >
+                            ←
+                          </button>
+                        </div>
+
+                        {/* Year Quick Selector */}
+                        <div style={{display:'flex', alignItems:'center', gap:'4px'}}>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const d = new Date(calendarViewDate);
+                              d.setFullYear(d.getFullYear() - 1);
+                              setCalendarViewDate(d);
+                            }}
+                            style={{
+                              background: 'rgba(255,255,255,0.03)',
+                              border: 'none',
+                              color: 'rgba(255,255,255,0.6)',
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '0.85rem'
+                            }}
+                            title="السنة السابقة"
+                          >
+                            »
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const d = new Date(calendarViewDate);
+                              d.setFullYear(d.getFullYear() + 1);
+                              setCalendarViewDate(d);
+                            }}
+                            style={{
+                              background: 'rgba(255,255,255,0.03)',
+                              border: 'none',
+                              color: 'rgba(255,255,255,0.6)',
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '0.85rem'
+                            }}
+                            title="السنة التالية"
+                          >
+                            «
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Weekday Initials */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(7, 1fr)',
+                        gap: '4px',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        color: 'rgba(255,255,255,0.4)',
+                        fontSize: '0.85rem',
+                        marginBottom: '0.5rem',
+                        direction: 'rtl'
+                      }}>
+                        <div>ح</div>
+                        <div>ن</div>
+                        <div>ث</div>
+                        <div>ر</div>
+                        <div>خ</div>
+                        <div>ج</div>
+                        <div>س</div>
+                      </div>
+
+                      {/* Days Grid */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(7, 1fr)',
+                        gap: '6px',
+                        direction: 'rtl'
+                      }}>
+                        {(() => {
+                          const year = calendarViewDate.getFullYear();
+                          const month = calendarViewDate.getMonth();
+                          
+                          const firstDay = new Date(year, month, 1);
+                          const startDayOfWeek = firstDay.getDay(); // 0 represents Sunday
+                          const numDays = new Date(year, month + 1, 0).getDate();
+                          const prevNumDays = new Date(year, month, 0).getDate();
+                          
+                          const cells = [];
+                          
+                          // Days from previous month
+                          for (let i = startDayOfWeek - 1; i >= 0; i--) {
+                            const dNum = prevNumDays - i;
+                            const dObj = new Date(year, month - 1, dNum);
+                            cells.push({ date: dObj, isCurrentMonth: false, dayNumber: dNum });
+                          }
+                          
+                          // Days from current month
+                          for (let d = 1; d <= numDays; d++) {
+                            const dObj = new Date(year, month, d);
+                            cells.push({ date: dObj, isCurrentMonth: true, dayNumber: d });
+                          }
+                          
+                          // Days from next month
+                          const remainingCells = 42 - cells.length;
+                          for (let d = 1; d <= remainingCells; d++) {
+                            const dObj = new Date(year, month + 1, d);
+                            cells.push({ date: dObj, isCurrentMonth: false, dayNumber: d });
+                          }
+                          
+                          const currentSelectedDateStr = editingTicket.date;
+                          const currentSelectedDate = currentSelectedDateStr ? parseFlexibleDate(currentSelectedDateStr) : null;
+                          const today = new Date();
+                          
+                          return cells.map((cell, idx) => {
+                            const isSelected = currentSelectedDate && 
+                              cell.date.getDate() === currentSelectedDate.getDate() && 
+                              cell.date.getMonth() === currentSelectedDate.getMonth() && 
+                              cell.date.getFullYear() === currentSelectedDate.getFullYear();
+                            
+                            const isToday = cell.date.getDate() === today.getDate() &&
+                              cell.date.getMonth() === today.getMonth() &&
+                              cell.date.getFullYear() === today.getFullYear();
+                              
+                            return (
+                              <div
+                                key={idx}
+                                onClick={() => {
+                                  const formattedDateStr = formatDateToDDMMYYYY(cell.date);
+                                  setEditingTicket({ ...editingTicket, date: formattedDateStr });
+                                  setIsEditDateOpen(false);
+                                }}
+                                style={{
+                                  aspectRatio: '1',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  borderRadius: '10px',
+                                  cursor: 'pointer',
+                                  fontSize: '0.9rem',
+                                  fontWeight: isSelected || isToday ? 'bold' : 'normal',
+                                  color: isSelected ? '#fff' : cell.isCurrentMonth ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.25)',
+                                  background: isSelected 
+                                    ? 'linear-gradient(135deg, #007471 0%, #7fbc03 100%)' 
+                                    : isToday 
+                                      ? 'rgba(127, 188, 3, 0.15)' 
+                                      : 'rgba(255,255,255,0.02)',
+                                  border: isSelected 
+                                    ? '1px solid #7fbc03' 
+                                    : isToday 
+                                      ? '1px dashed #7fbc03' 
+                                      : '1px solid transparent',
+                                  boxShadow: isSelected ? '0 4px 10px rgba(127, 188, 3, 0.3)' : 'none',
+                                  transition: 'all 0.15s ease'
+                                }}
+                                className={styles.calendarDayCell}
+                              >
+                                {cell.dayNumber.toLocaleString('ar-EG')}
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+
+                      {/* Footer Actions */}
+                      <div style={{
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        marginTop: '1rem',
+                        paddingTop: '0.8rem',
+                        borderTop: '1px solid rgba(255,255,255,0.08)',
+                        direction: 'rtl'
+                      }}>
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            const todayStr = formatDateToDDMMYYYY(new Date());
+                            setEditingTicket({ ...editingTicket, date: todayStr });
+                            setIsEditDateOpen(false);
+                          }}
+                          style={{
+                            background: 'rgba(127, 188, 3, 0.12)',
+                            color: '#7fbc03',
+                            border: '1px solid rgba(127, 188, 3, 0.2)',
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            fontFamily: 'Cairo'
+                          }}
+                        >
+                          اليوم
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => setIsEditDateOpen(false)}
+                          style={{
+                            background: 'rgba(255,255,255,0.05)',
+                            color: 'rgba(255,255,255,0.7)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            fontFamily: 'Cairo'
+                          }}
+                        >
+                          إغلاق
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <button 
