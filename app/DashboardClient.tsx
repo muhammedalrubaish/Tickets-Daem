@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '../lib/supabase';
 
 import styles from './page.module.css';
 import TicketForm from './TicketForm';
@@ -920,69 +921,168 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [isUploadingCirc, setIsUploadingCirc] = useState(false);
 
   useEffect(() => {
-    const cached = localStorage.getItem('balady_circulars');
-    if (cached) {
-      setCirculars(JSON.parse(cached));
-    } else {
-      const defaultCirculars = [
-        {
-          id: 'circ_1',
-          title: 'تعميم الرخص الإنشائية (الأحدث)',
-          number: '7.01',
-          description: 'بشأن إطلاق تحسينات الرخص الإنشائية 7.01 - تحديثات العمل الجديدة',
-          file: '/الملفات/التعاميم/7.01 الرخص الإنشائية _ إطلاق تحسينات.pdf',
-          date: '19-05-2026',
-          color: '#a855f7'
-        },
-        {
-          id: 'circ_2',
-          title: 'تعميم التقارير المساحية (جديد)',
-          number: '6.19',
-          description: 'بشأن إعفاء الجهات الحكومية من الرسوم البلدية لخدمة التقارير المساحية 6.19',
-          file: '/الملفات/التعاميم/6.19 التقارير المساحية _ إعفاء الجهات الحكومية من الرسوم البلدية.pdf',
-          date: '19-05-2026',
-          color: '#3b82f6'
-        },
-        {
-          id: 'circ_3',
-          title: 'تعميم الشهادات الصحية',
-          number: '6.15',
-          description: 'بشأن إطلاق تحسينات الشهادات الصحية 6.15 - تحديثات العمل الجديدة',
-          file: '/الملفات/التعاميم/6.15 الشهادات الصحية _ إطلاق تحسينات.pdf',
-          date: '12-05-2026',
-          color: '#10b981'
-        },
-        {
-          id: 'circ_4',
-          title: 'تعميم رقم 1445/02 (VPN)',
-          number: '6.18',
-          description: 'بشأن تغيير نطاق 6.18 VPN - تحديثات الأمان الجديدة',
-          file: '/الملفات/التعاميم/6.18 VPN  تغيير نطاق.pdf',
-          date: '10-05-2026',
-          color: '#ef4444'
-        },
-        {
-          id: 'circ_5',
-          title: 'تعميم رقم 1445/01',
-          number: '1445/01',
-          description: 'بشأن تنظيم آلية استقبال البلاغات لعام 2026',
-          file: '',
-          date: '07-05-2026',
-          color: '#94a3b8'
-        },
-        {
-          id: 'circ_6',
-          title: 'قرار إداري داخلي',
-          number: 'إداري',
-          description: 'تحديث قائمة المشرفين والمسؤولين في البلديات الفرعية',
-          file: '',
-          date: '01-05-2026',
-          color: '#eab308'
+    const loadCirculars = async () => {
+      try {
+        // محاولة جلب التعاميم من قاعدة بيانات سوبابيس السحابية
+        const { data: dbCirculars, error } = await supabase
+          .from('circulars')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!error && dbCirculars) {
+          if (dbCirculars.length > 0) {
+            setCirculars(dbCirculars.map(c => ({
+              id: c.id,
+              title: c.title,
+              number: c.number,
+              description: c.description || '',
+              file: c.file || '',
+              date: c.date,
+              color: c.color || '#94a3b8'
+            })));
+            return;
+          } else {
+            // الجدول موجود ولكنه فارغ، نقوم بتهيئته تلقائياً بالتعاميم الافتراضية
+            console.log('جدول التعاميم فارغ، يتم تهيئة التعاميم الافتراضية في Supabase...');
+            const defaultCirculars = [
+              {
+                id: 'circ_1',
+                title: 'تعميم الرخص الإنشائية (الأحدث)',
+                number: '7.01',
+                description: 'بشأن إطلاق تحسينات الرخص الإنشائية 7.01 - تحديثات العمل الجديدة',
+                file: '/الملفات/التعاميم/7.01 الرخص الإنشائية _ إطلاق تحسينات.pdf',
+                date: '19-05-2026',
+                color: '#a855f7'
+              },
+              {
+                id: 'circ_2',
+                title: 'تعميم التقارير المساحية (جديد)',
+                number: '6.19',
+                description: 'بشأن إعفاء الجهات الحكومية من الرسوم البلدية لخدمة التقارير المساحية 6.19',
+                file: '/الملفات/التعاميم/6.19 التقارير المساحية _ إعفاء الجهات الحكومية من الرسوم البلدية.pdf',
+                date: '19-05-2026',
+                color: '#3b82f6'
+              },
+              {
+                id: 'circ_3',
+                title: 'تعميم الشهادات الصحية',
+                number: '6.15',
+                description: 'بشأن إطلاق تحسينات الشهادات الصحية 6.15 - تحديثات العمل الجديدة',
+                file: '/الملفات/التعاميم/6.15 الشهادات الصحية _ إطلاق تحسينات.pdf',
+                date: '12-05-2026',
+                color: '#10b981'
+              },
+              {
+                id: 'circ_4',
+                title: 'تعميم رقم 1445/02 (VPN)',
+                number: '6.18',
+                description: 'بشأن تغيير نطاق 6.18 VPN - تحديثات الأمان الجديدة',
+                file: '/الملفات/التعاميم/6.18 VPN  تغيير نطاق.pdf',
+                date: '10-05-2026',
+                color: '#ef4444'
+              },
+              {
+                id: 'circ_5',
+                title: 'تعميم رقم 1445/01',
+                number: '1445/01',
+                description: 'بشأن تنظيم آلية استقبال البلاغات لعام 2026',
+                file: '',
+                date: '07-05-2026',
+                color: '#94a3b8'
+              },
+              {
+                id: 'circ_6',
+                title: 'قرار إداري داخلي',
+                number: 'إداري',
+                description: 'تحديث قائمة المشرفين والمسؤولين في البلديات الفرعية',
+                file: '',
+                date: '01-05-2026',
+                color: '#eab308'
+              }
+            ];
+
+            const { error: seedErr } = await supabase.from('circulars').insert(defaultCirculars);
+            if (!seedErr) {
+              setCirculars(defaultCirculars);
+              return;
+            } else {
+              console.warn('Failed to seed Supabase circulars:', seedErr);
+            }
+          }
+        } else {
+          console.warn('Failed to query Supabase circulars, table may not exist:', error);
         }
-      ];
-      localStorage.setItem('balady_circulars', JSON.stringify(defaultCirculars));
-      setCirculars(defaultCirculars);
-    }
+      } catch (err) {
+        console.warn('Supabase circulars connection exception, falling back to localStorage:', err);
+      }
+
+      // الخيار الاحتياطي: استخدام localStorage والتعاميم الافتراضية
+      const cached = localStorage.getItem('balady_circulars');
+      if (cached) {
+        setCirculars(JSON.parse(cached));
+      } else {
+        const defaultCirculars = [
+          {
+            id: 'circ_1',
+            title: 'تعميم الرخص الإنشائية (الأحدث)',
+            number: '7.01',
+            description: 'بشأن إطلاق تحسينات الرخص الإنشائية 7.01 - تحديثات العمل الجديدة',
+            file: '/الملفات/التعاميم/7.01 الرخص الإنشائية _ إطلاق تحسينات.pdf',
+            date: '19-05-2026',
+            color: '#a855f7'
+          },
+          {
+            id: 'circ_2',
+            title: 'تعميم التقارير المساحية (جديد)',
+            number: '6.19',
+            description: 'بشأن إعفاء الجهات الحكومية من الرسوم البلدية لخدمة التقارير المساحية 6.19',
+            file: '/الملفات/التعاميم/6.19 التقارير المساحية _ إعفاء الجهات الحكومية من الرسوم البلدية.pdf',
+            date: '19-05-2026',
+            color: '#3b82f6'
+          },
+          {
+            id: 'circ_3',
+            title: 'تعميم الشهادات الصحية',
+            number: '6.15',
+            description: 'بشأن إطلاق تحسينات الشهادات الصحية 6.15 - تحديثات العمل الجديدة',
+            file: '/الملفات/التعاميم/6.15 الشهادات الصحية _ إطلاق تحسينات.pdf',
+            date: '12-05-2026',
+            color: '#10b981'
+          },
+          {
+            id: 'circ_4',
+            title: 'تعميم رقم 1445/02 (VPN)',
+            number: '6.18',
+            description: 'بشأن تغيير نطاق 6.18 VPN - تحديثات الأمان الجديدة',
+            file: '/الملفات/التعاميم/6.18 VPN  تغيير نطاق.pdf',
+            date: '10-05-2026',
+            color: '#ef4444'
+          },
+          {
+            id: 'circ_5',
+            title: 'تعميم رقم 1445/01',
+            number: '1445/01',
+            description: 'بشأن تنظيم آلية استقبال البلاغات لعام 2026',
+            file: '',
+            date: '07-05-2026',
+            color: '#94a3b8'
+          },
+          {
+            id: 'circ_6',
+            title: 'قرار إداري داخلي',
+            number: 'إداري',
+            description: 'تحديث قائمة المشرفين والمسؤولين في البلديات الفرعية',
+            file: '',
+            date: '01-05-2026',
+            color: '#eab308'
+          }
+        ];
+        localStorage.setItem('balady_circulars', JSON.stringify(defaultCirculars));
+        setCirculars(defaultCirculars);
+      }
+    };
+
+    loadCirculars();
   }, []);
 
   const handleAddCircular = async (e: React.FormEvent) => {
@@ -1033,9 +1133,44 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         color: randomColor
       };
 
-      const updated = [newCirc, ...circulars];
-      localStorage.setItem('balady_circulars', JSON.stringify(updated));
-      setCirculars(updated);
+      // محاولة الحفظ في Supabase أولاً لتظهر عند جميع المستخدمين تلقائياً
+      let savedToSupabase = false;
+      try {
+        const { error: dbErr } = await supabase
+          .from('circulars')
+          .insert([newCirc]);
+
+        if (!dbErr) {
+          savedToSupabase = true;
+          // جلب القائمة الكاملة المحدثة من Supabase
+          const { data: dbCirculars } = await supabase
+            .from('circulars')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (dbCirculars) {
+            setCirculars(dbCirculars.map(c => ({
+              id: c.id,
+              title: c.title,
+              number: c.number,
+              description: c.description || '',
+              file: c.file || '',
+              date: c.date,
+              color: c.color || '#94a3b8'
+            })));
+          }
+        } else {
+          console.warn('Failed to save to Supabase database, falling back to localStorage:', dbErr);
+        }
+      } catch (sbEx) {
+        console.warn('Supabase DB exception, falling back to localStorage:', sbEx);
+      }
+
+      // إذا فشل الرفع السحابي لعدم تهيئة الجدول، يتم الحفظ محلياً كخيار احتياطي
+      if (!savedToSupabase) {
+        const updated = [newCirc, ...circulars];
+        localStorage.setItem('balady_circulars', JSON.stringify(updated));
+        setCirculars(updated);
+      }
 
       setNewCircTitle('');
       setNewCircNumber('');
