@@ -2730,7 +2730,34 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                   ))}
                 </div>
 
-                <button className={styles.submitButton} onClick={() => setIsCircularsOpen(false)} style={{marginTop:'1.5rem'}}>
+                <button 
+                  onClick={() => setIsCircularsOpen(false)} 
+                  style={{
+                    width: '100%',
+                    background: 'rgba(255, 255, 255, 0.05)', 
+                    color: '#94a3b8',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    padding: '12px 20px',
+                    borderRadius: '12px',
+                    fontSize: '0.95rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    transition: 'all 0.25s ease',
+                    marginTop: '1.5rem'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.color = '#ffffff';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                    e.currentTarget.style.color = '#94a3b8';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
                   إغلاق النافذة
                 </button>
               </>
