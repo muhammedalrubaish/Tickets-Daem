@@ -26,7 +26,7 @@ export default function Loading() {
       {/* حاوية الشعار التفاعلية البارزة */}
       <div className="logo-container">
         <img 
-          src="/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8I%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8I.png" 
+          src="/شعار بلدي الرسمي.png" 
           alt="شعار بلدي" 
           className="logo-img"
         />
@@ -45,8 +45,8 @@ export default function Loading() {
         </h3>
       </div>
 
-      {/* التأثيرات الرسومية البحتة باستخدام CSS النقي والآمن لضمان التشغيل الفوري قبل الترطيب (Hydration) */}
-      <style jsx global>{`
+      {/* التأثيرات الرسومية البحتة باستخدام كود CSS القياسي لضمان التوافق المطلق */}
+      <style dangerouslySetInnerHTML={{ __html: `
         .glow-orb {
           position: absolute;
           width: 450px;
@@ -97,11 +97,10 @@ export default function Loading() {
           top: 0;
           right: 0;
           height: 100%;
-          background: linear-gradient(90deg, #7fbc03 0%, #007471 100%); /* هوية ألوان بلدي الرسمية */
+          background: linear-gradient(90deg, #7fbc03 0%, #007471 100%);
           border-radius: 20px;
           box-shadow: 0 0 14px rgba(127, 188, 3, 0.65);
           width: 0%;
-          /* أنيميشن نقي يتحرك فوراً عند تحميل الـ HTML في المتصفح */
           animation: fillProgress 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
 
@@ -119,7 +118,7 @@ export default function Loading() {
           margin: 0;
           display: flex;
           align-items: center;
-          gap: 2px;
+          gap: 4px;
         }
         .loading-dots {
           display: inline-block;
@@ -144,7 +143,6 @@ export default function Loading() {
             filter: drop-shadow(0 15px 40px rgba(127, 188, 3, 0.35)); 
           }
         }
-        /* حركة تعبئة انسيابية وذكية تتسارع ثم تتباطأ لتبدو حقيقية وتفاعلية */
         @keyframes fillProgress {
           0% { width: 0%; }
           15% { width: 25%; }
@@ -157,7 +155,7 @@ export default function Loading() {
           0%, 100% { opacity: 0.3; }
           50% { opacity: 1; }
         }
-      `}</style>
+      `}} />
     </div>
   );
 }
