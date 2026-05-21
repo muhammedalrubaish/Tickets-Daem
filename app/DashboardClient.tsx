@@ -2209,6 +2209,20 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
         <div className={styles.mainActionsRow}>
           <div className={styles.iconsGroup}>
+            {/* زر إدارة الصلاحيات للمشرف العام محمد الربيش */}
+            {(userRole === 'super_admin' || loggedInUser?.includes('محمد الربيش')) && (
+              <button 
+                className={styles.navIconButton} 
+                onClick={() => setIsPermissionsOpen(true)} 
+                title="مركز التحكم بالصلاحيات والموظفين" 
+                style={{ backgroundColor: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s ease' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </button>
+            )}
+
             {/* 0. الانتقال لمنصة داعم الرسمية */}
             <a 
               href="https://daem.momah.gov.sa/sm/index.do" 
@@ -2224,20 +2238,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 style={{ width: '28px', height: '28px', objectFit: 'contain' }} 
               />
             </a>
-
-            {/* زر إدارة الصلاحيات للمشرف العام محمد الربيش */}
-            {(userRole === 'super_admin' || loggedInUser?.includes('محمد الربيش')) && (
-              <button 
-                className={styles.navIconButton} 
-                onClick={() => setIsPermissionsOpen(true)} 
-                title="مركز التحكم بالصلاحيات والموظفين" 
-                style={{ backgroundColor: '#10b981', color: 'white' }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-              </button>
-            )}
 
             <button 
               className={styles.navIconButton}
@@ -3462,11 +3462,50 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                         return;
                       }
                       setReportLoading(true);
+                      
                       setTimeout(() => {
+                        // 1. Generate and download CSV locally so they can attach it
+                        const headers = ['رقم البلاغ', 'التصنيف/النوع', 'حالة الحل', 'التاريخ', 'المستقبل'];
+                        const rows = filtered.map(c => [c.number, c.type, c.solution, c.date, c.receiver]);
+                        let csvContent = '\uFEFF'; 
+                        csvContent += headers.join(',') + '\n';
+                        rows.forEach(row => {
+                          csvContent += row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',') + '\n';
+                        });
+
+                        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.setAttribute('href', url);
+                        link.setAttribute('download', `تقرير_بلاغات_${reportIndicator}_${new Date().toISOString().split('T')[0]}.csv`);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+
+                        // 2. Open email client with pre-filled content
+                        let arabicIndicator = 'كل البلاغات';
+                        if (reportIndicator === 'closed') arabicIndicator = 'تم الحل';
+                        else if (reportIndicator === 'open') arabicIndicator = 'لم يتم الحل';
+                        else if (reportIndicator === 'ministry') arabicIndicator = 'لدى الوزارة';
+                        else if (reportIndicator === 'waiting') arabicIndicator = 'بانتظار المستفيد';
+                        else if (reportIndicator === 'new') arabicIndicator = 'بلاغ جديد';
+                        else if (reportIndicator === 'general') arabicIndicator = 'مشكلة عامة';
+
+                        const subjectText = `تقرير بلاغات وحدة بلدي - مؤشر: ${arabicIndicator}`;
+                        const emailBodyText = `السلام عليكم ورحمة الله وبركاته،\n\nتجدون مرفقاً تقرير بلاغات وحدة بلدي المفلتر حسب المؤشر: (${arabicIndicator}).\n\nإحصائيات سريعة للتقرير:\n- إجمالي البلاغات في التقرير: ${filtered.length} بلاغ\n- تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')}\n\n(فضلاً قم بإرفاق ملف الـ CSV المحمل تلقائياً في هذا البريد قبل الإرسال).\n\nمع التحيات،\nنظام بلاغات وحدة بلدي`;
+
+                        const mailtoUrl = `mailto:${reportEmail}?subject=${encodeURIComponent(subjectText)}&body=${encodeURIComponent(emailBodyText)}`;
+                        
+                        const mailLink = document.createElement('a');
+                        mailLink.setAttribute('href', mailtoUrl);
+                        document.body.appendChild(mailLink);
+                        mailLink.click();
+                        document.body.removeChild(mailLink);
+
                         setReportLoading(false);
-                        setNewTicketToast(`📧 تم إرسال ملف التقرير بنجاح للبريد الإلكتروني: ${reportEmail}`);
+                        setNewTicketToast(`📧 تم فتح البريد وتنزيل التقرير بنجاح! فضلاً أرفق الملف وأرسله.`);
                         setTimeout(() => setNewTicketToast(null), 6000);
-                      }, 1500);
+                      }, 1000);
                     }
                   }}
                   disabled={reportLoading}
