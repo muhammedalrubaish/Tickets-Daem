@@ -93,8 +93,8 @@ export default function ExtensionPopupPage() {
           font-family: 'Cairo', sans-serif !important;
           margin: 0 !important;
           padding: 20px !important;
-          width: 350px !important;
-          min-height: 500px !important;
+          width: 100% !important;
+          min-height: 100vh !important;
           box-sizing: border-box !important;
           direction: rtl !important;
         }
