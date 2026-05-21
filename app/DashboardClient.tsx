@@ -2488,32 +2488,198 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 </div>
 
                 <div style={{marginBottom:'1.5rem'}}>
-                  <label style={{display:'block', fontSize:'0.85rem', marginBottom:'5px', fontWeight:'bold'}}>ملف التعميم (PDF) - اختياري</label>
-                  <input 
-                    type="file" 
-                    accept=".pdf" 
-                    onChange={(e) => setNewCircFile(e.target.files?.[0] || null)}
-                    style={{width:'100%', color:'var(--foreground)'}}
-                  />
-                  <small style={{display:'block', color:'var(--text-muted)', fontSize:'0.7rem', marginTop:'5px'}}>
-                    سيتم حفظ الملف في مجلد المشروع ورفعه تلقائياً.
+                  <label style={{display:'block', fontSize:'0.85rem', marginBottom:'8px', fontWeight:'bold', color:'var(--foreground)', opacity:0.95}}>ملف التعميم (PDF) - اختياري</label>
+                  <div 
+                    id="dropzoneContainer"
+                    style={{
+                      border: newCircFile ? '2px solid #10b981' : '2px dashed rgba(255, 255, 255, 0.18)',
+                      borderRadius: '12px',
+                      padding: '24px 16px',
+                      textAlign: 'center',
+                      background: newCircFile ? 'rgba(16, 185, 129, 0.06)' : 'rgba(0, 0, 0, 0.25)',
+                      cursor: 'pointer',
+                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      boxShadow: newCircFile ? '0 4px 20px rgba(16, 185, 129, 0.15)' : 'inset 0 2px 8px rgba(0, 0, 0, 0.3)'
+                    }}
+                    onClick={() => document.getElementById('newCircFileInput')?.click()}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      if (!newCircFile) {
+                        e.currentTarget.style.borderColor = '#10b981';
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.1)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      if (!newCircFile) {
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.18)';
+                        e.currentTarget.style.background = 'rgba(0, 0, 0, 0.25)';
+                        e.currentTarget.style.boxShadow = 'inset 0 2px 8px rgba(0, 0, 0, 0.3)';
+                      } else {
+                        e.currentTarget.style.boxShadow = '0 4px 20px rgba(16, 185, 129, 0.15)';
+                      }
+                    }}
+                  >
+                    <input 
+                      id="newCircFileInput"
+                      type="file" 
+                      accept=".pdf" 
+                      onChange={(e) => setNewCircFile(e.target.files?.[0] || null)}
+                      style={{display: 'none'}}
+                    />
+                    {newCircFile ? (
+                      <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'8px', width:'100%'}}>
+                        <span style={{fontSize:'2.5rem', filter:'drop-shadow(0 4px 10px rgba(16,185,129,0.3))'}}>📄</span>
+                        <span style={{
+                          fontSize:'0.9rem', 
+                          fontWeight:'bold', 
+                          color:'#10b981', 
+                          maxWidth:'90%', 
+                          overflow:'hidden', 
+                          textOverflow:'ellipsis', 
+                          whiteSpace:'nowrap',
+                          direction:'ltr',
+                          unicodeBidi:'embed'
+                        }}>
+                          {newCircFile.name}
+                        </span>
+                        <span style={{fontSize:'0.75rem', color:'#94a3b8', fontWeight:'500'}}>{(newCircFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                        <span 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setNewCircFile(null);
+                            const fileInput = document.getElementById('newCircFileInput') as HTMLInputElement;
+                            if (fileInput) fileInput.value = '';
+                          }}
+                          style={{
+                            fontSize:'0.75rem', 
+                            color:'#ef4444', 
+                            textDecoration:'none', 
+                            cursor:'pointer', 
+                            marginTop:'6px',
+                            fontWeight:'bold',
+                            padding:'5px 12px',
+                            borderRadius:'8px',
+                            background:'rgba(239, 68, 68, 0.1)',
+                            border:'1px solid rgba(239, 68, 68, 0.25)',
+                            transition:'all 0.2s ease',
+                            display:'flex',
+                            alignItems:'center',
+                            gap:'4px'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                            e.currentTarget.style.transform = 'scale(1.05)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                            e.currentTarget.style.transform = 'scale(1)';
+                          }}
+                        >
+                          <span>إزالة الملف</span>
+                          <span>❌</span>
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <span style={{fontSize:'2.6rem', filter:'drop-shadow(0 4px 12px rgba(255,255,255,0.05))'}}>📤</span>
+                        <span style={{fontSize:'0.9rem', fontWeight:'bold', color:'var(--foreground)'}}>اضغط هنا أو اسحب ملف الـ PDF</span>
+                        <span style={{fontSize:'0.7rem', color:'var(--text-muted)'}}>الحد الأقصى للملف: 50 ميجابايت</span>
+                      </>
+                    )}
+                  </div>
+                  <small style={{display:'block', color:'#94a3b8', fontSize:'0.7rem', marginTop:'8px', textAlign:'right', lineHeight:'1.4', opacity:0.8}}>
+                    ✨ سيتم رفع الملف وحفظه سحابياً بشكل تلقائي ليكون متاحاً لجميع مستخدمي الموقع على الفور.
                   </small>
                 </div>
 
-                <div style={{display:'flex', gap:'10px', marginTop:'1.5rem'}}>
+                <div style={{display:'flex', gap:'12px', marginTop:'1.8rem'}}>
                   <button 
                     type="submit" 
-                    className={styles.submitButton} 
                     disabled={isUploadingCirc}
-                    style={{flex:1, background:'var(--primary)'}}
+                    style={{
+                      flex: 2, 
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '12px 24px',
+                      borderRadius: '12px',
+                      fontSize: '0.95rem',
+                      fontWeight: 'bold',
+                      cursor: isUploadingCirc ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                      boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isUploadingCirc) {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 22px rgba(16, 185, 129, 0.5)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isUploadingCirc) {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 4px 16px rgba(16, 185, 129, 0.3)';
+                      }
+                    }}
                   >
-                    {isUploadingCirc ? 'جاري الحفظ والرفع...' : 'حفظ ونشر التعميم'}
+                    {isUploadingCirc ? (
+                      <>
+                        <span style={{
+                          display: 'inline-block',
+                          width: '18px',
+                          height: '18px',
+                          border: '2px solid rgba(255,255,255,0.3)',
+                          borderTopColor: '#fff',
+                          borderRadius: '50%',
+                          animation: 'spin 0.8s linear infinite'
+                        }} />
+                        <span>جاري الرفع والنشر...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🚀</span>
+                        <span>حفظ ونشر التعميم</span>
+                      </>
+                    )}
                   </button>
                   <button 
                     type="button" 
-                    className={styles.submitButton} 
                     onClick={() => setIsAddCircularOpen(false)}
-                    style={{flex:1, background:'var(--border)', color:'var(--foreground)'}}
+                    style={{
+                      flex: 1, 
+                      background: 'rgba(255, 255, 255, 0.05)', 
+                      color: '#94a3b8',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      padding: '12px 20px',
+                      borderRadius: '12px',
+                      fontSize: '0.95rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.25s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                      e.currentTarget.style.color = '#ffffff';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.color = '#94a3b8';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
                   >
                     إلغاء
                   </button>
