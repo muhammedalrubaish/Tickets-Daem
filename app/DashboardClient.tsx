@@ -1651,6 +1651,28 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   };
 
   const handleLogout = () => {
+    // existing logout logic
+    // ...
+  };
+
+  // Export tickets to Google Docs
+  const handleExportToGoogleDocs = async () => {
+    try {
+      const payload = { tickets: complaints };
+      const res = await fetch('/api/export-google-docs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('Failed to export');
+      const data = await res.json();
+      if (data.url) window.open(data.url, '_blank');
+    } catch (e) {
+      console.error(e);
+      alert('خطأ في إنشاء مستند جوجل');
+    }
+  };
+
     document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     router.push('/login');
     router.refresh();
@@ -2209,6 +2231,28 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
         <div className={styles.mainActionsRow}>
           <div className={styles.iconsGroup}>
+          {/* Existing icons ... */}
+          {/* Google Docs Export Button */}
+          { (userRole === 'super_admin' || (employeesList.find(e=>e.name===loggedInUser)?.permissions.sendReport)) && (
+            <button
+              className={styles.navIconButton}
+              onClick={handleExportToGoogleDocs}
+              title="تصدير وإرسال التقرير إلى مستند جوجل"
+              style={{ backgroundColor: 'var(--primary)', color: 'white' }}
+            >
+              {/* Google Docs SVG Icon */}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 9h12" />
+                <path d="M6 12h12" />
+                <path d="M6 15h12" />
+                <path d="M9 6v12" />
+                <path d="M12 6v12" />
+                <path d="M15 6v12" />
+                <path d="M3 3h18v18H3V3z" />
+              </svg>
+            </button>
+          )}
+
             {/* زر إدارة الصلاحيات للمشرف العام محمد الربيش */}
             {(userRole === 'super_admin' || loggedInUser?.includes('محمد الربيش')) && (
               <button 
