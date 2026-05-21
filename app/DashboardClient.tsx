@@ -1225,6 +1225,55 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     }
   };
 
+  const handleDeleteCircular = async (circId: string, filePath: string) => {
+    if (!confirm('هل أنت متأكد من رغبتك في حذف هذا التعميم؟')) return;
+
+    try {
+      // 1. محاولة حذف الملف من تخزين Supabase Storage
+      if (filePath && filePath.includes('supabase.co')) {
+        try {
+          const fileKey = filePath.split('/').pop();
+          if (fileKey) {
+            await supabase.storage.from('circulars').remove([fileKey]);
+            console.log('File deleted from Supabase storage successfully');
+          }
+        } catch (storageErr) {
+          console.warn('Failed to delete file from storage:', storageErr);
+        }
+      }
+
+      // 2. محاولة حذف السجل من قاعدة بيانات Supabase
+      let deletedFromSupabase = false;
+      try {
+        const { error } = await supabase
+          .from('circulars')
+          .delete()
+          .eq('id', circId);
+
+        if (!error) {
+          deletedFromSupabase = true;
+          console.log('Record deleted from Supabase database successfully');
+        } else {
+          console.warn('Failed to delete from Supabase DB:', error.message);
+        }
+      } catch (dbErr) {
+        console.warn('Supabase DB delete exception:', dbErr);
+      }
+
+      // 3. تحديث الحالة المحلية والذاكرة المحلية الاحتياطية
+      const updated = circulars.filter(c => c.id !== circId);
+      setCirculars(updated);
+      localStorage.setItem('balady_circulars', JSON.stringify(updated));
+
+      setNewTicketToast('🗑️ تم حذف التعميم الإداري بنجاح!');
+      setTimeout(() => setNewTicketToast(null), 5000);
+
+    } catch (err: any) {
+      console.error(err);
+      alert(`حدث خطأ أثناء حذف التعميم: ${err.message}`);
+    }
+  };
+
   // مزامنة التنبيهات من البلاغات العامة (المستقبل: الجميع) - مع تجنب المكرر والمحذوف
   useEffect(() => {
     // جلب قائمة المعرفات المحذوفة من الذاكرة المحلية
@@ -2758,9 +2807,35 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                       <div style={{fontSize:'0.85rem', opacity:0.8}}>{circ.description}</div>
                       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'10px'}}>
                         <span style={{fontSize:'0.75rem', color:'var(--primary)'}}>{circ.date} — رقم {circ.number}</span>
-                        {circ.file && (
-                          <a href={circ.file} target="_blank" rel="noopener noreferrer" style={{fontSize:'0.75rem', background: circ.color, color:'white', padding:'2px 8px', borderRadius:'4px', textDecoration:'none', fontWeight:'bold'}}>عرض الملف</a>
-                        )}
+                        <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
+                          {circ.file && (
+                            <a href={circ.file} target="_blank" rel="noopener noreferrer" style={{fontSize:'0.75rem', background: circ.color, color:'white', padding:'2px 8px', borderRadius:'4px', textDecoration:'none', fontWeight:'bold'}}>عرض الملف</a>
+                          )}
+                          {loggedInUser && loggedInUser.includes('محمد الربيش') && (
+                            <button 
+                              onClick={() => handleDeleteCircular(circ.id, circ.file || '')}
+                              style={{
+                                fontSize:'0.75rem', 
+                                background:'rgba(239, 68, 68, 0.1)', 
+                                color:'#ef4444', 
+                                border:'1px solid rgba(239, 68, 68, 0.2)', 
+                                padding:'2px 8px', 
+                                borderRadius:'4px', 
+                                fontWeight:'bold', 
+                                cursor:'pointer',
+                                transition:'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                              }}
+                            >
+                              حذف 🗑️
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
