@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import styles from './page.module.css';
 import TicketForm from './TicketForm';
 import SupervisorsSearch from './SupervisorsSearch';
+import AIChat from './AIChat';
 
 
 type Complaint = {
@@ -4461,6 +4462,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
       {/* تم نقل نافذة تبديل البوابة لتكون تحت الأيقونة مباشرة في الهيدر العلوي */}
 
+      <AIChat stats={stats} />
     </main>
   );
 }

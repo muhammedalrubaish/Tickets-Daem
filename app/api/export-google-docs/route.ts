@@ -67,44 +67,78 @@ export async function POST(req: Request) {
       t.date ?? '',
     ]);
 
-    // Build the request body for batchUpdate to insert a table
-    const requests: any[] = [];
-    requests.push({
-      insertTable: {
-        rows: header.length ? rows.length + 1 : rows.length,
-        columns: header.length,
-        location: { index: 1 }, // after the start of document
+    const totalRows = rows.length + 1; // +1 for header
+    const totalCols = header.length;
+
+    // First insert the empty table structure
+    await docs.documents.batchUpdate({
+      documentId,
+      requestBody: {
+        requests: [
+          {
+            insertTable: {
+              rows: totalRows,
+              columns: totalCols,
+              location: { index: 1 },
+            },
+          },
+        ],
       },
     });
 
-    // Fill header cells
+    // Fetch the document body to find the exact paragraph start index for each cell
+    const docData = await docs.documents.get({ documentId });
+    const content = docData.data.body?.content || [];
+    let tableElement: any = null;
+    for (const element of content) {
+      if (element.table) {
+        tableElement = element.table;
+        break;
+      }
+    }
+
+    if (!tableElement) throw new Error('Failed to locate table in document');
+
+    const insertions: { text: string; index: number }[] = [];
+
+    // Map header cells to their paragraph start indices
+    const headerRow = tableElement.tableRows[0];
     header.forEach((text, col) => {
-      requests.push({
-        insertText: {
-          text,
-          location: { index: 2 + col }, // first row cells
-        },
+      const cell = headerRow.tableCells[col];
+      const startIndex = cell.content[0]?.paragraph?.startIndex;
+      if (typeof startIndex === 'number') {
+        insertions.push({ text, index: startIndex });
+      }
+    });
+
+    // Map data rows to their paragraph start indices
+    rows.forEach((row, rowIndex) => {
+      const docRow = tableElement.tableRows[rowIndex + 1];
+      row.forEach((text, colIndex) => {
+        const cell = docRow.tableCells[colIndex];
+        const startIndex = cell.content[0]?.paragraph?.startIndex;
+        if (typeof startIndex === 'number') {
+          insertions.push({ text, index: startIndex });
+        }
       });
     });
 
-    // Fill data cells (starting after header row)
-    let cellIndex = 2 + header.length; // after header cells
-    rows.forEach((row) => {
-      row.forEach((cellText: string) => {
-        requests.push({
-          insertText: {
-            text: cellText,
-            location: { index: cellIndex },
-          },
-        });
-        cellIndex += 1;
-      });
-    });
+    // Sort insertions descending by index so that inserting text doesn't shift indices for subsequent insertions
+    insertions.sort((a, b) => b.index - a.index);
 
-    await docs.documents.batchUpdate({
-      documentId,
-      requestBody: { requests },
-    });
+    const textRequests = insertions.map((ins) => ({
+      insertText: {
+        text: ins.text,
+        location: { index: ins.index },
+      },
+    }));
+
+    if (textRequests.length > 0) {
+      await docs.documents.batchUpdate({
+        documentId,
+        requestBody: { requests: textRequests },
+      });
+    }
 
     // 3️⃣ Get shareable link (drive.permissions.create + export URL)
     await drive.permissions.create({
