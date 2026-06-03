@@ -14,8 +14,11 @@ const SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.google
  */
 function getAuthClient() {
   // Try OAuth2 first (uses user's personal drive quota)
-  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
+  let { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
   if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REFRESH_TOKEN) {
+    GOOGLE_CLIENT_ID = GOOGLE_CLIENT_ID.trim();
+    GOOGLE_CLIENT_SECRET = GOOGLE_CLIENT_SECRET.trim();
+    GOOGLE_REFRESH_TOKEN = GOOGLE_REFRESH_TOKEN.trim();
     const oauth2 = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
     oauth2.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
     return oauth2;
