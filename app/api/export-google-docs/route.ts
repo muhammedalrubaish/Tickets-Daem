@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
+// Trigger rebuild to apply updated Vercel environment variables.
 // Expected env variables:
 // GOOGLE_SERVICE_ACCOUNT_KEY - base64‑encoded JSON key for a service account with Drive & Docs scopes
 // Alternatively, set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN for OAuth2.
