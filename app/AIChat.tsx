@@ -261,13 +261,11 @@ export default function AIChat({ stats }: AIChatProps) {
           {/* Quick Actions Shortcuts */}
           <div className={styles.chatShortcuts} style={{
             display: 'flex',
+            flexWrap: 'wrap',
             gap: '6px',
             padding: '8px 12px',
-            overflowX: 'auto',
             background: 'var(--card-bg)',
-            borderTop: '1px solid var(--border)',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none'
+            borderTop: '1px solid var(--border)'
           }}>
             {shortcuts.map((shortcut, sIdx) => (
               <button
@@ -276,12 +274,12 @@ export default function AIChat({ stats }: AIChatProps) {
                 disabled={isLoading}
                 onClick={() => handleShortcutClick(shortcut.query)}
                 style={{
-                  padding: '6px 12px',
+                  padding: '5px 10px',
                   borderRadius: '15px',
                   background: 'rgba(255, 255, 255, 0.05)',
                   color: 'var(--foreground)',
                   border: '1px solid var(--border)',
-                  fontSize: '0.78rem',
+                  fontSize: '0.68rem',
                   fontWeight: '600',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
