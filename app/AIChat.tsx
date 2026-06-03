@@ -78,7 +78,27 @@ export default function AIChat({ stats }: AIChatProps) {
     { label: '❓ البلاغات المفتوحة', query: 'كم عدد البلاغات المفتوحة (التي لم تُحل)؟' }
   ];
 
-  // Helper function to format responses with bold, newlines, and list items
+  // Helper for parsing bold text inside segments
+  const parseBold = (text: string): React.ReactNode[] => {
+    const boldRegex = /\*\*(.*?)\*\*/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = boldRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      parts.push(<strong key={match.index} style={{ fontWeight: '800', color: '#ffffff' }}>{match[1]}</strong>);
+      lastIndex = boldRegex.lastIndex;
+    }
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+    return parts;
+  };
+
+  // Helper function to format responses with bold, links, WhatsApp buttons, and list items
   const formatMessage = (content: string) => {
     const lines = content.split('\n');
     const elements: React.ReactNode[] = [];
@@ -98,26 +118,79 @@ export default function AIChat({ stats }: AIChatProps) {
     lines.forEach((line, idx) => {
       const trimmed = line.trim();
       const isBullet = trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ');
-
-      // Process bold text (**text**)
-      const boldRegex = /\*\*(.*?)\*\*/g;
-      const parts: React.ReactNode[] = [];
-      let lastIndex = 0;
-      let match;
       const textToProcess = isBullet ? trimmed.replace(/^[-*•]\s+/, '') : line;
 
-      while ((match = boldRegex.exec(textToProcess)) !== null) {
-        if (match.index > lastIndex) {
-          parts.push(textToProcess.substring(lastIndex, match.index));
+      const nodes: React.ReactNode[] = [];
+      let lastIdx = 0;
+
+      // Match markdown links: [label](url)
+      const linkRegex = /\[(.*?)\]\((https?:\/\/.*?)\)/g;
+      let linkMatch;
+
+      while ((linkMatch = linkRegex.exec(textToProcess)) !== null) {
+        const textBefore = textToProcess.substring(lastIdx, linkMatch.index);
+        if (textBefore) {
+          nodes.push(...parseBold(textBefore));
         }
-        parts.push(<strong key={match.index} style={{ fontWeight: '800', color: '#ffffff' }}>{match[1]}</strong>);
-        lastIndex = boldRegex.lastIndex;
-      }
-      if (lastIndex < textToProcess.length) {
-        parts.push(textToProcess.substring(lastIndex));
+
+        const label = linkMatch[1];
+        const url = linkMatch[2];
+
+        // Check if it is a WhatsApp link
+        if (url.includes('wa.me')) {
+          nodes.push(
+            <a
+              key={`wa-${linkMatch.index}`}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: '#25D366',
+                color: 'white',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                fontSize: '0.82rem',
+                fontWeight: 'bold',
+                margin: '4px 2px',
+                boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)',
+                transition: 'all 0.2s',
+                fontFamily: 'Cairo, sans-serif'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'none'}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .004 5.412.001 12.04c0 2.123.542 4.19 1.594 6.02l-1.595 5.821 5.956-1.562a11.754 11.754 0 005.441 1.341h.005c6.635 0 12.044-5.414 12.048-12.044 0-3.212-1.251-6.232-3.524-8.504"/>
+              </svg>
+              <span>{label}</span>
+            </a>
+          );
+        } else {
+          // Standard Link
+          nodes.push(
+            <a
+              key={`link-${linkMatch.index}`}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#3b82f6', textDecoration: 'underline' }}
+            >
+              {label}
+            </a>
+          );
+        }
+        lastIdx = linkRegex.lastIndex;
       }
 
-      const contentNode = parts.length > 0 ? parts : textToProcess;
+      if (lastIdx < textToProcess.length) {
+        nodes.push(...parseBold(textToProcess.substring(lastIdx)));
+      }
+
+      const contentNode = nodes.length > 0 ? nodes : textToProcess;
 
       if (isBullet) {
         currentList.push(
