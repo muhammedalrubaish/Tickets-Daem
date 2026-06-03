@@ -1651,8 +1651,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   };
 
   const handleLogout = () => {
-    // existing logout logic
-    // ...
+    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    router.push('/login');
+    router.refresh();
   };
 
   // Export tickets to Google Docs
@@ -1671,11 +1672,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       console.error(e);
       alert('خطأ في إنشاء مستند جوجل');
     }
-  };
-
-    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    router.push('/login');
-    router.refresh();
   };
 
   const handleDeleteClick = (ticketId: string, createdAt?: string) => {
