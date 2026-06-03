@@ -12,19 +12,20 @@ const SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.google
  * Prefer a service account for simplicity; fall back to OAuth2 if env vars are set.
  */
 function getAuthClient() {
+  // Try OAuth2 first (uses user's personal drive quota)
+  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
+  if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REFRESH_TOKEN) {
+    const oauth2 = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
+    oauth2.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
+    return oauth2;
+  }
+  // Fallback to Service Account
   if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
     const key = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString('utf8'));
     return new google.auth.GoogleAuth({
       credentials: key,
       scopes: SCOPES,
     });
-  }
-  // OAuth2 fallback (requires client_id/secret/refresh_token)
-  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
-  if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REFRESH_TOKEN) {
-    const oauth2 = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
-    oauth2.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
-    return oauth2;
   }
   throw new Error('Google credentials not configured');
 }
