@@ -4397,29 +4397,57 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         )}
       </div>
       {isDeleteConfirmOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsDeleteConfirmOpen(false)}>
-          <div className={styles.modalContent} style={{maxWidth: '400px', textAlign: 'center'}} onClick={(e) => e.stopPropagation()}>
-            <div style={{color: '#ef4444', marginBottom: '1.5rem'}}>
-              <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{margin: '0 auto'}}>
+        <div className={styles.modalOverlay} onClick={() => setIsDeleteConfirmOpen(false)} style={{ backdropFilter: 'blur(12px)', backgroundColor: 'rgba(15, 23, 42, 0.75)' }}>
+          <div 
+            className={styles.modalContent} 
+            style={{ maxWidth: '420px', textAlign: 'center', background: 'linear-gradient(135deg, #1c231f 0%, #111613 100%)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '24px', padding: '2.5rem 2rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 25px rgba(239, 68, 68, 0.15)', overflow: 'hidden' }} 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', boxShadow: '0 0 20px rgba(239, 68, 68, 0.15)' }}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                 <line x1="12" y1="9" x2="12" y2="13"></line>
                 <line x1="12" y1="17" x2="12.01" y2="17"></line>
               </svg>
             </div>
-            <h2 style={{fontSize: '1.4rem', marginBottom: '1rem'}}>تأكيد الحذف النهائي</h2>
-            <p style={{color: 'var(--text-muted)', marginBottom: '2rem'}}>هل أنت متأكد من رغبتك في حذف هذا البلاغ نهائياً؟ لا يمكن التراجع عن هذا الإجراء.</p>
-            <div style={{display: 'flex', gap: '12px'}}>
+            
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#ffffff', marginBottom: '0.75rem', fontFamily: 'Cairo' }}>
+              تأكيد الحذف النهائي
+            </h2>
+            
+            <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2rem', fontFamily: 'Cairo' }}>
+              هل أنت متأكد من رغبتك في حذف هذا البلاغ نهائياً؟ 
+              <br />
+              <span style={{ color: '#f87171', fontWeight: 'bold' }}>لا يمكن التراجع عن هذا الإجراء.</span>
+            </p>
+            
+            <div style={{ display: 'flex', gap: '14px' }}>
               <button 
-                className={styles.submitButton} 
-                style={{background: '#ef4444', flex: 1}} 
                 onClick={confirmDelete}
+                style={{ flex: 1, background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)', color: '#ffffff', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s ease', boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)', fontFamily: 'Cairo' }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 18px rgba(220, 38, 38, 0.45)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(220, 38, 38, 0.3)';
+                }}
               >
                 تأكيد الحذف
               </button>
+              
               <button 
-                className={styles.submitButton} 
-                style={{background: 'var(--border)', color: 'var(--foreground)', flex: 1}} 
                 onClick={() => setIsDeleteConfirmOpen(false)}
+                style={{ flex: 1, background: 'rgba(255, 255, 255, 0.08)', color: '#e2e8f0', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '12px 24px', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s ease', fontFamily: 'Cairo' }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                  e.currentTarget.style.transform = 'none';
+                }}
               >
                 إلغاء
               </button>
