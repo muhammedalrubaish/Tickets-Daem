@@ -21,13 +21,17 @@ function getAuthClient() {
   }
   // Fallback to Service Account
   if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-    const key = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString('utf8'));
-    return new google.auth.GoogleAuth({
-      credentials: key,
-      scopes: SCOPES,
-    });
+    try {
+      const key = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString('utf8'));
+      return new google.auth.GoogleAuth({
+        credentials: key,
+        scopes: SCOPES,
+      });
+    } catch (e) {
+      console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY:', e);
+    }
   }
-  throw new Error('Google credentials not configured');
+  throw new Error('Google credentials not configured or invalid');
 }
 
 export async function POST(req: Request) {
