@@ -50,12 +50,12 @@ export async function POST(req: Request) {
     if (!documentId) throw new Error('Failed to create document');
 
     // 2️⃣ Build table rows (header + data)
-    const header = ['رقم البلاغ', 'اسم المستقبل', 'الحلول المقترحة', 'تاريخ إنشاء البلاغ'];
+    const header = ['رقم البلاغ', 'اسم المستقبل', 'الحالة / الحلول المقترحة', 'تاريخ استقبال البلاغ'];
     const rows = tickets.map((t: any) => [
-      t.id?.toString() ?? '',
-      t.receiverName ?? '',
-      t.proposedSolution ?? '',
-      t.createdAt ? new Date(t.createdAt).toLocaleDateString('ar-EG') : '',
+      t.number ?? t.id?.toString() ?? '',
+      t.receiver ?? '',
+      t.solution ?? '',
+      t.date ?? '',
     ]);
 
     // Build the request body for batchUpdate to insert a table
