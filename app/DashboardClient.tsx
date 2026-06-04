@@ -903,6 +903,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [newTicketToast, setNewTicketToast] = useState<string | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [showPushPrompt, setShowPushPrompt] = useState(false);
 
   // Convert VAPID public key to Uint8Array
   const urlBase64ToUint8Array = (base64String: string) => {
@@ -926,12 +927,34 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       }).then((sub) => {
         if (sub) {
           setIsSubscribed(true);
+        } else {
+          // Check if they already declined in this session
+          const declined = localStorage.getItem('push_declined_temp');
+          const cookies = document.cookie.split('; ');
+          const hasAuth = cookies.some(c => c.startsWith('auth_token='));
+          
+          if (!declined && hasAuth) {
+            // Show prompt after a short delay (3 seconds) for a premium user experience
+            setTimeout(() => {
+              setShowPushPrompt(true);
+            }, 3000);
+          }
         }
       }).catch(err => {
         console.error('Service Worker registration failed:', err);
       });
     }
-  }, []);
+  }, [userRole, loggedInUser]);
+
+  const handleAcceptPush = async () => {
+    setShowPushPrompt(false);
+    await togglePushSubscription();
+  };
+
+  const handleDeclinePush = () => {
+    setShowPushPrompt(false);
+    localStorage.setItem('push_declined_temp', 'true');
+  };
 
   const togglePushSubscription = async () => {
     if (!swRegistration) {
@@ -4563,6 +4586,69 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       )}
 
       {/* تم نقل نافذة تبديل البوابة لتكون تحت الأيقونة مباشرة في الهيدر العلوي */}
+
+      {showPushPrompt && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--border)',
+          borderRadius: '16px',
+          padding: '1.25rem',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+          zIndex: 9999,
+          maxWidth: '350px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+          animation: 'macPopoverSpring 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          direction: 'rtl'
+        }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <span style={{ fontSize: '1.8rem' }}>🔔</span>
+            <div>
+              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 'bold' }}>تفعيل إشعارات الهاتف</h4>
+              <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                احصل على تنبيهات فورية على هاتفك عند استلام بلاغات جديدة أو تحديثها.
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
+            <button 
+              onClick={handleDeclinePush}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-muted)',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                fontFamily: 'Cairo'
+              }}
+            >
+              ليس الآن
+            </button>
+            <button 
+              onClick={handleAcceptPush}
+              style={{
+                background: 'var(--primary)',
+                color: 'white',
+                border: 'none',
+                padding: '6px 16px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                fontWeight: 'bold',
+                fontFamily: 'Cairo'
+              }}
+            >
+              تفعيل التنبيهات
+            </button>
+          </div>
+        </div>
+      )}
 
       <AIChat stats={stats} />
     </main>
