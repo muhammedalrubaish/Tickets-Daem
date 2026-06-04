@@ -904,6 +904,14 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [showPushPrompt, setShowPushPrompt] = useState(false);
+  const [showBottomNotifyBtn, setShowBottomNotifyBtn] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowBottomNotifyBtn(true);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Convert VAPID public key to Uint8Array
   const urlBase64ToUint8Array = (base64String: string) => {
@@ -2293,22 +2301,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               <span style={{fontSize:'1.2rem'}}>{theme === 'light' ? '🌙' : '☀️'}</span>
             </button>
 
-            {/* 3.5. إشعارات الهاتف */}
-            <button 
-              className={styles.navIconButton} 
-              onClick={togglePushSubscription} 
-              title={isSubscribed ? "تعطيل إشعارات الهاتف" : "تفعيل إشعارات الهاتف"} 
-              style={{ 
-                background: isSubscribed ? 'rgba(34, 197, 94, 0.15)' : 'var(--border)', 
-                color: isSubscribed ? '#22c55e' : 'var(--foreground)',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-            </button>
 
             {/* 4. تسجيل الخروج (أخر واحد يسار) */}
             <button 
@@ -4649,6 +4641,45 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
             </button>
           </div>
         </div>
+      )}
+
+      {showBottomNotifyBtn && (
+        <button 
+          onClick={togglePushSubscription} 
+          title={isSubscribed ? "تعطيل إشعارات الهاتف" : "تفعيل إشعارات الهاتف"} 
+          style={{ 
+            position: 'fixed',
+            bottom: '24px',
+            left: '24px',
+            width: '52px',
+            height: '52px',
+            borderRadius: '50%',
+            background: isSubscribed ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #374151, #1f2937)',
+            color: '#ffffff',
+            border: '2px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            zIndex: 9998,
+            transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            animation: 'macPopoverSpring 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'scale(1.1) translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.5)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'scale(1) translateY(0)';
+            e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.4)';
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </button>
       )}
 
       <AIChat stats={stats} />

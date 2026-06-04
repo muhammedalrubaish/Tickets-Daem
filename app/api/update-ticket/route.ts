@@ -59,7 +59,7 @@ export async function POST(req: Request) {
             title: 'بلاغات بلدي',
             body: `✏️ تم التحديث بلاغ رقم: ${ticketNum}\nالتصنيف: ${category} | المستقبل: ${rcv} | الحالة: ${statusText}`,
             url: '/'
-          });
+          }, rcv);
         } catch (pushErr) {
           console.error('Failed to trigger push notification for updated ticket:', pushErr);
         }

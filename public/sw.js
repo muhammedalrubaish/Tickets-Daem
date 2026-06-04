@@ -1,11 +1,18 @@
+self.addEventListener('install', function(event) {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', function(event) {
+  event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener('push', function(event) {
   if (event.data) {
     try {
       const payload = event.data.json();
-      const title = payload.title || 'لوحة التحكم للبلاغات | وحدة بلدي';
+      const title = payload.body || ' ';
       
       const options = {
-        body: payload.body,
         icon: '/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8A%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A.png',
         badge: '/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8A%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A.png',
         data: {

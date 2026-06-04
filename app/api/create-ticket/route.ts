@@ -36,7 +36,7 @@ export async function POST(req: Request) {
         title: 'بلاغات بلدي',
         body: `🔔 بلاغ جديد رقم: ${ticketNum}\nالتصنيف: ${category} | المستقبل: ${rcv} | الحالة: ${statusText}`,
         url: '/' // Can point to homepage or target page
-      });
+      }, rcv);
     } catch (pushErr) {
       console.error('Failed to trigger push notification for new ticket:', pushErr);
     }

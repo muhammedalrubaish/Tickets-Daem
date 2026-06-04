@@ -22,7 +22,7 @@ interface NotificationPayload {
   url?: string;
 }
 
-export async function sendPushNotification(payload: NotificationPayload) {
+export async function sendPushNotification(payload: NotificationPayload, receiverName?: string) {
   try {
     // 1. Fetch all active subscriptions from Supabase
     const { data: subscriptions, error } = await supabase
@@ -38,10 +38,42 @@ export async function sendPushNotification(payload: NotificationPayload) {
       return { success: true, count: 0 };
     }
 
+    // Filter subscriptions: Mohammed Al-Rubaish gets everything, others get only if they are the receiver
+    const filteredSubscriptions = subscriptions.filter((row: any) => {
+      const subUserName = row.user_name ? row.user_name.trim() : '';
+      
+      if (subUserName.includes('محمد الربيش')) {
+        return true;
+      }
+      
+      if (receiverName) {
+        const cleanRec = receiverName.trim();
+        const firstWordSub = subUserName.split(/\s+/)[0];
+        const firstWordRec = cleanRec.split(/\s+/)[0];
+        
+        if (
+          subUserName === cleanRec ||
+          cleanRec.includes(subUserName) ||
+          subUserName.includes(cleanRec) ||
+          (firstWordSub && firstWordRec && firstWordSub === firstWordRec)
+        ) {
+          return true;
+        }
+        
+        return false;
+      }
+      
+      return true;
+    });
+
+    if (filteredSubscriptions.length === 0) {
+      return { success: true, count: 0, total: subscriptions.length };
+    }
+
     const payloadString = JSON.stringify(payload);
     
-    // 2. Send to all subscriptions in parallel
-    const promises = subscriptions.map(async (row: any) => {
+    // 2. Send to all filtered subscriptions in parallel
+    const promises = filteredSubscriptions.map(async (row: any) => {
       try {
         await webpush.sendNotification(row.subscription, payloadString);
         return { success: true, id: row.id };
@@ -58,7 +90,7 @@ export async function sendPushNotification(payload: NotificationPayload) {
 
     const results = await Promise.all(promises);
     const successCount = results.filter(r => r.success).length;
-    return { success: true, count: successCount, total: subscriptions.length };
+    return { success: true, count: successCount, total: filteredSubscriptions.length };
   } catch (err) {
     console.error('Push notifications sending failed:', err);
     return { success: false, error: err };
