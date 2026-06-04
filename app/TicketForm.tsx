@@ -50,15 +50,34 @@ export default function TicketForm({ mode, onClose, currentUser, onAddOptimistic
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
 
-  // التركيز التلقائي الذكي
+  // التركيز التلقائي الذكي والـ refs للإغلاق عند النقر خارج القوائم
   const ticketInputRef = useRef<HTMLInputElement>(null);
   const receiverInputRef = useRef<HTMLSelectElement>(null);
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const statusRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (ticketInputRef.current) {
       ticketInputRef.current.focus();
     }
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (categoryRef.current && !categoryRef.current.contains(event.target as Node)) {
+        setIsCategoryOpen(false);
+      }
+      if (statusRef.current && !statusRef.current.contains(event.target as Node)) {
+        setIsStatusOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -220,26 +239,95 @@ ________________________________________________________________________________
           />
         </div>
 
-        <div className={styles.formGroup}>
+        <div className={styles.formGroup} ref={categoryRef}>
           <label htmlFor="serviceType">
             <span>📋</span> نوع التصنيف
           </label>
-          <select id="serviceType" name="serviceType" value={formData.serviceType} onChange={handleChange} required>
-            <option value="">-- اختر نوع التصنيف --</option>
-            {CATEGORIES.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+          <div className={styles.customSelectWrapper}>
+            <div 
+              className={styles.customSelectTrigger}
+              onClick={() => {
+                setIsCategoryOpen(!isCategoryOpen);
+                setIsStatusOpen(false);
+              }}
+            >
+              <span>{formData.serviceType || '-- اختر نوع التصنيف --'}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            {isCategoryOpen && (
+              <div 
+                className={styles.customSelectOptions} 
+                style={{ 
+                  position: 'absolute', 
+                  top: '100%', 
+                  left: 0, 
+                  right: 0, 
+                  zIndex: 1001, 
+                  maxHeight: '220px', 
+                  overflowY: 'auto', 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  padding: 0
+                }}
+              >
+                <div style={{ padding: '8px', position: 'sticky', top: 0, background: 'var(--card-bg)', zIndex: 10, borderBottom: '1px solid var(--border)' }}>
+                  <input 
+                    type="text" 
+                    placeholder="ابحث عن تصنيف..." 
+                    value={categorySearch} 
+                    onChange={(e) => setCategorySearch(e.target.value)} 
+                    onClick={(e) => e.stopPropagation()} 
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--background)',
+                      color: 'var(--foreground)',
+                      fontSize: '0.85rem',
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+                <div style={{ padding: '4px' }}>
+                  {CATEGORIES.filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase())).length > 0 ? (
+                    CATEGORIES.filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase())).map(cat => (
+                      <div 
+                        key={cat} 
+                        className={styles.customOption}
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, serviceType: cat }));
+                          setIsCategoryOpen(false);
+                          setCategorySearch('');
+                        }}
+                      >
+                        {cat}
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ padding: '12px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      لا توجد نتائج مطابقة
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className={styles.formGroup}>
+        <div className={styles.formGroup} ref={statusRef}>
           <label htmlFor="solution">
             <span>💡</span> الحل المقترح (الحالة)
           </label>
           <div className={styles.customSelectWrapper}>
             <div 
               className={styles.customSelectTrigger}
-              onClick={() => setIsStatusOpen(!isStatusOpen)}
+              onClick={() => {
+                setIsStatusOpen(!isStatusOpen);
+                setIsCategoryOpen(false);
+              }}
             >
               <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
                 {(() => {

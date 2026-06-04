@@ -55,7 +55,13 @@ export default function AIChat({ stats }: AIChatProps) {
 
       const data = await response.json();
       if (data.error) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: 'عذراً، يبدو أن هناك مشكلة في الاتصال بالمساعد الذكي. تأكد من إعداد مفتاح API الخاص بـ Gemini.' }]);
+        let errorMsg = 'عذراً، يبدو أن هناك مشكلة في الاتصال بالمساعد الذكي. تأكد من إعداد مفتاح API الخاص بـ Gemini.';
+        if (data.error === 'rate_limit') {
+          errorMsg = '⚠️ تم تجاوز حد الاستفسارات المسموح به مؤقتاً (Rate Limit). يرجى الانتظار لمدة دقيقة ثم المحاولة مرة أخرى.';
+        } else if (data.message) {
+          errorMsg = `عذراً، حدث خطأ: ${data.message}`;
+        }
+        setMessages((prev) => [...prev, { role: 'assistant', content: errorMsg }]);
       } else {
         setMessages((prev) => [...prev, { role: 'assistant', content: data.content }]);
       }

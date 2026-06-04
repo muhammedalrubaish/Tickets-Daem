@@ -68,8 +68,22 @@ export async function POST(req: Request) {
     const text = response.text();
 
     return NextResponse.json({ content: text });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Chat API Error:', error);
-    return NextResponse.json({ error: 'حدث خطأ أثناء معالجة طلبك.' }, { status: 500 });
+    const errorMessage = error?.message || '';
+    
+    if (
+      errorMessage.includes('429') || 
+      errorMessage.toLowerCase().includes('limit') || 
+      errorMessage.toLowerCase().includes('quota') || 
+      errorMessage.toLowerCase().includes('exhausted')
+    ) {
+      return NextResponse.json({ 
+        error: 'rate_limit',
+        message: 'تم تجاوز حد الاستفسارات المسموح به مؤقتاً. يرجى الانتظار لمدة دقيقة ثم المحاولة مرة أخرى.'
+      }, { status: 429 });
+    }
+
+    return NextResponse.json({ error: 'general_error', message: 'حدث خطأ أثناء معالجة طلبك.' }, { status: 500 });
   }
 }
