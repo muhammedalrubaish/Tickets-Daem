@@ -1031,7 +1031,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [editEmpPassValue, setEditEmpPassValue] = useState('');
   const [isEditPasswordOpen, setIsEditPasswordOpen] = useState(false);
   const [reportIndicator, setReportIndicator] = useState<'week' | 'month' | 'year'>('month');
-  const [reportMethod, setReportMethod] = useState<'download' | 'email' | 'local'>('download');
+  const [reportMethod, setReportMethod] = useState<'download' | 'email'>('download');
   const [reportEmail, setReportEmail] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
 
