@@ -3369,7 +3369,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                               { key: 'editPassword', label: 'تعديل كلمات المرور 🔑' },
                               { key: 'sendReport', label: 'تصدير وإرسال التقارير 📊' },
                             ].map((item) => {
-                              const hasPerm = emp.permissions[item.key as keyof Permissions];
+                              const hasPerm = emp.permissions[item.key as keyof PermissionSet];
                               const isOwnerAdmin = emp.name.includes('محمد الربيش');
                               return (
                                 <div 
