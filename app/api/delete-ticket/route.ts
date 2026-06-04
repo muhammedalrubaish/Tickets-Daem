@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       const cat = category || 'غير محدد';
       const sol = solution || 'غير محدد';
       await sendPushNotification({
-        title: '🗑️ تم حذف بلاغ - بلاغات بلدي',
+        title: '🗑️ تم حذف البلاغ',
         body: `المستقبل: ${rcv} | التصنيف: ${cat} | حالة المقترح: ${sol}`,
         url: '/'
       }, rcv);
