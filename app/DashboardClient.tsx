@@ -1166,6 +1166,72 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [newCircDesc, setNewCircDesc] = useState('');
   const [newCircFile, setNewCircFile] = useState<File | null>(null);
   const [isUploadingCirc, setIsUploadingCirc] = useState(false);
+  const [isAnalyzingCirc, setIsAnalyzingCirc] = useState(false);
+
+  const parseCircularFileName = (fileName: string) => {
+    let cleanName = fileName.replace(/\.[^/.]+$/, "");
+    const numberRegex = /(\b\d+[\./-]\d+\b|\b\d+\b)/;
+    const match = cleanName.match(numberRegex);
+    let number = "";
+    if (match) {
+      number = match[0];
+      cleanName = cleanName.replace(number, "");
+    }
+    cleanName = cleanName
+      .replace(/(تعميم|رقم|ملف|جديد|عاجل|هام)/g, "")
+      .replace(/[_\-\s]+/g, " ")
+      .trim();
+    return { title: cleanName, number };
+  };
+
+  const handleCircFileChange = async (file: File | null) => {
+    setNewCircFile(file);
+    if (!file) return;
+
+    // 1. تحليل محلي فوري لاسم الملف
+    const localData = parseCircularFileName(file.name);
+    if (localData.title) {
+      setNewCircTitle(localData.title);
+    }
+    if (localData.number) {
+      setNewCircNumber(localData.number);
+    }
+    setNewCircDesc('جاري قراءة وتحليل ملف التعميم بالذكاء الاصطناعي...');
+
+    // 2. تحليل محتوى المستند عبر Gemini
+    setIsAnalyzingCirc(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/analyze-circular', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error('فشل الاتصال بخدمة التحليل.');
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        if (data.title) setNewCircTitle(data.title);
+        if (data.number) setNewCircNumber(data.number);
+        if (data.description) setNewCircDesc(data.description);
+        
+        setNewTicketToast("✨ تم التعرف على بيانات ومحتوى التعميم تلقائياً!");
+        setTimeout(() => setNewTicketToast(null), 4000);
+      } else {
+        console.warn("AI parsing warning:", data.error);
+        setNewCircDesc(`تعميم بشأن ${localData.title || file.name}`);
+      }
+    } catch (err) {
+      console.error("AI parsing error:", err);
+      setNewCircDesc(`تعميم بشأن ${localData.title || file.name}`);
+    } finally {
+      setIsAnalyzingCirc(false);
+    }
+  };
 
   useEffect(() => {
     const loadCirculars = async () => {
@@ -3001,10 +3067,23 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                       id="newCircFileInput"
                       type="file" 
                       accept=".pdf" 
-                      onChange={(e) => setNewCircFile(e.target.files?.[0] || null)}
+                      onChange={(e) => handleCircFileChange(e.target.files?.[0] || null)}
                       style={{display: 'none'}}
                     />
-                    {newCircFile ? (
+                    {isAnalyzingCirc ? (
+                      <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'8px', width:'100%', padding:'10px 0'}}>
+                        <span style={{
+                          display: 'inline-block',
+                          width: '28px',
+                          height: '28px',
+                          border: '3px solid rgba(255,255,255,0.1)',
+                          borderTopColor: '#10b981',
+                          borderRadius: '50%',
+                          animation: 'spin 0.8s linear infinite'
+                        }} />
+                        <span style={{fontSize:'0.85rem', fontWeight:'bold', color:'#10b981'}}>جاري قراءة وتحليل المستند بالذكاء الاصطناعي...</span>
+                      </div>
+                    ) : newCircFile ? (
                       <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'8px', width:'100%'}}>
                         <span style={{fontSize:'2.5rem', filter:'drop-shadow(0 4px 10px rgba(16,185,129,0.3))'}}>📄</span>
                         <span style={{
@@ -3025,6 +3104,9 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                           onClick={(e) => {
                             e.stopPropagation();
                             setNewCircFile(null);
+                            setNewCircTitle('');
+                            setNewCircNumber('');
+                            setNewCircDesc('');
                             const fileInput = document.getElementById('newCircFileInput') as HTMLInputElement;
                             if (fileInput) fileInput.value = '';
                           }}
