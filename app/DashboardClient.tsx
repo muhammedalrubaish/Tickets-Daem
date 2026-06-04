@@ -732,6 +732,17 @@ const EMPLOYEES = [
   { name: 'ثامر المنصور', user: 't.almansour', phone: '966570770940' },
 ];
 
+const DEFAULT_EMPLOYEES_WITH_PERMS = EMPLOYEES.map(emp => ({
+  ...emp,
+  permissions: {
+    editTicket: true,
+    createTicket: true,
+    deleteCircular: emp.name === 'محمد الربيش',
+    addEmployee: emp.name === 'محمد الربيش',
+    sendReport: true
+  }
+}));
+
 const CATEGORIES = [
   "الرخص التجارية", "الرخص الإنشائية", "بلدي أعمال", "مسار منصة الحفريات", 
   "التقرير المساحي", "الإدارة الذكية للنظافة", "خدمة المواعيد الالكترونية", 
@@ -1000,359 +1011,68 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
   const [isEditDateOpen, setIsEditDateOpen] = useState(false);
   const [calendarViewDate, setCalendarViewDate] = useState<Date>(new Date());
-  const [ticketToDelete, setTicketToDelete] = useState<{id: string, createdAt?: string} | null>(null);
-
-  // --- تعريف هيكل ونظام الصلاحيات الديناميكي للموظفين ---
-  interface PermissionSet {
-    editTicket: boolean;
-    createTicket: boolean;
-    deleteCircular: boolean;
-    addEmployee: boolean;
-    editPassword: boolean;
-    sendReport: boolean;
-  }
-
-  interface EmployeeItem {
-    name: string;
-    user: string;
-    phone: string;
-    pass: string;
-    permissions: PermissionSet;
-  }
-
-  const DEFAULT_EMPLOYEES_WITH_PERMS: EmployeeItem[] = [
-    {
-      name: 'البراء النصيان',
-      user: 'a.alnesayan',
-      phone: '966537313164',
-      pass: '1111',
-      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
-    },
-    {
-      name: 'عبدالله العويد',
-      user: 'aalowaid',
-      phone: '966582060644',
-      pass: '2222',
-      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
-    },
-    {
-      name: 'عبدالرحمن العمري',
-      user: 'af.alamri',
-      phone: '966553077432',
-      pass: '3333',
-      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
-    },
-    {
-      name: 'عزام الحربي',
-      user: 'azz.alharbi',
-      phone: '966500000000',
-      pass: '4444',
-      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
-    },
-    {
-      name: 'محمد الربيش',
-      user: 'mialrubaish',
-      phone: '966595866711',
-      pass: 'Balady.20',
-      permissions: { editTicket: true, createTicket: true, deleteCircular: true, addEmployee: true, editPassword: true, sendReport: true }
-    },
-    {
-      name: 'صالح الغصن',
-      user: 's.alghosen',
-      phone: '966557828464',
-      pass: '6666',
-      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
-    },
-    {
-      name: 'طارق الهدياني',
-      user: 't.alhedyani',
-      phone: '966500221260',
-      pass: '7777',
-      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
-    },
-    {
-      name: 'ثامر المنصور',
-      user: 't.almansour',
-      phone: '966570770940',
-      pass: '8888',
-      permissions: { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
-    }
-  ];
-
-  const [employeesList, setEmployeesList] = useState<EmployeeItem[]>([]);
-  const [isPermissionsOpen, setIsPermissionsOpen] = useState(false);
-  const [selectedEmployeeForPerms, setSelectedEmployeeForPerms] = useState<string | null>(null);
-  
-  // نموذج إضافة موظف جديد
-  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
-  const [newEmpName, setNewEmpName] = useState('');
-  const [newEmpUser, setNewEmpUser] = useState('');
-  const [newEmpPhone, setNewEmpPhone] = useState('');
-  const [newEmpPass, setNewEmpPass] = useState('');
-
-  // نموذج تعديل كلمة المرور
-  const [isEditPasswordOpen, setIsEditPasswordOpen] = useState(false);
-  const [editEmpPassName, setEditEmpPassName] = useState('');
-  const [editEmpPassValue, setEditEmpPassValue] = useState('');
-
-  // لوحة التقارير الذكية
-  const [reportIndicator, setReportIndicator] = useState<'all' | 'closed' | 'open' | 'ministry' | 'waiting' | 'new' | 'general'>('all');
-  const [reportMethod, setReportMethod] = useState<'email' | 'local'>('local');
-  const [reportEmail, setReportEmail] = useState('');
-  const [reportLoading, setReportLoading] = useState(false);
-
-  // تحميل قائمة الموظفين عند بدء التشغيل
-  useEffect(() => {
-    const cached = localStorage.getItem('balady_employees_v1');
-    if (cached) {
-      try {
-        setEmployeesList(JSON.parse(cached));
-      } catch (e) {
-        setEmployeesList(DEFAULT_EMPLOYEES_WITH_PERMS);
-      }
-    } else {
-      localStorage.setItem('balady_employees_v1', JSON.stringify(DEFAULT_EMPLOYEES_WITH_PERMS));
-      setEmployeesList(DEFAULT_EMPLOYEES_WITH_PERMS);
-    }
-  }, []);
-
-  // المزامنة التلقائية مع Supabase إن وُجد جدول الموظفين
-  useEffect(() => {
-    const syncWithSupabase = async () => {
-      try {
-        const { data, error } = await supabase.from('employees').select('*');
-        if (!error && data && data.length > 0) {
-          // دمج البيانات المسترجعة
-          const dbEmployees = data.map((emp: any) => ({
-            name: emp.name,
-            user: emp.user || emp.username,
-            phone: emp.phone || '',
-            pass: emp.pass || emp.password || '1111',
-            permissions: emp.permissions || { editTicket: true, createTicket: true, deleteCircular: false, addEmployee: false, editPassword: false, sendReport: false }
-          }));
-          setEmployeesList(dbEmployees);
-          localStorage.setItem('balady_employees_v1', JSON.stringify(dbEmployees));
-        }
-      } catch (e) {
-        console.warn('Supabase employees sync failed, using localStorage:', e);
-      }
-    };
-    syncWithSupabase();
-  }, []);
-
-  const saveEmployeesList = async (updatedList: EmployeeItem[]) => {
-    setEmployeesList(updatedList);
-    localStorage.setItem('balady_employees_v1', JSON.stringify(updatedList));
-
-    // محاولة الحفظ في سوبابيس أيضاً لتعمل التحديثات للجميع
-    try {
-      const supabasePayload = updatedList.map(emp => ({
-        name: emp.name,
-        user: emp.user,
-        phone: emp.phone,
-        pass: emp.pass,
-        permissions: emp.permissions
-      }));
-      await supabase.from('employees').upsert(supabasePayload, { onConflict: 'name' });
-    } catch (e) {
-      console.warn('Supabase update skipped, saved locally in localStorage.');
-    }
-  };
-  // نظام التعاميم الإدارية الديناميكي
-  const [circulars, setCirculars] = useState<{id:string, title:string, number:string, description:string, file:string, date:string, color:string}[]>([]);
-  const [isAddCircularOpen, setIsAddCircularOpen] = useState(false);
+  const [circulars, setCirculars] = useState<any[]>([]);
   const [newCircTitle, setNewCircTitle] = useState('');
   const [newCircNumber, setNewCircNumber] = useState('');
   const [newCircDesc, setNewCircDesc] = useState('');
   const [newCircFile, setNewCircFile] = useState<File | null>(null);
   const [isUploadingCirc, setIsUploadingCirc] = useState(false);
+  const [isAddCircularOpen, setIsAddCircularOpen] = useState(false);
+  const [isPermissionsOpen, setIsPermissionsOpen] = useState(false);
   const [isAnalyzingCirc, setIsAnalyzingCirc] = useState(false);
+  const [newEmpName, setNewEmpName] = useState('');
+  const [newEmpUser, setNewEmpUser] = useState('');
+  const [newEmpPass, setNewEmpPass] = useState('');
+  const [newEmpPhone, setNewEmpPhone] = useState('');
 
-  const parseCircularFileName = (fileName: string) => {
-    let cleanName = fileName.replace(/\.[^/.]+$/, "");
-    const numberRegex = /(\b\d+[\./-]\d+\b|\b\d+\b)/;
-    const match = cleanName.match(numberRegex);
-    let number = "";
-    if (match) {
-      number = match[0];
-      cleanName = cleanName.replace(number, "");
-    }
-    cleanName = cleanName
-      .replace(/(تعميم|رقم|ملف|جديد|عاجل|هام)/g, "")
-      .replace(/[_\-\s]+/g, " ")
-      .trim();
-    return { title: cleanName, number };
-  };
+  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
+  const [selectedEmployeeForPerms, setSelectedEmployeeForPerms] = useState<string | null>(null);
+  const [editEmpPassName, setEditEmpPassName] = useState('');
+  const [editEmpPassValue, setEditEmpPassValue] = useState('');
+  const [isEditPasswordOpen, setIsEditPasswordOpen] = useState(false);
+  const [reportIndicator, setReportIndicator] = useState<'week' | 'month' | 'year'>('month');
+  const [reportMethod, setReportMethod] = useState<'download' | 'email'>('download');
+  const [reportEmail, setReportEmail] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
 
   const handleCircFileChange = async (file: File | null) => {
     setNewCircFile(file);
     if (!file) return;
-
-    // 1. تحليل محلي فوري لاسم الملف
-    const localData = parseCircularFileName(file.name);
-    if (localData.title) {
-      setNewCircTitle(localData.title);
-    }
-    if (localData.number) {
-      setNewCircNumber(localData.number);
-    }
-    setNewCircDesc('جاري قراءة وتحليل ملف التعميم بالذكاء الاصطناعي...');
-
-    // 2. تحليل محتوى المستند عبر Gemini
     setIsAnalyzingCirc(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
-
-      const res = await fetch('/api/analyze-circular', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        throw new Error('فشل الاتصال بخدمة التحليل.');
-      }
-
-      const data = await res.json();
-      if (data.success) {
+      const res = await fetch('/api/analyze-circular', { method: 'POST', body: formData });
+      if (res.ok) {
+        const data = await res.json();
         if (data.title) setNewCircTitle(data.title);
         if (data.number) setNewCircNumber(data.number);
         if (data.description) setNewCircDesc(data.description);
-        
-        setNewTicketToast("✨ تم التعرف على بيانات ومحتوى التعميم تلقائياً!");
-        setTimeout(() => setNewTicketToast(null), 4000);
-      } else {
-        console.warn("AI parsing warning:", data.error);
-        setNewCircDesc(`تعميم بشأن ${localData.title || file.name}`);
       }
     } catch (err) {
-      console.error("AI parsing error:", err);
-      setNewCircDesc(`تعميم بشأن ${localData.title || file.name}`);
+      console.error('Error analyzing circular:', err);
     } finally {
       setIsAnalyzingCirc(false);
     }
   };
+  const [ticketToDelete, setTicketToDelete] = useState<{ id: string, createdAt?: string } | null>(null);
+  const [employeesList, setEmployeesList] = useState<any[]>([]);
+  const saveEmployeesList = async (list: any[]) => {
+    setEmployeesList(list);
+    try {
+      await supabase.from('employees').upsert(list);
+    } catch (err) {
+      console.error('Error saving employees:', err);
+    }
+  };
 
   useEffect(() => {
-    const loadCirculars = async () => {
-      try {
-        // محاولة جلب التعاميم من قاعدة بيانات سوبابيس السحابية
-        const { data: dbCirculars, error } = await supabase
-          .from('circulars')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (!error && dbCirculars) {
-          if (dbCirculars.length > 0) {
-            setCirculars(dbCirculars.map(c => ({
-              id: c.id,
-              title: c.title,
-              number: c.number,
-              description: c.description || '',
-              file: c.file || '',
-              date: c.date,
-              color: c.color || '#94a3b8'
-            })));
-            return;
-          } else {
-            // الجدول موجود ولكنه فارغ، نقوم بتهيئته تلقائياً بالتعاميم الافتراضية
-            console.log('جدول التعاميم فارغ، يتم تهيئة التعاميم الافتراضية في Supabase...');
-            const defaultCirculars = [
-              {
-                id: 'circ_1',
-                title: 'تعميم الرخص الإنشائية (الأحدث)',
-                number: '7.01',
-                description: 'بشأن إطلاق تحسينات الرخص الإنشائية 7.01 - تحديثات العمل الجديدة',
-                file: '/الملفات/التعاميم/7.01 الرخص الإنشائية _ إطلاق تحسينات.pdf',
-                date: '19-05-2026',
-                color: '#a855f7'
-              },
-              {
-                id: 'circ_2',
-                title: 'تعميم التقارير المساحية (جديد)',
-                number: '6.19',
-                description: 'بشأن إعفاء الجهات الحكومية من الرسوم البلدية لخدمة التقارير المساحية 6.19',
-                file: '/الملفات/التعاميم/6.19 التقارير المساحية _ إعفاء الجهات الحكومية من الرسوم البلدية.pdf',
-                date: '19-05-2026',
-                color: '#3b82f6'
-              },
-              {
-                id: 'circ_3',
-                title: 'تعميم الشهادات الصحية',
-                number: '6.15',
-                description: 'بشأن إطلاق تحسينات الشهادات الصحية 6.15 - تحديثات العمل الجديدة',
-                file: '/الملفات/التعاميم/6.15 الشهادات الصحية _ إطلاق تحسينات.pdf',
-                date: '12-05-2026',
-                color: '#10b981'
-              },
-              {
-                id: 'circ_4',
-                title: 'تعميم رقم 1445/02 (VPN)',
-                number: '6.18',
-                description: 'بشأن تغيير نطاق 6.18 VPN - تحديثات الأمان الجديدة',
-                file: '/الملفات/التعاميم/6.18 VPN  تغيير نطاق.pdf',
-                date: '10-05-2026',
-                color: '#ef4444'
-              },
-              {
-                id: 'circ_5',
-                title: 'تعميم رقم 1445/01',
-                number: '1445/01',
-                description: 'بشأن تنظيم آلية استقبال البلاغات لعام 2026',
-                file: '',
-                date: '07-05-2026',
-                color: '#94a3b8'
-              },
-              {
-                id: 'circ_6',
-                title: 'قرار إداري داخلي',
-                number: 'إداري',
-                description: 'تحديث قائمة المشرفين والمسؤولين في البلديات الفرعية',
-                file: '',
-                date: '01-05-2026',
-                color: '#eab308'
-              }
-            ];
-
-            const { error: seedErr } = await supabase.from('circulars').insert(defaultCirculars);
-            if (!seedErr) {
-              setCirculars(defaultCirculars);
-              return;
-            } else {
-              console.warn('Failed to seed Supabase circulars:', seedErr);
-            }
-          }
-        } else {
-          console.warn('Failed to query Supabase circulars, table may not exist:', error);
-        }
-      } catch (err) {
-        console.warn('Supabase circulars connection exception, falling back to localStorage:', err);
-      }
-
-      // الخيار الاحتياطي: استخدام localStorage والتعاميم الافتراضية
-      const cached = localStorage.getItem('balady_circulars');
-      if (cached) {
-        setCirculars(JSON.parse(cached));
+    const loadCirculars = () => {
+      const stored = localStorage.getItem('balady_circulars');
+      if (stored) {
+        setCirculars(JSON.parse(stored));
       } else {
         const defaultCirculars = [
-          {
-            id: 'circ_1',
-            title: 'تعميم الرخص الإنشائية (الأحدث)',
-            number: '7.01',
-            description: 'بشأن إطلاق تحسينات الرخص الإنشائية 7.01 - تحديثات العمل الجديدة',
-            file: '/الملفات/التعاميم/7.01 الرخص الإنشائية _ إطلاق تحسينات.pdf',
-            date: '19-05-2026',
-            color: '#a855f7'
-          },
-          {
-            id: 'circ_2',
-            title: 'تعميم التقارير المساحية (جديد)',
-            number: '6.19',
-            description: 'بشأن إعفاء الجهات الحكومية من الرسوم البلدية لخدمة التقارير المساحية 6.19',
-            file: '/الملفات/التعاميم/6.19 التقارير المساحية _ إعفاء الجهات الحكومية من الرسوم البلدية.pdf',
-            date: '19-05-2026',
-            color: '#3b82f6'
-          },
           {
             id: 'circ_3',
             title: 'تعميم الشهادات الصحية',
@@ -1396,6 +1116,20 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     };
 
     loadCirculars();
+    const loadEmployees = async () => {
+      try {
+        const { data, error } = await supabase.from('employees').select('*');
+        if (data && data.length > 0) {
+          setEmployeesList(data);
+        } else {
+          setEmployeesList(DEFAULT_EMPLOYEES_WITH_PERMS);
+        }
+      } catch (err) {
+        console.error('Error loading employees:', err);
+        setEmployeesList(DEFAULT_EMPLOYEES_WITH_PERMS);
+      }
+    };
+    loadEmployees();
   }, []);
 
   const handleAddCircular = async (e: React.FormEvent) => {
@@ -1611,7 +1345,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   }, [complaints]);
 
   const [isNotiOpen, setIsNotiOpen] = useState(false);
-  const [ticketStateMap, setTicketStateMap] = useState<Record<string, {state: string, number: string, date?: string}>>({});
+  const [ticketStateMap, setTicketStateMap] = useState<Record<string, {state: string, number: string, receiver: string, type: string, solution: string, date?: string}>>({});
   const [isCircularsOpen, setIsCircularsOpen] = useState(false);
   const [hasNewUpdate, setHasNewUpdate] = useState(false);
   const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
@@ -1769,17 +1503,57 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
     if (Object.keys(ticketStateMap).length > 0) {
       const todayStr = new Date().toISOString().split('T')[0];
+      
+      // 1. التحقق من البلاغات الجديدة أو المحدثة
       complaints.forEach(ticket => {
-        const prev = ticketStateMap[ticket.id] as {state: string, number: string} | undefined;
+        const prev = ticketStateMap[ticket.id];
         const currentState = `${ticket.status}-${ticket.solution}`;
         
         // لا ترسل تنبيه إلا إذا كان البلاغ بتاريخ اليوم فقط لمنع الإزعاج بالقديم
         const isToday = ticket.date && ticket.date >= todayStr;
 
-        if (prev && prev.state !== currentState && isToday) {
-          const msg = `تحديث في بلاغ ${ticket.number} للمستقبل ${ticket.receiver || 'غير محدد'}: ${ticket.solution}`;
+        if (!prev) {
+          // بلاغ جديد تم إنشاؤه
+          if (isToday) {
+            const isVacation = ticket.solution === 'مجاز' || (ticket.number && ticket.number.includes('إجازة'));
+            const msg = isVacation
+              ? `📅 أخذ وضع إجازة - المستقبل: ${ticket.receiver || 'غير محدد'} | التصنيف: ${ticket.type || 'غير محدد'} | حالة المقترح: ${ticket.solution || 'مجاز'}`
+              : `🔔 بلاغ جديد رقم: ${ticket.number} - المستقبل: ${ticket.receiver || 'غير محدد'} | التصنيف: ${ticket.type || 'غير محدد'} | حالة المقترح: ${ticket.solution || 'لم يتم الحل'}`;
+
+            newNotifications.push({
+              id: `new-${ticket.id}-${Date.now()}`,
+              msg,
+              time: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
+              read: false
+            });
+            if (!newTicketToast) setNewTicketToast(msg);
+          }
+        } else if (prev.state !== currentState && isToday) {
+          // تحديث في البلاغ - فقط إذا أصبح وضع إجازة
+          const isVacation = ticket.solution === 'مجاز' || (ticket.number && ticket.number.includes('إجازة'));
+          if (isVacation) {
+            const msg = `📅 أخذ وضع إجازة - المستقبل: ${ticket.receiver || 'غير محدد'} | التصنيف: ${ticket.type || 'غير محدد'} | حالة المقترح: ${ticket.solution || 'مجاز'}`;
+
+            newNotifications.push({
+              id: `update-${ticket.id}-${Date.now()}`,
+              msg,
+              time: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
+              read: false
+            });
+            if (!newTicketToast) setNewTicketToast(msg);
+          }
+        }
+      });
+
+      // 2. التحقق من البلاغات المحذوفة
+      Object.keys(ticketStateMap).forEach(id => {
+        const stillExists = complaints.some(c => c.id === id);
+        if (!stillExists) {
+          const prev = ticketStateMap[id];
+          const msg = `🗑️ تم حذف بلاغ رقم: ${prev.number} - المستقبل: ${prev.receiver || 'غير محدد'} | التصنيف: ${prev.type || 'غير محدد'} | حالة المقترح: ${prev.solution || 'غير محدد'}`;
+
           newNotifications.push({
-            id: `update-${ticket.id}-${Date.now()}`,
+            id: `delete-${id}-${Date.now()}`,
             msg,
             time: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
             read: false
@@ -1789,12 +1563,19 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       });
     }
 
-    const newMap: Record<string, {state: string, number: string, date?: string}> = {};
+    const newMap: Record<string, any> = {};
     complaints.forEach(t => {
       if (!t.id || t.id === 'null' || t.id === 'undefined') return;
-      newMap[t.id] = { state: `${t.status}-${t.solution}`, number: t.number, date: t.date };
+      newMap[t.id] = {
+        state: `${t.status}-${t.solution}`,
+        number: t.number,
+        receiver: t.receiver || 'غير محدد',
+        type: t.type || 'غير محدد',
+        solution: t.solution || 'غير محدد',
+        date: t.date
+      };
     });
-      const numberCounts: {[key: string]: number} = {};
+      const numberCounts: Record<string, number> = {};
       complaints.forEach(c => {
         // نستثني الإجازات وتحديثات النظام من فحص التكرار
         if (c.number && c.number !== 'غير محدد' && c.type !== 'تحديث نظام' && !c.number.includes('جازة')) {
@@ -1818,7 +1599,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         setNotifications(prev => [...newNotifications, ...prev]);
       }
       setTicketStateMap(newMap);
-    setPrevCount(currentCount);
+      setPrevCount(currentCount);
   }, [complaints]);
 
   useEffect(() => {
