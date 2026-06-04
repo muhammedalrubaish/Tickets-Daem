@@ -3596,7 +3596,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 return;
               }
 
-              const newEmployee: EmployeeItem = {
+              const newEmployee: any = {
                 name: newEmpName.trim(),
                 user: newEmpUser.trim().toLowerCase(),
                 phone: newEmpPhone.trim(),
