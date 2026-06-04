@@ -1030,7 +1030,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [editEmpPassName, setEditEmpPassName] = useState('');
   const [editEmpPassValue, setEditEmpPassValue] = useState('');
   const [isEditPasswordOpen, setIsEditPasswordOpen] = useState(false);
-  const [reportIndicator, setReportIndicator] = useState<'week' | 'month' | 'year' | 'closed' | 'open' | 'ministry' | 'waiting' | 'new' | 'general'>('month');
+  const [reportIndicator, setReportIndicator] = useState<'week' | 'month' | 'year'>('month');
   const [reportMethod, setReportMethod] = useState<'download' | 'email' | 'local'>('download');
   const [reportEmail, setReportEmail] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
