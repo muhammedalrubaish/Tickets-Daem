@@ -33,8 +33,8 @@ export async function POST(req: Request) {
       const statusText = (data.solution === 'تم الحل') ? 'إغلاق' : 'قيد المعالجة';
 
       await sendPushNotification({
-        title: 'لوحة التحكم للبلاغات | وحدة بلدي',
-        body: `🔔 بلاغ جديد مستلم رقم: ${ticketNum}\nالتصنيف: ${category} | المستقبل: ${rcv} | الحالة: ${statusText}`,
+        title: 'بلاغات بلدي',
+        body: `🔔 بلاغ جديد رقم: ${ticketNum}\nالتصنيف: ${category} | المستقبل: ${rcv} | الحالة: ${statusText}`,
         url: '/' // Can point to homepage or target page
       });
     } catch (pushErr) {

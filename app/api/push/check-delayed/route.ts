@@ -38,7 +38,7 @@ export async function GET() {
     }
 
     const result = await sendPushNotification({
-      title: 'لوحة التحكم للبلاغات | وحدة بلدي',
+      title: 'بلاغات بلدي',
       body: body,
       url: '/'
     });

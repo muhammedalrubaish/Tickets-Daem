@@ -56,8 +56,8 @@ export async function POST(req: Request) {
           const statusText = (solution === 'تم الحل' || status === 'إغلاق') ? 'إغلاق' : 'قيد المعالجة';
 
           await sendPushNotification({
-            title: 'لوحة التحكم للبلاغات | وحدة بلدي',
-            body: `✏️ تم تحديث البلاغ رقم: ${ticketNum}\nالتصنيف: ${category} | المستقبل: ${rcv} | الحالة: ${statusText}`,
+            title: 'بلاغات بلدي',
+            body: `✏️ تم التحديث بلاغ رقم: ${ticketNum}\nالتصنيف: ${category} | المستقبل: ${rcv} | الحالة: ${statusText}`,
             url: '/'
           });
         } catch (pushErr) {
