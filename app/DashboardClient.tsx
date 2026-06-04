@@ -901,6 +901,91 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [isUpdating, setIsUpdating] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [newTicketToast, setNewTicketToast] = useState<string | null>(null);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
+
+  // Convert VAPID public key to Uint8Array
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
+      // Register service worker
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        setSwRegistration(reg);
+        // Check if subscription already exists
+        return reg.pushManager.getSubscription();
+      }).then((sub) => {
+        if (sub) {
+          setIsSubscribed(true);
+        }
+      }).catch(err => {
+        console.error('Service Worker registration failed:', err);
+      });
+    }
+  }, []);
+
+  const togglePushSubscription = async () => {
+    if (!swRegistration) {
+      alert('نظام الإشعارات غير مدعوم على هذا الجهاز أو لم يتم تحميله بعد.');
+      return;
+    }
+
+    try {
+      if (isSubscribed) {
+        // Unsubscribe
+        const sub = await swRegistration.pushManager.getSubscription();
+        if (sub) {
+          await sub.unsubscribe();
+          await fetch('/api/push/unsubscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription: sub }),
+          });
+        }
+        setIsSubscribed(false);
+        setNewTicketToast('🔕 تم إيقاف إشعارات الهاتف');
+        setTimeout(() => setNewTicketToast(null), 3000);
+      } else {
+        // Request permission
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          alert('يجب الموافقة على صلاحية الإشعارات لتفعيل الخدمة.');
+          return;
+        }
+
+        const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BMj-yYMxHf9oYpFFW5q0HmFswewpCdUDynNSLRhnj5h_98LWe9f19b-j9JfQtwz_z8HMTRgNjpHiGthQS0HXeZg';
+        const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+
+        const sub = await swRegistration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertedVapidKey
+        });
+
+        await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscription: sub }),
+        });
+
+        setIsSubscribed(true);
+        setNewTicketToast('🔔 تم تفعيل إشعارات الهاتف بنجاح!');
+        setTimeout(() => setNewTicketToast(null), 3000);
+      }
+    } catch (err) {
+      console.error('Error toggling push subscription:', err);
+      alert('حدث خطأ أثناء ضبط الإشعارات: ' + (err as Error).message);
+    }
+  };
+
   const [prevCount, setPrevCount] = useState<number>(complaints.length);
   const [notifications, setNotifications] = useState<{id:string, msg:string, time:string, read:boolean}[]>([]);
   const [circularFilter, setCircularFilter] = useState<'all' | 'circular' | 'system' | 'drive'>('all');
@@ -2182,6 +2267,23 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
             {/* 3. الوضع الداكن */}
             <button className={styles.navIconButton} onClick={toggleTheme} title="تغيير مظهر الموقع" style={{ background: 'var(--border)', color: 'var(--foreground)' }}>
               <span style={{fontSize:'1.2rem'}}>{theme === 'light' ? '🌙' : '☀️'}</span>
+            </button>
+
+            {/* 3.5. إشعارات الهاتف */}
+            <button 
+              className={styles.navIconButton} 
+              onClick={togglePushSubscription} 
+              title={isSubscribed ? "تعطيل إشعارات الهاتف" : "تفعيل إشعارات الهاتف"} 
+              style={{ 
+                background: isSubscribed ? 'rgba(34, 197, 94, 0.15)' : 'var(--border)', 
+                color: isSubscribed ? '#22c55e' : 'var(--foreground)',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
             </button>
 
             {/* 4. تسجيل الخروج (أخر واحد يسار) */}

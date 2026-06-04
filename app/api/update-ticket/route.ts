@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
+import { sendPushNotification } from '../../../lib/push';
 
 export async function POST(req: Request) {
   try {
@@ -46,6 +47,22 @@ export async function POST(req: Request) {
       if (conditions.length > 0) {
         const { error } = await query.or(conditions.join(','));
         if (error) throw error;
+        
+        // Trigger Push Notification for the update
+        try {
+          const ticketNum = number || 'غير محدد';
+          const category = category_type || 'غير محدد';
+          const rcv = receiver || 'غير محدد';
+          const statusText = (solution === 'تم الحل' || status === 'إغلاق') ? 'إغلاق' : 'قيد المعالجة';
+
+          await sendPushNotification({
+            title: 'لوحة التحكم للبلاغات | وحدة بلدي',
+            body: `✏️ تم تحديث البلاغ رقم: ${ticketNum}\n• التصنيف: ${category}\n• المستقبل: ${rcv}\n• الحالة المقترحة: ${statusText}`,
+            url: '/'
+          });
+        } catch (pushErr) {
+          console.error('Failed to trigger push notification for updated ticket:', pushErr);
+        }
       } else {
         return NextResponse.json({ error: 'No ticket identifier provided' }, { status: 400 });
       }

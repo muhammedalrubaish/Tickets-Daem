@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
+import { sendPushNotification } from '../../../lib/push';
 
 export async function POST(req: Request) {
   try {
@@ -23,6 +24,22 @@ export async function POST(req: Request) {
     }
 
     const insertedTicket = insertedData?.[0];
+
+    // Trigger Push Notification to all subscribed devices
+    try {
+      const ticketNum = data.ticketNumber || 'غير محدد';
+      const category = data.type || data.serviceType || 'غير محدد';
+      const rcv = data.receiver || data.name || 'غير محدد';
+      const statusText = (data.solution === 'تم الحل') ? 'إغلاق' : 'قيد المعالجة';
+
+      await sendPushNotification({
+        title: 'لوحة التحكم للبلاغات | وحدة بلدي',
+        body: `🔔 بلاغ جديد مستلم رقم: ${ticketNum}\n• التصنيف: ${category}\n• المستقبل: ${rcv}\n• الحالة المقترحة: ${statusText}`,
+        url: '/' // Can point to homepage or target page
+      });
+    } catch (pushErr) {
+      console.error('Failed to trigger push notification for new ticket:', pushErr);
+    }
 
     return NextResponse.json({ 
       success: true, 
