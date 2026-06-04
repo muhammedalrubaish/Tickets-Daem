@@ -30,15 +30,11 @@ export async function POST(req: Request) {
       const ticketNum = data.ticketNumber || 'غير محدد';
       const category = data.type || data.serviceType || 'غير محدد';
       const rcv = data.receiver || data.name || 'غير محدد';
-      const solutionText = data.solution || 'لم يتم الحل';
-
-      const isVacation = solutionText === 'مجاز' || ticketNum.includes('إجازة');
-      const title = isVacation ? '📅 أخذ وضع إجازة' : `🔔 بلاغ جديد رقم: ${ticketNum}`;
-      const body = `المستقبل: ${rcv} | التصنيف: ${category} | حالة المقترح: ${solutionText}`;
+      const statusText = (data.solution === 'تم الحل') ? 'إغلاق' : 'قيد المعالجة';
 
       await sendPushNotification({
-        title,
-        body,
+        title: 'بلاغات بلدي',
+        body: `🔔 بلاغ جديد رقم: ${ticketNum}\nالتصنيف: ${category} | المستقبل: ${rcv} | الحالة: ${statusText}`,
         url: '/' // Can point to homepage or target page
       }, rcv);
     } catch (pushErr) {

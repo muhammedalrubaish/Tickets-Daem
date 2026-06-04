@@ -37,13 +37,6 @@ export async function POST(req: Request) {
       conditions.push(`ticket_number.eq.${ticketId}`);
     }
 
-    // جلب بيانات البلاغ قبل الحذف لإرسال الإشعار
-    const { data: ticketToDelete } = await supabase
-      .from('tickets')
-      .select('*')
-      .or(conditions.join(','))
-      .maybeSingle();
-
     const { error: dbError } = await supabase
       .from('tickets')
       .delete()
@@ -51,25 +44,6 @@ export async function POST(req: Request) {
 
     if (dbError) {
       throw dbError;
-    }
-
-    // إرسال إشعار بالدفع بعد الحذف بنجاح
-    if (ticketToDelete) {
-      try {
-        const { sendPushNotification } = await import('../../../lib/push');
-        const ticketNum = ticketToDelete.ticket_number || 'غير محدد';
-        const category = ticketToDelete.category_type || 'غير محدد';
-        const rcv = ticketToDelete.receiver || 'غير محدد';
-        const solutionText = ticketToDelete.solution || 'غير محدد';
-
-        await sendPushNotification({
-          title: `🗑️ تم حذف البلاغ رقم: ${ticketNum}`,
-          body: `المستقبل: ${rcv} | التصنيف: ${category} | حالة المقترح: ${solutionText}`,
-          url: '/'
-        }, rcv);
-      } catch (pushErr) {
-        console.error('Failed to trigger push notification for deleted ticket:', pushErr);
-      }
     }
 
     return NextResponse.json({ success: true });
