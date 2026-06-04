@@ -2537,12 +2537,23 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 transition: 'all 0.2s ease',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                boxShadow: '0 0 10px rgba(16, 185, 129, 0.1)'
               }}
               onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
               onMouseOut={(e) => e.currentTarget.style.transform = 'none'}
             >
-              <span style={{color:'#10b981'}}>💡</span>
+              <span style={{ 
+                width: '8px', 
+                height: '8px', 
+                background: '#10b981', 
+                borderRadius: '50%', 
+                display: 'inline-block',
+                boxShadow: '0 0 8px #10b981',
+                animation: 'pulse 1.5s infinite',
+                flexShrink: 0
+              }} />
+              <span style={{color:'#10b981', display: 'flex', alignItems: 'center'}}>💡</span>
               <span style={{fontWeight:'bold', fontSize:'0.8rem', color: '#10b981'}}>دليل تعليمي: كيف تفعل إشعارات الهاتف؟ (اضغط هنا)</span>
             </div>
           </div>
