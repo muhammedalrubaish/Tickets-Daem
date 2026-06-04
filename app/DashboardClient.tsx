@@ -905,6 +905,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [showPushPrompt, setShowPushPrompt] = useState(false);
   const [showBottomNotifyBtn, setShowBottomNotifyBtn] = useState(false);
+  const [isWelcomePushModalOpen, setIsWelcomePushModalOpen] = useState(false);
+  const [isHowToPushOpen, setIsHowToPushOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -912,6 +914,16 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     }, 3000);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem('push_welcome_dismissed');
+    if (!isSubscribed && !dismissed) {
+      const timer = setTimeout(() => {
+        setIsWelcomePushModalOpen(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isSubscribed]);
 
   // Convert VAPID public key to Uint8Array
   const urlBase64ToUint8Array = (base64String: string) => {
@@ -2510,6 +2522,29 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 <span style={{fontSize:'0.8rem'}}>تعميم 7.01 بشأن الرخص الإنشائية</span>
               </div>
             )}
+
+            {/* دليل تفعيل إشعارات الهاتف */}
+            <div 
+              className={styles.noteItem} 
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsHowToPushOpen(true);
+              }}
+              style={{
+                borderColor: '#10b981', 
+                background: 'rgba(16, 185, 129, 0.08)', 
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'none'}
+            >
+              <span style={{color:'#10b981'}}>💡</span>
+              <span style={{fontWeight:'bold', fontSize:'0.8rem', color: '#10b981'}}>دليل تعليمي: كيف تفعل إشعارات الهاتف؟ (اضغط هنا)</span>
+            </div>
           </div>
         </div>
 
@@ -4680,6 +4715,195 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
         </button>
+      )}
+
+      {isWelcomePushModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => {
+          setIsWelcomePushModalOpen(false);
+          localStorage.setItem('push_welcome_dismissed', 'true');
+        }} style={{ backdropFilter: 'blur(12px)', backgroundColor: 'rgba(15, 23, 42, 0.75)' }}>
+          <div 
+            className={styles.modalContent} 
+            style={{ 
+              maxWidth: '450px', 
+              textAlign: 'center', 
+              background: 'linear-gradient(135deg, #1c231f 0%, #111613 100%)', 
+              border: '1px solid rgba(16, 185, 129, 0.25)', 
+              borderRadius: '24px', 
+              padding: '2.5rem 2rem', 
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 25px rgba(16, 185, 129, 0.15)', 
+              overflow: 'hidden',
+              position: 'relative'
+            }} 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => {
+                setIsWelcomePushModalOpen(false);
+                localStorage.setItem('push_welcome_dismissed', 'true');
+              }}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                left: '1rem',
+                background: 'rgba(255,255,255,0.05)',
+                border: 'none',
+                color: 'var(--text-muted)',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                fontSize: '1.2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+            >
+              &times;
+            </button>
+
+            <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justify: 'center', margin: '0 auto 1.5rem auto', boxShadow: '0 0 20px rgba(16, 185, 129, 0.15)' }}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </div>
+            
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#ffffff', marginBottom: '0.75rem', fontFamily: 'Cairo' }}>
+              ربط إشعارات الهاتف 🔔
+            </h2>
+            
+            <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2rem', fontFamily: 'Cairo' }}>
+              لقد قمنا بربط نظام الإشعارات الفورية على الهاتف بنجاح!
+              <br />
+              <span style={{ color: '#10b981', fontWeight: 'bold' }}>قم بتفعيلها الآن لتلقي البلاغات فورًا.</span>
+            </p>
+            
+            <div style={{ display: 'flex', gap: '14px', flexDirection: 'column' }}>
+              <button 
+                onClick={async () => {
+                  setIsWelcomePushModalOpen(false);
+                  localStorage.setItem('push_welcome_dismissed', 'true');
+                  await togglePushSubscription();
+                }}
+                style={{ width: '100%', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#ffffff', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s ease', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)', fontFamily: 'Cairo' }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 18px rgba(16, 185, 129, 0.45)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+                }}
+              >
+                تفعيل الإشعارات الآن
+              </button>
+              
+              <button 
+                onClick={() => {
+                  setIsWelcomePushModalOpen(false);
+                  localStorage.setItem('push_welcome_dismissed', 'true');
+                }}
+                style={{ width: '100%', background: 'rgba(255, 255, 255, 0.05)', color: '#e2e8f0', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '10px 24px', borderRadius: '12px', fontWeight: 'bold', fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s ease', fontFamily: 'Cairo' }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                }}
+              >
+                ليس الآن، سأفعلها لاحقاً
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isHowToPushOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsHowToPushOpen(false)} style={{ backdropFilter: 'blur(12px)', backgroundColor: 'rgba(15, 23, 42, 0.75)' }}>
+          <div 
+            className={styles.modalContent} 
+            style={{ 
+              maxWidth: '500px', 
+              background: 'linear-gradient(135deg, #1c231f 0%, #111613 100%)', 
+              border: '1px solid rgba(16, 185, 129, 0.2)', 
+              borderRadius: '24px', 
+              padding: '2rem', 
+              boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)', 
+              direction: 'rtl',
+              position: 'relative'
+            }} 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setIsHowToPushOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                left: '1rem',
+                background: 'rgba(255,255,255,0.05)',
+                border: 'none',
+                color: 'var(--text-muted)',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                fontSize: '1.2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+            >
+              &times;
+            </button>
+
+            <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#10b981', marginBottom: '1.5rem', fontFamily: 'Cairo', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span>💡</span> دليل تفعيل إشعارات الهاتف الفورية
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', color: '#e2e8f0', fontFamily: 'Cairo', fontSize: '0.92rem', lineHeight: '1.6' }}>
+              
+              {/* Android Section */}
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#10b981', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🤖</span> أجهزة الأندرويد (Android):
+                </h4>
+                <ol style={{ margin: 0, paddingRight: '1.2rem' }}>
+                  <li>اضغط على أيقونة الإشعارات (الجرس العائم) الظاهرة أسفل يسار الشاشة.</li>
+                  <li>عند ظهور طلب الإذن من المتصفح، اضغط على <strong>سماح (Allow)</strong> لتأكيد التفعيل.</li>
+                </ol>
+              </div>
+
+              {/* iOS Section */}
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: '#3b82f6', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🍎</span> أجهزة الآيفون (iOS):
+                </h4>
+                <ol style={{ margin: 0, paddingRight: '1.2rem' }}>
+                  <li>يجب عليك فتح الموقع أولاً باستخدام متصفح <strong>Safari</strong> الأصلي.</li>
+                  <li>اضغط على زر المشاركة (📤 <strong>Share</strong>) أسفل المتصفح.</li>
+                  <li>اختر <strong>إضافة إلى الشاشة الرئيسية (➕ Add to Home Screen)</strong>.</li>
+                  <li>افتح الموقع كـ "تطبيق" من الشاشة الرئيسية لهاتفك.</li>
+                  <li>اضغط على الجرس العائم أسفل اليسار، ووافق على منح صلاحية إرسال التنبيهات.</li>
+                </ol>
+              </div>
+
+            </div>
+
+            <button 
+              onClick={() => setIsHowToPushOpen(false)}
+              style={{ width: '100%', background: 'var(--primary)', color: 'white', border: 'none', padding: '10px', borderRadius: '10px', marginTop: '1.5rem', cursor: 'pointer', fontFamily: 'Cairo', fontWeight: 'bold' }}
+            >
+              فهمت، إغلاق الدليل
+            </button>
+          </div>
+        </div>
       )}
 
       <AIChat stats={stats} />
