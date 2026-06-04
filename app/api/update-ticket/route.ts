@@ -57,7 +57,7 @@ export async function POST(req: Request) {
 
           await sendPushNotification({
             title: 'لوحة التحكم للبلاغات | وحدة بلدي',
-            body: `✏️ تم تحديث البلاغ رقم: ${ticketNum}\n• التصنيف: ${category}\n• المستقبل: ${rcv}\n• الحالة المقترحة: ${statusText}`,
+            body: `✏️ تم تحديث البلاغ رقم: ${ticketNum}\nالتصنيف: ${category} | المستقبل: ${rcv} | الحالة: ${statusText}`,
             url: '/'
           });
         } catch (pushErr) {

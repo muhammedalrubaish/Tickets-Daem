@@ -32,7 +32,7 @@ export async function GET() {
 
     if (count === 1) {
       const ticket = delayedTickets[0];
-      body = `⚠️ بلاغ متأخر لأكثر من يوم رقم: ${ticket.ticket_number || 'غير محدد'}\n• التصنيف: ${ticket.category_type || 'غير محدد'}\n• المستقبل: ${ticket.receiver || 'غير محدد'}\n• تاريخ الاستقبال: ${ticket.reception_date || 'غير محدد'}`;
+      body = `⚠️ بلاغ متأخر لأكثر من يوم رقم: ${ticket.ticket_number || 'غير محدد'}\nالتصنيف: ${ticket.category_type || 'غير محدد'} | المستقبل: ${ticket.receiver || 'غير محدد'} | تاريخ الاستقبال: ${ticket.reception_date || 'غير محدد'}`;
     } else {
       body = `⚠️ يوجد عدد (${count}) بلاغات متأخرة لأكثر من يوم دون معالجة. يرجى الدخول والمتابعة.`;
     }

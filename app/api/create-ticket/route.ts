@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
       await sendPushNotification({
         title: 'لوحة التحكم للبلاغات | وحدة بلدي',
-        body: `🔔 بلاغ جديد مستلم رقم: ${ticketNum}\n• التصنيف: ${category}\n• المستقبل: ${rcv}\n• الحالة المقترحة: ${statusText}`,
+        body: `🔔 بلاغ جديد مستلم رقم: ${ticketNum}\nالتصنيف: ${category} | المستقبل: ${rcv} | الحالة: ${statusText}`,
         url: '/' // Can point to homepage or target page
       });
     } catch (pushErr) {
