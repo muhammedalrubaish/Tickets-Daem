@@ -48,18 +48,20 @@ export async function POST(req: Request) {
         const { error } = await query.or(conditions.join(','));
         if (error) throw error;
         
-        // Trigger Push Notification for the update
+        // Trigger Push Notification only for vacation status
         try {
-          const ticketNum = number || 'غير محدد';
-          const category = category_type || 'غير محدد';
-          const rcv = receiver || 'غير محدد';
-          const statusText = (solution === 'تم الحل' || status === 'إغلاق') ? 'إغلاق' : 'قيد المعالجة';
+          const isVacation = solution === 'إجازة' || solution === 'في إجازة';
+          if (isVacation) {
+            const ticketNum = number || 'غير محدد';
+            const category = category_type || 'غير محدد';
+            const rcv = receiver || 'غير محدد';
 
-          await sendPushNotification({
-            title: 'بلاغات بلدي',
-            body: `✏️ تم التحديث بلاغ رقم: ${ticketNum}\nالتصنيف: ${category} | المستقبل: ${rcv} | الحالة: ${statusText}`,
-            url: '/'
-          }, rcv);
+            await sendPushNotification({
+              title: '🏖️ إجازة - بلاغات بلدي',
+              body: `المستقبل: ${rcv} | التصنيف: ${category} | حالة المقترح: ${solution}`,
+              url: '/'
+            }, rcv);
+          }
         } catch (pushErr) {
           console.error('Failed to trigger push notification for updated ticket:', pushErr);
         }

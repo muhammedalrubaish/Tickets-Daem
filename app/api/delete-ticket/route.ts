@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { ticketId, createdAt } = await req.json();
+    const { ticketId, createdAt, receiver, category, solution } = await req.json();
 
     if (!ticketId) {
       return NextResponse.json({ error: 'Ticket ID is required' }, { status: 400 });
@@ -46,7 +46,23 @@ export async function POST(req: Request) {
       throw dbError;
     }
 
+    // إرسال إشعار عند حذف البلاغ
+    try {
+      const { sendPushNotification } = await import('../../../lib/push');
+      const rcv = receiver || 'غير محدد';
+      const cat = category || 'غير محدد';
+      const sol = solution || 'غير محدد';
+      await sendPushNotification({
+        title: '🗑️ تم حذف بلاغ - بلاغات بلدي',
+        body: `المستقبل: ${rcv} | التصنيف: ${cat} | حالة المقترح: ${sol}`,
+        url: '/'
+      }, rcv);
+    } catch (pushErr) {
+      console.error('Failed to send delete push notification:', pushErr);
+    }
+
     return NextResponse.json({ success: true });
+
   } catch (error) {
     console.error('Delete Error:', error);
     return NextResponse.json({ error: 'حدث خطأ أثناء حذف البلاغ.' }, { status: 500 });

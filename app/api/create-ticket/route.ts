@@ -30,12 +30,12 @@ export async function POST(req: Request) {
       const ticketNum = data.ticketNumber || 'غير محدد';
       const category = data.type || data.serviceType || 'غير محدد';
       const rcv = data.receiver || data.name || 'غير محدد';
-      const statusText = (data.solution === 'تم الحل') ? 'إغلاق' : 'قيد المعالجة';
+      const solutionText = data.solution || 'غير محدد';
 
       await sendPushNotification({
-        title: 'بلاغات بلدي',
-        body: `🔔 بلاغ جديد رقم: ${ticketNum}\nالتصنيف: ${category} | المستقبل: ${rcv} | الحالة: ${statusText}`,
-        url: '/' // Can point to homepage or target page
+        title: '🔔 بلاغ جديد - بلاغات بلدي',
+        body: `المستقبل: ${rcv} | التصنيف: ${category} | حالة المقترح: ${solutionText}`,
+        url: '/'
       }, rcv);
     } catch (pushErr) {
       console.error('Failed to trigger push notification for new ticket:', pushErr);
