@@ -3,7 +3,7 @@ import { supabase } from '../../../../lib/supabase';
 
 export async function POST(req: Request) {
   try {
-    const { subscription } = await req.json();
+    const { subscription, userName } = await req.json();
 
     if (!subscription) {
       return NextResponse.json({ error: 'Subscription data is required' }, { status: 400 });
@@ -12,7 +12,10 @@ export async function POST(req: Request) {
     // Insert or ignore if duplicate (unique constraint on subscription)
     const { data, error } = await supabase
       .from('push_subscriptions')
-      .upsert({ subscription }, { onConflict: 'subscription' })
+      .upsert({ 
+        subscription, 
+        user_name: userName || 'غير معروف' 
+      }, { onConflict: 'subscription' })
       .select();
 
     if (error) {
