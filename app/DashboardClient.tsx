@@ -917,44 +917,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     return outputArray;
   };
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
-      // Register service worker
-      navigator.serviceWorker.register('/sw.js').then((reg) => {
-        setSwRegistration(reg);
-        // Check if subscription already exists
-        return reg.pushManager.getSubscription();
-      }).then((sub) => {
-        if (sub) {
-          setIsSubscribed(true);
-        } else {
-          // Check if they already declined in this session
-          const declined = localStorage.getItem('push_declined_temp');
-          const cookies = document.cookie.split('; ');
-          const hasAuth = cookies.some(c => c.startsWith('auth_token='));
-          
-          if (!declined && hasAuth) {
-            // Show prompt after a short delay (3 seconds) for a premium user experience
-            setTimeout(() => {
-              setShowPushPrompt(true);
-            }, 3000);
-          }
-        }
-      }).catch(err => {
-        console.error('Service Worker registration failed:', err);
-      });
-    }
-  }, [userRole, loggedInUser]);
-
-  const handleAcceptPush = async () => {
-    setShowPushPrompt(false);
-    await togglePushSubscription();
-  };
-
-  const handleDeclinePush = () => {
-    setShowPushPrompt(false);
-    localStorage.setItem('push_declined_temp', 'true');
-  };
 
   const togglePushSubscription = async () => {
     if (!swRegistration) {
@@ -1570,6 +1532,45 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [userRole, setUserRole] = useState<'viewer' | 'editor' | 'super_admin' | null>(null);
   const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
+      // Register service worker
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        setSwRegistration(reg);
+        // Check if subscription already exists
+        return reg.pushManager.getSubscription();
+      }).then((sub) => {
+        if (sub) {
+          setIsSubscribed(true);
+        } else {
+          // Check if they already declined in this session
+          const declined = localStorage.getItem('push_declined_temp');
+          const cookies = document.cookie.split('; ');
+          const hasAuth = cookies.some(c => c.startsWith('auth_token='));
+          
+          if (!declined && hasAuth) {
+            // Show prompt after a short delay (3 seconds) for a premium user experience
+            setTimeout(() => {
+              setShowPushPrompt(true);
+            }, 3000);
+          }
+        }
+      }).catch(err => {
+        console.error('Service Worker registration failed:', err);
+      });
+    }
+  }, [userRole, loggedInUser]);
+
+  const handleAcceptPush = async () => {
+    setShowPushPrompt(false);
+    await togglePushSubscription();
+  };
+
+  const handleDeclinePush = () => {
+    setShowPushPrompt(false);
+    localStorage.setItem('push_declined_temp', 'true');
+  };
 
   const currentUserPermissions = useMemo(() => {
     if (!loggedInUser) return null;
