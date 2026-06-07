@@ -30,6 +30,7 @@ export default function ExtensionPopupPage() {
   const [password, setPassword] = useState<string>('');
   const [showPasswordField, setShowPasswordField] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
+  const [nextEmployee, setNextEmployee] = useState<string>('غير محدد');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -65,6 +66,55 @@ export default function ExtensionPopupPage() {
           const tickets: Ticket[] = await res.json();
           const calculatedCounts = calculateCounts(tickets);
           setCounts(calculatedCounts);
+
+          // حساب الموظف التالي بالدور
+          const priorityOrder = [
+            { name: 'البراء النصيان', user: 'a.alnesayan' },
+            { name: 'محمد الربيش', user: 'mialrubaish' },
+            { name: 'عبدالرحمن العمري', user: 'af.alamri' },
+            { name: 'عزام الحربي', user: 'azz.alharbi' },
+            { name: 'صالح الغصن', user: 's.alghosen' },
+            { name: 'طارق الهدياني', user: 't.alhedyani' },
+            { name: 'ثامر المنصور', user: 't.almansour' }
+          ];
+
+          const empCounts: Record<string, number> = {};
+          priorityOrder.forEach(emp => {
+            empCounts[emp.name] = 0;
+          });
+
+          const baseTickets = tickets.filter(t => 
+            t.date && 
+            t.date >= '2026-04-04' && 
+            t.solution !== 'تحديث نظام' && 
+            t.solution !== 'تحديثات النظام' &&
+            !(t.number && t.number.includes('📢'))
+          );
+
+          baseTickets.forEach(t => {
+            const receiver = (t.receiver || '').trim();
+            if (!receiver || receiver === 'غير محدد') return;
+
+            const matched = priorityOrder.find(p => 
+              receiver.includes(p.name.split(' ')[0]) || 
+              p.name.includes(receiver.split(' ')[0])
+            );
+
+            if (matched) {
+              empCounts[matched.name]++;
+            }
+          });
+
+          let bestCandidate = priorityOrder[0];
+          let minCount = empCounts[bestCandidate.name];
+
+          for (const emp of priorityOrder) {
+            if (empCounts[emp.name] < minCount) {
+              minCount = empCounts[emp.name];
+              bestCandidate = emp;
+            }
+          }
+          setNextEmployee(bestCandidate.name);
         }
       } catch (err) {
         console.error('Failed to load tickets in extension popup page:', err);
@@ -367,6 +417,80 @@ export default function ExtensionPopupPage() {
           background: rgba(239, 68, 68, 0.15) !important;
         }
 
+        .space-dashboard {
+          background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.05)) !important;
+          border: 1px dashed rgba(16, 185, 129, 0.3) !important;
+          border-radius: 10px !important;
+          padding: 10px !important;
+          margin-top: 10px !important;
+          box-shadow: 0 0 15px rgba(16, 185, 129, 0.1) !important;
+          direction: rtl !important;
+          text-align: right !important;
+          font-family: 'Cairo', sans-serif !important;
+          animation: space-pulse 4s infinite alternate !important;
+        }
+
+        @keyframes space-pulse {
+          0% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); }
+          100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.5); }
+        }
+
+        .space-title {
+          font-size: 10px !important;
+          font-weight: 700 !important;
+          color: #38bdf8 !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.5px !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 6px !important;
+          margin-bottom: 8px !important;
+        }
+
+        .space-metric-container {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 6px !important;
+        }
+
+        .space-bar-bg {
+          width: 100% !important;
+          height: 6px !important;
+          background: rgba(255, 255, 255, 0.05) !important;
+          border-radius: 3px !important;
+          overflow: hidden !important;
+          position: relative !important;
+          border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .space-bar-fill {
+          height: 100% !important;
+          background: linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6) !important;
+          border-radius: 3px !important;
+          transition: width 1s ease-in-out !important;
+          box-shadow: 0 0 8px #10b981 !important;
+        }
+
+        .space-text-row {
+          display: flex !important;
+          justify-content: space-between !important;
+          font-size: 10px !important;
+          color: #e2e8f0 !important;
+        }
+
+        .space-assignee-tag {
+          background: rgba(16, 185, 129, 0.1) !important;
+          color: #10b981 !important;
+          padding: 2px 6px !important;
+          border-radius: 4px !important;
+          border: 1px solid rgba(16, 185, 129, 0.2) !important;
+          font-weight: 700 !important;
+          font-size: 9px !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          gap: 4px !important;
+        }
+
         .login-view {
           display: flex !important;
           flex-direction: column !important;
@@ -652,6 +776,36 @@ export default function ExtensionPopupPage() {
                 ❌ تبديل الحساب
               </button>
             </div>
+            {role === 'admin' && (
+              <div className="space-dashboard">
+                <div className="space-title">
+                  <span>🛰️ مركز التوزيع والتحكم</span>
+                </div>
+                <div className="space-metric-container">
+                  <div className="space-text-row">
+                    <span>إجمالي حمولة البلاغات النشطة:</span>
+                    <span style={{ fontWeight: 'bold', color: '#10b981' }}>
+                      {counts.new + counts.recent + counts.veryOld + counts.old + counts.notSolved}
+                    </span>
+                  </div>
+                  <div className="space-bar-bg">
+                    <div 
+                      className="space-bar-fill" 
+                      style={{ 
+                        width: `${Math.min(100, ((counts.new + counts.recent + counts.veryOld + counts.old + counts.notSolved) / 100) * 100)}%` 
+                      }}
+                    ></div>
+                  </div>
+                  <div className="space-text-row" style={{ marginTop: '4px' }}>
+                    <span>المستقبل التالي بالدور:</span>
+                    <span className="space-assignee-tag">
+                      <span className="pulse-dot" style={{ width: '6px', height: '6px', backgroundColor: '#10b981', borderRadius: '50%', boxShadow: '0 0 6px #10b981', display: 'inline-block' }}></span>
+                      {nextEmployee}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
