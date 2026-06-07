@@ -228,7 +228,24 @@ export default function ExtensionPopupPage() {
           background: #0f172a !important;
           margin: 0 !important;
           padding: 0 !important;
-          overflow: hidden !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+          height: 100% !important;
+        }
+
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+          width: 4px !important;
+        }
+        ::-webkit-scrollbar-track {
+          background: #0f172a !important;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #334155 !important;
+          border-radius: 4px !important;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: #10b981 !important;
         }
 
         .popup-container {
@@ -236,28 +253,29 @@ export default function ExtensionPopupPage() {
           color: #f8fafc !important;
           font-family: 'Cairo', sans-serif !important;
           margin: 0 !important;
-          padding: 15px !important;
+          padding: 10px !important;
           width: 100% !important;
-          min-height: 100vh !important;
+          min-height: 100% !important;
           box-sizing: border-box !important;
           direction: rtl !important;
+          overflow-y: auto !important;
         }
 
         .header-logo {
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
-          margin-bottom: 8px !important;
+          margin-bottom: 4px !important;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-          padding-bottom: 8px !important;
+          padding-bottom: 4px !important;
           width: 100% !important;
         }
 
         .logo-img {
-          width: 45px !important;
-          height: 45px !important;
-          border-radius: 12px !important;
-          margin-bottom: 6px !important;
+          width: 38px !important;
+          height: 38px !important;
+          border-radius: 10px !important;
+          margin-bottom: 4px !important;
           box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25) !important;
           border: 2px solid #10b981 !important;
           transition: all 0.3s ease !important;
@@ -270,7 +288,7 @@ export default function ExtensionPopupPage() {
 
         h3.title {
           margin: 0 !important;
-          font-size: 15px !important;
+          font-size: 13px !important;
           color: #10b981 !important;
           text-align: center !important;
           font-weight: 700 !important;
@@ -279,16 +297,16 @@ export default function ExtensionPopupPage() {
         .stats-grid {
           display: flex !important;
           flex-direction: column !important;
-          gap: 6px !important;
+          gap: 4px !important;
         }
 
         .stat-card {
           display: flex !important;
           align-items: center !important;
           justify-content: space-between !important;
-          padding: 6px 12px !important;
+          padding: 5px 10px !important;
           background: rgba(255, 255, 255, 0.05) !important;
-          border-radius: 8px !important;
+          border-radius: 6px !important;
           border: 1px solid rgba(255, 255, 255, 0.05) !important;
           transition: all 0.2s ease !important;
         }
@@ -350,7 +368,7 @@ export default function ExtensionPopupPage() {
         }
 
         .daem-link-container {
-          margin-top: 10px !important;
+          margin-top: 6px !important;
           display: flex !important;
           justify-content: center !important;
           width: 100% !important;
@@ -361,13 +379,13 @@ export default function ExtensionPopupPage() {
           align-items: center !important;
           justify-content: center !important;
           width: 100% !important;
-          padding: 6px 12px !important;
+          padding: 4px 8px !important;
           background: linear-gradient(135deg, #10b981, #059669) !important;
           color: white !important;
           text-decoration: none !important;
-          border-radius: 8px !important;
+          border-radius: 6px !important;
           font-weight: 600 !important;
-          font-size: 11px !important;
+          font-size: 10px !important;
           transition: all 0.3s ease !important;
           border: 1px solid rgba(255, 255, 255, 0.1) !important;
           box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15) !important;
@@ -380,16 +398,17 @@ export default function ExtensionPopupPage() {
         }
 
         .footer {
-          margin-top: 8px !important;
-          font-size: 9px !important;
+          margin-top: 6px !important;
+          font-size: 8px !important;
           text-align: center !important;
           opacity: 0.8 !important;
+          padding-bottom: 6px !important;
         }
 
         .logout-footer {
-          margin-top: 6px !important;
+          margin-top: 4px !important;
           border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-          padding-top: 6px !important;
+          padding-top: 4px !important;
           display: flex !important;
           justify-content: space-between !important;
           align-items: center !important;
@@ -423,12 +442,13 @@ export default function ExtensionPopupPage() {
           border: 1px dashed rgba(16, 185, 129, 0.3) !important;
           border-radius: 10px !important;
           padding: 10px !important;
-          margin-top: 10px !important;
+          margin-top: 8px !important;
           box-shadow: 0 0 15px rgba(16, 185, 129, 0.1) !important;
           direction: rtl !important;
           text-align: right !important;
           font-family: 'Cairo', sans-serif !important;
           animation: space-pulse 4s infinite alternate !important;
+          display: block !important;
         }
 
         @keyframes space-pulse {
@@ -771,42 +791,42 @@ export default function ExtensionPopupPage() {
             <div>تطوير ذكي - 2026 (تحديث فوري تلقائي ⚡)</div>
             <div className="logout-footer">
               <span className="badge-role" style={{ color: role === 'admin' ? '#10b981' : '#94a3b8' }}>
-                الدور: {role === 'admin' ? 'صلاحيات كاملة' : 'نسخ ولصق فقط'}
+                الدور: {role === 'admin' ? '🔑 صلاحيات كاملة' : '👤 نسخ ولصق فقط'}
               </span>
               <button onClick={handleLogout} className="btn-switch-account">
                 ❌ تبديل الحساب
               </button>
             </div>
-            {role === 'admin' && (
-              <div className="space-dashboard">
-                <div className="space-title">
-                  <span>🛰️ مركز التوزيع والتحكم</span>
+
+            {/* مركز التوزيع يظهر لكلا الدورين دائماً */}
+            <div className="space-dashboard">
+              <div className="space-title">
+                <span>🛰️ مركز التوزيع والتحكم</span>
+              </div>
+              <div className="space-metric-container">
+                <div className="space-text-row">
+                  <span>إجمالي البلاغات النشطة:</span>
+                  <span style={{ fontWeight: 'bold', color: '#10b981' }}>
+                    {counts.new + counts.recent + counts.veryOld + counts.old + counts.notSolved}
+                  </span>
                 </div>
-                <div className="space-metric-container">
-                  <div className="space-text-row">
-                    <span>إجمالي حمولة البلاغات النشطة:</span>
-                    <span style={{ fontWeight: 'bold', color: '#10b981' }}>
-                      {counts.new + counts.recent + counts.veryOld + counts.old + counts.notSolved}
-                    </span>
-                  </div>
-                  <div className="space-bar-bg">
-                    <div 
-                      className="space-bar-fill" 
-                      style={{ 
-                        width: `${Math.min(100, ((counts.new + counts.recent + counts.veryOld + counts.old + counts.notSolved) / 100) * 100)}%` 
-                      }}
-                    ></div>
-                  </div>
-                  <div className="space-text-row" style={{ marginTop: '4px' }}>
-                    <span>المستقبل التالي بالدور:</span>
-                    <span className="space-assignee-tag">
-                      <span className="pulse-dot" style={{ width: '6px', height: '6px', backgroundColor: '#10b981', borderRadius: '50%', boxShadow: '0 0 6px #10b981', display: 'inline-block' }}></span>
-                      {nextEmployee}
-                    </span>
-                  </div>
+                <div className="space-bar-bg">
+                  <div 
+                    className="space-bar-fill" 
+                    style={{ 
+                      width: `${Math.min(100, ((counts.new + counts.recent + counts.veryOld + counts.old + counts.notSolved) / 100) * 100)}%` 
+                    }}
+                  ></div>
+                </div>
+                <div className="space-text-row" style={{ marginTop: '6px' }}>
+                  <span>المستقبل التالي بالدور:</span>
+                  <span className="space-assignee-tag">
+                    <span style={{ width: '6px', height: '6px', backgroundColor: '#10b981', borderRadius: '50%', boxShadow: '0 0 6px #10b981', display: 'inline-block', flexShrink: 0 }}></span>
+                    {nextEmployee}
+                  </span>
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </>
       )}
