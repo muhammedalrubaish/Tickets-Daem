@@ -155,6 +155,8 @@ export default function ExtensionPopupPage() {
     return counts;
   }
 
+  const [showPasswordText, setShowPasswordText] = useState<boolean>(false);
+
   return (
     <div className="popup-container">
       <style>{`
@@ -432,9 +434,15 @@ export default function ExtensionPopupPage() {
           to { opacity: 1; transform: translateY(0); }
         }
 
+        .password-input-container {
+          position: relative !important;
+          width: 100% !important;
+          margin-bottom: 8px !important;
+        }
+
         .login-input {
           width: 100% !important;
-          padding: 8px 12px !important;
+          padding: 8px 38px 8px 12px !important;
           border-radius: 6px !important;
           border: 1px solid #334155 !important;
           background-color: #1e293b !important;
@@ -442,12 +450,32 @@ export default function ExtensionPopupPage() {
           font-family: 'Cairo', sans-serif !important;
           font-size: 11px !important;
           text-align: center !important;
-          margin-bottom: 8px !important;
           outline: none !important;
+          box-sizing: border-box !important;
         }
 
         .login-input:focus {
           border-color: #10b981 !important;
+        }
+
+        .password-toggle-btn {
+          position: absolute !important;
+          right: 10px !important;
+          top: 50% !important;
+          transform: translateY(-50%) !important;
+          background: transparent !important;
+          border: none !important;
+          color: #94a3b8 !important;
+          cursor: pointer !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          padding: 0 !important;
+          outline: none !important;
+        }
+
+        .password-toggle-btn:hover {
+          color: #10b981 !important;
         }
 
         .error-message {
@@ -489,16 +517,36 @@ export default function ExtensionPopupPage() {
           
           {showPasswordField && (
             <div id="password-section">
-              <input 
-                type="password" 
-                className="login-input" 
-                placeholder="أدخل كلمة مرور محمد الربيش"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleLoginAdmin();
-                }}
-              />
+              <div className="password-input-container">
+                <input 
+                  type={showPasswordText ? "text" : "password"} 
+                  className="login-input" 
+                  placeholder="أدخل كلمة مرور محمد الربيش"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleLoginAdmin();
+                  }}
+                />
+                <button 
+                  type="button" 
+                  className="password-toggle-btn"
+                  onClick={() => setShowPasswordText(!showPasswordText)}
+                  title={showPasswordText ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                >
+                  {showPasswordText ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  )}
+                </button>
+              </div>
               <button onClick={handleLoginAdmin} className="login-btn login-btn-primary">تأكيد الدخول</button>
               {errorMsg && <div className="error-message">{errorMsg}</div>}
             </div>
