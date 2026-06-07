@@ -1354,6 +1354,21 @@
   flex-shrink: 0;
 }
 
+.quickBtnIconOnly {
+  padding: 0 !important;
+  width: 42px !important;
+}
+
+.quickBtnIconOnly svg {
+  margin: 0 !important;
+}
+
+@media (max-width: 768px) {
+  .quickBtnIconOnly {
+    width: 32px !important;
+  }
+}
+
 /* تحسينات الهيدر الجديد (v7.8.1) */
 .headerLayout {
   display: flex;

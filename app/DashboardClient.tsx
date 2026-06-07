@@ -1767,6 +1767,17 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       localStorage.setItem('seen_vpn_circular_v3.1', 'true');
     }
 
+    const hasSeenPlusIconUpdate = localStorage.getItem('seen_plus_icon_update_v1.0');
+    if (!hasSeenPlusIconUpdate) {
+      newNotifications.push({
+        id: `update-plus-icon-${Date.now()}`,
+        msg: '⚙️ تحديث النظام: تم حل مشكلة انحراف وتوسيط علامة الزائد (+) في قائمة البلاغات وتحديث قواعد النظام.',
+        time: new Date().toLocaleDateString('ar-SA'),
+        read: false
+      });
+      localStorage.setItem('seen_plus_icon_update_v1.0', 'true');
+    }
+
     if (Object.keys(ticketStateMap).length > 0) {
       const todayStr = new Date().toISOString().split('T')[0];
       complaints.forEach(ticket => {
@@ -4440,9 +4451,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               {/* زر إنشاء بلاغ نوشن (+) */}
               <button 
                 onClick={() => { setFormMode('notion'); setIsFormOpen(true); }}
-                className={styles.quickBtn}
+                className={`${styles.quickBtn} ${styles.quickBtnIconOnly}`}
                 style={{
-                  width:'42px', 
                   background:'var(--primary)', color:'white', 
                   boxShadow:'0 4px 15px rgba(34, 197, 94, 0.4)',
                   fontSize:'1.5rem'
