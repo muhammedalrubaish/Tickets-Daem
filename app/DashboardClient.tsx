@@ -2038,7 +2038,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           'البراء النصيان',
           'محمد الربيش',
           'عبدالرحمن العمري',
-          'عزام الحربي',
           'صالح الغصن',
           'طارق الهدياني',
           'ثامر المنصور'

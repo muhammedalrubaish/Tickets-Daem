@@ -69,12 +69,11 @@ export default function ExtensionPopupPage() {
           const calculatedCounts = calculateCounts(tickets);
           setCounts(calculatedCounts);
 
-          // حساب الموظف التالي بالدور
+          // حساب الموظف التالي بالدور - ترتيب الأولوية المعتمد
           const priorityOrder = [
             { name: 'البراء النصيان', user: 'a.alnesayan' },
             { name: 'محمد الربيش', user: 'mialrubaish' },
             { name: 'عبدالرحمن العمري', user: 'af.alamri' },
-            { name: 'عزام الحربي', user: 'azz.alharbi' },
             { name: 'صالح الغصن', user: 's.alghosen' },
             { name: 'طارق الهدياني', user: 't.alhedyani' },
             { name: 'ثامر المنصور', user: 't.almansour' }
@@ -94,7 +93,8 @@ export default function ExtensionPopupPage() {
           );
 
           baseTickets.forEach(t => {
-            const receiver = (t.receiver || '').trim();
+            // تنظيف المسافات مثل DashboardClient تماماً
+            const receiver = (t.receiver || '').trim().replace(/\s+/g, ' ');
             if (!receiver || receiver === 'غير محدد') return;
 
             const matched = priorityOrder.find(p => 
@@ -107,6 +107,7 @@ export default function ExtensionPopupPage() {
             }
           });
 
+          // البحث عن الموظف الأقل بلاغات - عند التساوي يقدم الأسبق في القائمة
           let bestCandidate = priorityOrder[0];
           let minCount = empCounts[bestCandidate.name];
 
