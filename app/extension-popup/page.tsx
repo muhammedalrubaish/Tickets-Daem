@@ -833,30 +833,7 @@ export default function ExtensionPopupPage() {
             </div>
           )}
 
-          <div className="daem-link-container">
-            <a href="https://daem.momah.gov.sa/sm/index.do" target="_blank" rel="noopener noreferrer" className="daem-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '6px' }}>
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-              </svg>
-              منصة داعم الرسمية
-            </a>
-          </div>
-
-          <div className="footer">
-            <div>تطوير ذكي - 2026 (تحديث فوري تلقائي ⚡)</div>
-            <div className="logout-footer">
-              <span className="badge-role" style={{ color: role === 'admin' ? '#10b981' : '#94a3b8' }}>
-                الدور: {role === 'admin' ? '🔑 صلاحيات كاملة' : '👤 نسخ ولصق فقط'}
-              </span>
-              <button onClick={handleLogout} className="btn-switch-account">
-                ❌ تبديل الحساب
-              </button>
-            </div>
-          </div>
-
-          {/* مركز التوزيع الفضائي - خارج الـ footer في أسفل الصفحة */}
+          {/* مركز التوزيع الفضائي أولاً */}
           <div className="space-dashboard">
             <div className="space-title">🛰️ مركز التوزيع والتحكم</div>
 
@@ -881,20 +858,18 @@ export default function ExtensionPopupPage() {
                 </defs>
                 {/* حلقة الخلفية */}
                 <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="7" />
-                {/* حلقة الإجمالي المتحركة */}
+                {/* حلقة الإجمالي: max بصري = 2000 بلاغ */}
                 <circle
                   cx="45" cy="45" r="36"
                   fill="none"
                   stroke="url(#orbGrad)"
                   strokeWidth="7"
                   strokeLinecap="round"
-                  strokeDasharray={`${Math.min(226.2, (totalTickets / 300) * 226.2).toFixed(1)} 226.2`}
+                  strokeDasharray={`${Math.min(226.2, (totalTickets / 2000) * 226.2)} 226.2`}
                   transform="rotate(-90 45 45)"
                   filter="url(#glowFilter)"
                   style={{ transition: 'stroke-dasharray 1.5s ease-in-out' }}
                 />
-                {/* النص المركزي */}
-                <text x="45" y="41" textAnchor="middle" fill="#f8fafc" fontSize="18" fontWeight="bold" fontFamily="Cairo, sans-serif">
                   {totalTickets}
                 </text>
                 <text x="45" y="54" textAnchor="middle" fill="#94a3b8" fontSize="7" fontFamily="Cairo, sans-serif">
@@ -910,6 +885,31 @@ export default function ExtensionPopupPage() {
                 <span className="live-dot"></span>
                 {nextEmployee}
               </span>
+            </div>
+          </div>
+
+          {/* منصة داعم الرسمية */}
+          <div className="daem-link-container" style={{ marginTop: '8px' }}>
+            <a href="https://daem.momah.gov.sa/sm/index.do" target="_blank" rel="noopener noreferrer" className="daem-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '6px' }}>
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+              منصة داعم الرسمية
+            </a>
+          </div>
+
+          {/* التذييل: تطوير ذكي + الدور + تبديل الحساب */}
+          <div className="footer" style={{ marginTop: '6px' }}>
+            <div>تطوير ذكي - 2026 (تحديث فوري تلقائي ⚡)</div>
+            <div className="logout-footer">
+              <span className="badge-role" style={{ color: role === 'admin' ? '#10b981' : '#94a3b8' }}>
+                الدور: {role === 'admin' ? '🔑 صلاحيات كاملة' : '👤 نسخ ولصق فقط'}
+              </span>
+              <button onClick={handleLogout} className="btn-switch-account">
+                ❌ تبديل الحساب
+              </button>
             </div>
           </div>
         </>

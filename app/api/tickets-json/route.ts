@@ -6,12 +6,13 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Query Supabase directly
+    // Query Supabase - جلب الإجمالي الفعلي بدون حد الـ 1000 الافتراضي
     const { data: ticketsData, error } = await supabase
       .from('tickets')
       .select('id, notion_id, ticket_number, category_type, solution, receiver, reception_date')
       .gte('reception_date', '2026-04-04')
-      .order('reception_date', { ascending: false });
+      .order('reception_date', { ascending: false })
+      .limit(9999);
 
     if (error) {
       throw error;
