@@ -19,11 +19,19 @@ interface Counts {
   notSolved: number;
 }
 
+const LATEST_VERSION = '1.1';
+
 export default function ExtensionPopupPage() {
   const [counts, setCounts] = useState<Counts>({ new: 0, recent: 0, old: 0, veryOld: 0, unassigned: 0, notSolved: 0 });
   const [loading, setLoading] = useState<boolean>(true);
+  const [clientVersion, setClientVersion] = useState<string>('');
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setClientVersion(params.get('v') || '');
+    }
+
     async function loadData() {
       try {
         const res = await fetch('/api/tickets-json');
@@ -181,6 +189,33 @@ export default function ExtensionPopupPage() {
         .dot-not-solved { background: #ef4444 !important; box-shadow: 0 0 8px #ef4444 !important; }
         .dot-unassigned { background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%) !important; box-shadow: 0 0 8px #ef4444 !important; }
 
+        .update-banner {
+          display: block !important;
+          background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+          color: white !important;
+          text-decoration: none !important;
+          text-align: center !important;
+          padding: 8px 10px !important;
+          border-radius: 8px !important;
+          font-size: 11px !important;
+          font-weight: 700 !important;
+          margin-bottom: 10px !important;
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          transition: all 0.2s ease !important;
+          animation: banner-glow 1.5s infinite ease-in-out !important;
+        }
+
+        .update-banner:hover {
+          filter: brightness(1.1) !important;
+          transform: translateY(-1px) !important;
+        }
+
+        @keyframes banner-glow {
+          0%, 100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
+          50% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); }
+        }
+
         .daem-link-container {
           margin-top: 10px !important;
           display: flex !important;
@@ -236,6 +271,12 @@ export default function ExtensionPopupPage() {
         <img src="/ايقونة داعم.png" alt="Daem Plus Logo" className="logo-img" />
         <h3 className="title">🚀 داعم بلس Premium</h3>
       </div>
+
+      {clientVersion && clientVersion !== LATEST_VERSION && (
+        <a href="/Daem-Plus.zip" download className="update-banner">
+          ⚠️ يتوفر تحديث جديد للإضافة ({LATEST_VERSION})! اضغط للتحميل ⚡
+        </a>
+      )}
 
       {loading ? (
         <div className="loading-pulse">جاري جلب العدادات الحية... ⚡</div>
