@@ -65,9 +65,15 @@ export default function ExtensionPopupPage() {
       try {
         const res = await fetch('/api/tickets-json');
         if (res.ok) {
-          const tickets: Ticket[] = await res.json();
+          const resData = await res.json();
+          // دعم الصيغة الجديدة { tickets, totalCount } والقديمة [ array ]
+          const tickets: Ticket[] = Array.isArray(resData) ? resData : (resData.tickets || []);
+          const exactTotal: number = Array.isArray(resData) ? tickets.length : (resData.totalCount ?? tickets.length);
+
           const calculatedCounts = calculateCounts(tickets);
           setCounts(calculatedCounts);
+          // العداد يعرض الإجمالي الحقيقي من count المنفصل
+          setTotalTickets(exactTotal);
 
           // حساب الموظف التالي بالدور - ترتيب الأولوية المعتمد
           const priorityOrder = [
@@ -119,8 +125,7 @@ export default function ExtensionPopupPage() {
             }
           }
           setNextEmployee(bestCandidate.name);
-          // إجمالي كل البلاغات بالقاعدة (كامل ما تُرجعه الـ API)
-          setTotalTickets(tickets.length);
+          // ملاحظة: setTotalTickets تم تعيينه مسبقاً من exactTotal في بداية loadData
         }
       } catch (err) {
         console.error('Failed to load tickets in extension popup page:', err);
