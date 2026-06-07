@@ -410,21 +410,31 @@ export default function ExtensionPopupPage() {
         }
 
         .footer {
+          position: sticky !important;
+          bottom: -10px !important;
+          background: #0f172a !important;
           margin-top: auto !important;
           font-size: 10px !important;
           text-align: center !important;
-          opacity: 0.9 !important;
-          padding-top: 10px !important;
-          padding-bottom: 6px !important;
+          opacity: 1 !important;
+          padding-top: 8px !important;
+          padding-bottom: 8px !important;
+          z-index: 1000 !important;
+          width: calc(100% + 20px) !important;
+          margin-right: -10px !important;
+          margin-left: -10px !important;
+          border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 -4px 10px rgba(15, 23, 42, 0.8) !important;
         }
 
         .logout-footer {
-          margin-top: 4px !important;
-          border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-          padding-top: 4px !important;
+          margin-top: 6px !important;
+          padding-top: 2px !important;
           display: flex !important;
           justify-content: space-between !important;
           align-items: center !important;
+          padding-right: 10px !important;
+          padding-left: 10px !important;
         }
 
         .badge-role {
