@@ -265,10 +265,12 @@ export default function ExtensionPopupPage() {
           margin: 0 !important;
           padding: 10px !important;
           width: 100% !important;
-          min-height: 100% !important;
+          min-height: 100vh !important;
           box-sizing: border-box !important;
           direction: rtl !important;
           overflow-y: auto !important;
+          display: flex !important;
+          flex-direction: column !important;
         }
 
         .header-logo {
@@ -408,10 +410,11 @@ export default function ExtensionPopupPage() {
         }
 
         .footer {
-          margin-top: 6px !important;
-          font-size: 8px !important;
+          margin-top: auto !important;
+          font-size: 10px !important;
           text-align: center !important;
-          opacity: 0.8 !important;
+          opacity: 0.9 !important;
+          padding-top: 10px !important;
           padding-bottom: 6px !important;
         }
 
@@ -910,7 +913,7 @@ export default function ExtensionPopupPage() {
           </div>
 
           {/* التذييل: تطوير ذكي + الدور + تبديل الحساب */}
-          <div className="footer" style={{ marginTop: '6px' }}>
+          <div className="footer">
             <div>تطوير ذكي - 2026 (تحديث فوري تلقائي ⚡)</div>
             <div className="logout-footer">
               <span className="badge-role" style={{ color: role === 'admin' ? '#10b981' : '#94a3b8' }}>
