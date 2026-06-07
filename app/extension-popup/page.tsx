@@ -8,6 +8,7 @@ interface Ticket {
   solution: string;
   receiver: string;
   date: string;
+  type?: string;
 }
 
 interface Counts {
@@ -86,8 +87,8 @@ export default function ExtensionPopupPage() {
           const baseTickets = tickets.filter(t => 
             t.date && 
             t.date >= '2026-04-04' && 
-            t.solution !== 'تحديث نظام' && 
-            t.solution !== 'تحديثات النظام' &&
+            t.type !== 'تحديث نظام' && 
+            t.type !== 'تحديثات النظام' &&
             !(t.number && t.number.includes('📢'))
           );
 

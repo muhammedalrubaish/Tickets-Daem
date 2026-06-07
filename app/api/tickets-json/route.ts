@@ -9,7 +9,7 @@ export async function GET() {
     // Query Supabase directly
     const { data: ticketsData, error } = await supabase
       .from('tickets')
-      .select('id, notion_id, ticket_number, solution, receiver, reception_date')
+      .select('id, notion_id, ticket_number, category_type, solution, receiver, reception_date')
       .gte('reception_date', '2026-04-04')
       .order('reception_date', { ascending: false });
 
@@ -22,6 +22,7 @@ export async function GET() {
       id: ticket.notion_id || ticket.id,
       statusPageId: ticket.notion_id || null,
       number: ticket.ticket_number || 'غير محدد',
+      type: ticket.category_type || 'أخرى',
       solution: ticket.solution || 'لم يتم الحل',
       receiver: ticket.receiver || 'غير محدد',
       date: ticket.reception_date || ''
