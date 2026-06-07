@@ -74,6 +74,7 @@ export default function ExtensionPopupPage() {
             { name: 'البراء النصيان', user: 'a.alnesayan' },
             { name: 'محمد الربيش', user: 'mialrubaish' },
             { name: 'عبدالرحمن العمري', user: 'af.alamri' },
+            { name: 'عزام الحربي', user: 'azz.alharbi' },
             { name: 'صالح الغصن', user: 's.alghosen' },
             { name: 'طارق الهدياني', user: 't.alhedyani' },
             { name: 'ثامر المنصور', user: 't.almansour' }
