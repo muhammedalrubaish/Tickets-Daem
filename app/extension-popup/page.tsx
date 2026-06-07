@@ -32,6 +32,7 @@ export default function ExtensionPopupPage() {
   const [showPasswordField, setShowPasswordField] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [nextEmployee, setNextEmployee] = useState<string>('غير محدد');
+  const [totalTickets, setTotalTickets] = useState<number>(0);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -116,6 +117,8 @@ export default function ExtensionPopupPage() {
             }
           }
           setNextEmployee(bestCandidate.name);
+          // إجمالي كل البلاغات بالقاعدة (كامل ما تُرجعه الـ API)
+          setTotalTickets(tickets.length);
         }
       } catch (err) {
         console.error('Failed to load tickets in extension popup page:', err);
@@ -437,79 +440,133 @@ export default function ExtensionPopupPage() {
           background: rgba(239, 68, 68, 0.15) !important;
         }
 
+        /* === مركز التوزيع الفضائي === */
         .space-dashboard {
-          background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.05)) !important;
-          border: 1px dashed rgba(16, 185, 129, 0.3) !important;
-          border-radius: 10px !important;
-          padding: 10px !important;
+          background: radial-gradient(ellipse at top, rgba(16, 185, 129, 0.08), rgba(15, 23, 42, 0.95)) !important;
+          border: 1px solid rgba(16, 185, 129, 0.25) !important;
+          border-radius: 14px !important;
+          padding: 12px 10px 10px !important;
           margin-top: 8px !important;
-          box-shadow: 0 0 15px rgba(16, 185, 129, 0.1) !important;
+          box-shadow: 0 0 20px rgba(16, 185, 129, 0.08), inset 0 1px 0 rgba(255,255,255,0.05) !important;
           direction: rtl !important;
-          text-align: right !important;
+          text-align: center !important;
           font-family: 'Cairo', sans-serif !important;
-          animation: space-pulse 4s infinite alternate !important;
+          animation: space-pulse 5s infinite alternate !important;
           display: block !important;
+          position: relative !important;
+          overflow: hidden !important;
+        }
+
+        .space-dashboard::before {
+          content: '' !important;
+          position: absolute !important;
+          top: -50% !important;
+          left: -50% !important;
+          width: 200% !important;
+          height: 200% !important;
+          background: radial-gradient(circle at 60% 40%, rgba(59, 130, 246, 0.04), transparent 60%) !important;
+          pointer-events: none !important;
         }
 
         @keyframes space-pulse {
-          0% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); }
-          100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.5); }
+          0% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.08), inset 0 1px 0 rgba(255,255,255,0.05); border-color: rgba(16, 185, 129, 0.2); }
+          100% { box-shadow: 0 0 25px rgba(59, 130, 246, 0.18), inset 0 1px 0 rgba(255,255,255,0.08); border-color: rgba(59, 130, 246, 0.45); }
         }
 
         .space-title {
-          font-size: 10px !important;
+          font-size: 9px !important;
           font-weight: 700 !important;
           color: #38bdf8 !important;
-          text-transform: uppercase !important;
-          letter-spacing: 0.5px !important;
+          letter-spacing: 0.8px !important;
           display: flex !important;
           align-items: center !important;
-          gap: 6px !important;
-          margin-bottom: 8px !important;
+          justify-content: center !important;
+          gap: 5px !important;
+          margin-bottom: 10px !important;
+          text-transform: uppercase !important;
         }
 
-        .space-metric-container {
+        /* الحلقات المدارية الزخرفية */
+        .orbital-wrapper {
           display: flex !important;
-          flex-direction: column !important;
-          gap: 6px !important;
-        }
-
-        .space-bar-bg {
-          width: 100% !important;
-          height: 6px !important;
-          background: rgba(255, 255, 255, 0.05) !important;
-          border-radius: 3px !important;
-          overflow: hidden !important;
+          justify-content: center !important;
+          align-items: center !important;
           position: relative !important;
-          border: 1px solid rgba(255, 255, 255, 0.05) !important;
+          width: 100px !important;
+          height: 100px !important;
+          margin: 0 auto 8px !important;
         }
 
-        .space-bar-fill {
-          height: 100% !important;
-          background: linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6) !important;
-          border-radius: 3px !important;
-          transition: width 1s ease-in-out !important;
-          box-shadow: 0 0 8px #10b981 !important;
+        .orbital-ring {
+          position: absolute !important;
+          border-radius: 50% !important;
+          pointer-events: none !important;
         }
 
+        .orbital-ring-1 {
+          width: 96px !important;
+          height: 96px !important;
+          border: 1px solid rgba(59, 130, 246, 0.18) !important;
+          animation: orbit-spin 12s linear infinite !important;
+        }
+
+        .orbital-ring-2 {
+          width: 108px !important;
+          height: 108px !important;
+          border: 1px dashed rgba(139, 92, 246, 0.12) !important;
+          animation: orbit-spin 18s linear infinite reverse !important;
+        }
+
+        @keyframes orbit-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        .orbital-svg {
+          filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.5)) !important;
+          position: relative !important;
+          z-index: 1 !important;
+        }
+
+        /* المستقبل التالي */
         .space-text-row {
           display: flex !important;
           justify-content: space-between !important;
-          font-size: 10px !important;
-          color: #e2e8f0 !important;
+          align-items: center !important;
+          font-size: 9.5px !important;
+          color: #cbd5e1 !important;
+          margin-top: 4px !important;
+          direction: rtl !important;
+          text-align: right !important;
         }
 
         .space-assignee-tag {
-          background: rgba(16, 185, 129, 0.1) !important;
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.1)) !important;
           color: #10b981 !important;
-          padding: 2px 6px !important;
-          border-radius: 4px !important;
-          border: 1px solid rgba(16, 185, 129, 0.2) !important;
+          padding: 3px 8px !important;
+          border-radius: 20px !important;
+          border: 1px solid rgba(16, 185, 129, 0.3) !important;
           font-weight: 700 !important;
           font-size: 9px !important;
           display: inline-flex !important;
           align-items: center !important;
-          gap: 4px !important;
+          gap: 5px !important;
+          box-shadow: 0 0 8px rgba(16, 185, 129, 0.15) !important;
+        }
+
+        @keyframes pulse-dot {
+          0%, 100% { opacity: 1; box-shadow: 0 0 4px #10b981; }
+          50% { opacity: 0.4; box-shadow: 0 0 8px #10b981; }
+        }
+
+        .live-dot {
+          width: 5px !important;
+          height: 5px !important;
+          background: #10b981 !important;
+          border-radius: 50% !important;
+          display: inline-block !important;
+          flex-shrink: 0 !important;
+          animation: pulse-dot 1.5s ease-in-out infinite !important;
         }
 
         .login-view {
@@ -797,35 +854,62 @@ export default function ExtensionPopupPage() {
                 ❌ تبديل الحساب
               </button>
             </div>
+          </div>
 
-            {/* مركز التوزيع يظهر لكلا الدورين دائماً */}
-            <div className="space-dashboard">
-              <div className="space-title">
-                <span>🛰️ مركز التوزيع والتحكم</span>
-              </div>
-              <div className="space-metric-container">
-                <div className="space-text-row">
-                  <span>إجمالي البلاغات النشطة:</span>
-                  <span style={{ fontWeight: 'bold', color: '#10b981' }}>
-                    {counts.new + counts.recent + counts.veryOld + counts.old + counts.notSolved}
-                  </span>
-                </div>
-                <div className="space-bar-bg">
-                  <div 
-                    className="space-bar-fill" 
-                    style={{ 
-                      width: `${Math.min(100, ((counts.new + counts.recent + counts.veryOld + counts.old + counts.notSolved) / 100) * 100)}%` 
-                    }}
-                  ></div>
-                </div>
-                <div className="space-text-row" style={{ marginTop: '6px' }}>
-                  <span>المستقبل التالي بالدور:</span>
-                  <span className="space-assignee-tag">
-                    <span style={{ width: '6px', height: '6px', backgroundColor: '#10b981', borderRadius: '50%', boxShadow: '0 0 6px #10b981', display: 'inline-block', flexShrink: 0 }}></span>
-                    {nextEmployee}
-                  </span>
-                </div>
-              </div>
+          {/* مركز التوزيع الفضائي - خارج الـ footer في أسفل الصفحة */}
+          <div className="space-dashboard">
+            <div className="space-title">🛰️ مركز التوزيع والتحكم</div>
+
+            {/* المؤشر الدائري الفضائي SVG */}
+            <div className="orbital-wrapper">
+              <div className="orbital-ring orbital-ring-1"></div>
+              <div className="orbital-ring orbital-ring-2"></div>
+              <svg className="orbital-svg" viewBox="0 0 90 90" width="90" height="90">
+                <defs>
+                  <linearGradient id="orbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#10b981" />
+                    <stop offset="50%" stopColor="#3b82f6" />
+                    <stop offset="100%" stopColor="#8b5cf6" />
+                  </linearGradient>
+                  <filter id="glowFilter">
+                    <feGaussianBlur stdDeviation="2.5" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+                {/* حلقة الخلفية */}
+                <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="7" />
+                {/* حلقة الإجمالي المتحركة */}
+                <circle
+                  cx="45" cy="45" r="36"
+                  fill="none"
+                  stroke="url(#orbGrad)"
+                  strokeWidth="7"
+                  strokeLinecap="round"
+                  strokeDasharray={`${Math.min(226.2, (totalTickets / 300) * 226.2).toFixed(1)} 226.2`}
+                  transform="rotate(-90 45 45)"
+                  filter="url(#glowFilter)"
+                  style={{ transition: 'stroke-dasharray 1.5s ease-in-out' }}
+                />
+                {/* النص المركزي */}
+                <text x="45" y="41" textAnchor="middle" fill="#f8fafc" fontSize="18" fontWeight="bold" fontFamily="Cairo, sans-serif">
+                  {totalTickets}
+                </text>
+                <text x="45" y="54" textAnchor="middle" fill="#94a3b8" fontSize="7" fontFamily="Cairo, sans-serif">
+                  إجمالي البلاغات
+                </text>
+              </svg>
+            </div>
+
+            {/* المستقبل التالي */}
+            <div className="space-text-row">
+              <span>🔄 المستقبل التالي بالدور:</span>
+              <span className="space-assignee-tag">
+                <span className="live-dot"></span>
+                {nextEmployee}
+              </span>
             </div>
           </div>
         </>
