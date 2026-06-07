@@ -37,15 +37,24 @@ export default function ExtensionPopupPage() {
       setClientVersion(params.get('v') || '');
       
       const paramRole = params.get('role');
+      const paramPass = params.get('p') || '';
       const savedRole = localStorage.getItem('daemRole') as 'admin' | 'support' | null;
+      const savedPass = localStorage.getItem('daemPassword') || '';
       
       const activeRole = savedRole || (paramRole && paramRole !== 'null' ? (paramRole as 'admin' | 'support') : null);
+      const activePass = savedPass || paramPass || '';
+
+      if (activePass) {
+        setPassword(activePass);
+      }
+
       if (activeRole) {
         setRole(activeRole);
-        if (!savedRole && paramRole) {
-          localStorage.setItem('daemRole', paramRole);
+        localStorage.setItem('daemRole', activeRole);
+        if (activePass) {
+          localStorage.setItem('daemPassword', activePass);
         }
-        window.parent.postMessage({ action: 'SET_ROLE', role: activeRole }, '*');
+        window.parent.postMessage({ action: 'SET_ROLE', role: activeRole, password: activePass }, '*');
       }
     }
 
@@ -72,7 +81,8 @@ export default function ExtensionPopupPage() {
   const handleLoginSupport = () => {
     setRole('support');
     localStorage.setItem('daemRole', 'support');
-    window.parent.postMessage({ action: 'SET_ROLE', role: 'support' }, '*');
+    localStorage.removeItem('daemPassword');
+    window.parent.postMessage({ action: 'SET_ROLE', role: 'support', password: '' }, '*');
   };
 
   const handleLoginAdmin = () => {
@@ -103,7 +113,8 @@ export default function ExtensionPopupPage() {
     if (password.trim() === correctPassword.trim()) {
       setRole('admin');
       localStorage.setItem('daemRole', 'admin');
-      window.parent.postMessage({ action: 'SET_ROLE', role: 'admin' }, '*');
+      localStorage.setItem('daemPassword', password);
+      window.parent.postMessage({ action: 'SET_ROLE', role: 'admin', password: password }, '*');
       setErrorMsg('');
     } else {
       setErrorMsg('كلمة المرور غير صحيحة! ⚠️');
@@ -114,7 +125,8 @@ export default function ExtensionPopupPage() {
   const handleLogout = () => {
     setRole(null);
     localStorage.removeItem('daemRole');
-    window.parent.postMessage({ action: 'SET_ROLE', role: 'support' }, '*');
+    localStorage.removeItem('daemPassword');
+    window.parent.postMessage({ action: 'SET_ROLE', role: 'support', password: '' }, '*');
     setShowPasswordField(false);
     setPassword('');
     setErrorMsg('');
