@@ -16,10 +16,11 @@ interface Counts {
   old: number;
   veryOld: number;
   unassigned: number;
+  notSolved: number;
 }
 
 export default function ExtensionPopupPage() {
-  const [counts, setCounts] = useState<Counts>({ new: 0, recent: 0, old: 0, veryOld: 0, unassigned: 0 });
+  const [counts, setCounts] = useState<Counts>({ new: 0, recent: 0, old: 0, veryOld: 0, unassigned: 0, notSolved: 0 });
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function ExtensionPopupPage() {
   }, []);
 
   function calculateCounts(tickets: Ticket[]): Counts {
-    let counts = { new: 0, recent: 0, old: 0, veryOld: 0, unassigned: 0 };
+    let counts = { new: 0, recent: 0, old: 0, veryOld: 0, unassigned: 0, notSolved: 0 };
     if (!Array.isArray(tickets)) return counts;
 
     tickets.forEach(ticket => {
@@ -58,6 +59,8 @@ export default function ExtensionPopupPage() {
         counts.veryOld++;
       } else if (status === 'مشكلة عامة') {
         counts.old++;
+      } else if (status === 'لم يتم الحل') {
+        counts.notSolved++;
       }
 
       // حساب التذاكر المتأخرة لأكثر من أسبوع
@@ -92,7 +95,7 @@ export default function ExtensionPopupPage() {
           color: #f8fafc !important;
           font-family: 'Cairo', sans-serif !important;
           margin: 0 !important;
-          padding: 20px !important;
+          padding: 15px !important;
           width: 100% !important;
           min-height: 100vh !important;
           box-sizing: border-box !important;
@@ -103,17 +106,17 @@ export default function ExtensionPopupPage() {
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
-          margin-bottom: 10px !important;
+          margin-bottom: 8px !important;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-          padding-bottom: 10px !important;
+          padding-bottom: 8px !important;
           width: 100% !important;
         }
 
         .logo-img {
-          width: 50px !important;
-          height: 50px !important;
+          width: 45px !important;
+          height: 45px !important;
           border-radius: 12px !important;
-          margin-bottom: 8px !important;
+          margin-bottom: 6px !important;
           box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25) !important;
           border: 2px solid #10b981 !important;
           transition: all 0.3s ease !important;
@@ -126,7 +129,7 @@ export default function ExtensionPopupPage() {
 
         h3.title {
           margin: 0 !important;
-          font-size: 16px !important;
+          font-size: 15px !important;
           color: #10b981 !important;
           text-align: center !important;
           font-weight: 700 !important;
@@ -135,16 +138,16 @@ export default function ExtensionPopupPage() {
         .stats-grid {
           display: flex !important;
           flex-direction: column !important;
-          gap: 8px !important;
+          gap: 6px !important;
         }
 
         .stat-card {
           display: flex !important;
           align-items: center !important;
           justify-content: space-between !important;
-          padding: 8px 12px !important;
+          padding: 6px 12px !important;
           background: rgba(255, 255, 255, 0.05) !important;
-          border-radius: 10px !important;
+          border-radius: 8px !important;
           border: 1px solid rgba(255, 255, 255, 0.05) !important;
           transition: all 0.2s ease !important;
         }
@@ -175,10 +178,11 @@ export default function ExtensionPopupPage() {
         .dot-recent { background: #ec4899 !important; box-shadow: 0 0 8px #ec4899 !important; }
         .dot-very-old { background: #fbbf24 !important; box-shadow: 0 0 8px #fbbf24 !important; }
         .dot-old { background: #06b6d4 !important; box-shadow: 0 0 8px #06b6d4 !important; }
-        .dot-unassigned { background: #ef4444 !important; box-shadow: 0 0 8px #ef4444 !important; }
+        .dot-not-solved { background: #ef4444 !important; box-shadow: 0 0 8px #ef4444 !important; }
+        .dot-unassigned { background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%) !important; box-shadow: 0 0 8px #ef4444 !important; }
 
         .daem-link-container {
-          margin-top: 12px !important;
+          margin-top: 10px !important;
           display: flex !important;
           justify-content: center !important;
           width: 100% !important;
@@ -189,13 +193,13 @@ export default function ExtensionPopupPage() {
           align-items: center !important;
           justify-content: center !important;
           width: 100% !important;
-          padding: 8px 12px !important;
+          padding: 6px 12px !important;
           background: linear-gradient(135deg, #10b981, #059669) !important;
           color: white !important;
           text-decoration: none !important;
-          border-radius: 10px !important;
+          border-radius: 8px !important;
           font-weight: 600 !important;
-          font-size: 12px !important;
+          font-size: 11px !important;
           transition: all 0.3s ease !important;
           border: 1px solid rgba(255, 255, 255, 0.1) !important;
           box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15) !important;
@@ -208,8 +212,8 @@ export default function ExtensionPopupPage() {
         }
 
         .footer {
-          margin-top: 10px !important;
-          font-size: 10px !important;
+          margin-top: 8px !important;
+          font-size: 9px !important;
           text-align: center !important;
           opacity: 0.4 !important;
         }
@@ -267,6 +271,14 @@ export default function ExtensionPopupPage() {
               <span>مشكلة عامة (بالموقع)</span>
             </div>
             <div className="count">{counts.old}</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="label-group">
+              <div className="dot dot-not-solved"></div>
+              <span>لم يتم الحل (بالموقع)</span>
+            </div>
+            <div className="count">{counts.notSolved}</div>
           </div>
 
           <div className="stat-card">
