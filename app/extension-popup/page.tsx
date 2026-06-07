@@ -871,7 +871,9 @@ export default function ExtensionPopupPage() {
                   filter="url(#glowFilter)"
                   style={{ transition: 'stroke-dasharray 1.5s ease-in-out' }}
                 />
-                  {totalTickets}
+                {/* الرقم الفعلي - يتكيف حجم الخط مع الأرقام الكبيرة */}
+                <text x="45" y="39" textAnchor="middle" fill="#f8fafc" fontSize={totalTickets >= 1000 ? '14' : '18'} fontWeight="bold" fontFamily="Cairo, sans-serif">
+                  {totalTickets.toLocaleString('en')}
                 </text>
                 <text x="45" y="54" textAnchor="middle" fill="#94a3b8" fontSize="7" fontFamily="Cairo, sans-serif">
                   إجمالي البلاغات
