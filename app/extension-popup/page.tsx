@@ -103,19 +103,19 @@ export default function ExtensionPopupPage() {
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
-          margin-bottom: 20px !important;
+          margin-bottom: 10px !important;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-          padding-bottom: 15px !important;
+          padding-bottom: 10px !important;
           width: 100% !important;
         }
 
         .logo-img {
-          width: 68px !important;
-          height: 68px !important;
-          border-radius: 16px !important;
-          margin-bottom: 10px !important;
+          width: 50px !important;
+          height: 50px !important;
+          border-radius: 12px !important;
+          margin-bottom: 8px !important;
           box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25) !important;
-          border: 2.5px solid #10b981 !important;
+          border: 2px solid #10b981 !important;
           transition: all 0.3s ease !important;
         }
 
@@ -126,7 +126,7 @@ export default function ExtensionPopupPage() {
 
         h3.title {
           margin: 0 !important;
-          font-size: 18px !important;
+          font-size: 16px !important;
           color: #10b981 !important;
           text-align: center !important;
           font-weight: 700 !important;
@@ -135,16 +135,16 @@ export default function ExtensionPopupPage() {
         .stats-grid {
           display: flex !important;
           flex-direction: column !important;
-          gap: 12px !important;
+          gap: 8px !important;
         }
 
         .stat-card {
           display: flex !important;
           align-items: center !important;
           justify-content: space-between !important;
-          padding: 12px 16px !important;
+          padding: 8px 12px !important;
           background: rgba(255, 255, 255, 0.05) !important;
-          border-radius: 12px !important;
+          border-radius: 10px !important;
           border: 1px solid rgba(255, 255, 255, 0.05) !important;
           transition: all 0.2s ease !important;
         }
@@ -156,18 +156,18 @@ export default function ExtensionPopupPage() {
         .label-group {
           display: flex !important;
           align-items: center !important;
-          gap: 12px !important;
+          gap: 10px !important;
         }
 
         .dot {
-          width: 10px !important;
-          height: 10px !important;
+          width: 8px !important;
+          height: 8px !important;
           border-radius: 50% !important;
         }
 
         .count {
           font-weight: 700 !important;
-          font-size: 16px !important;
+          font-size: 14px !important;
           color: #38bdf8 !important;
         }
 
@@ -178,7 +178,7 @@ export default function ExtensionPopupPage() {
         .dot-unassigned { background: #ef4444 !important; box-shadow: 0 0 8px #ef4444 !important; }
 
         .daem-link-container {
-          margin-top: 18px !important;
+          margin-top: 12px !important;
           display: flex !important;
           justify-content: center !important;
           width: 100% !important;
@@ -189,13 +189,13 @@ export default function ExtensionPopupPage() {
           align-items: center !important;
           justify-content: center !important;
           width: 100% !important;
-          padding: 10px 14px !important;
+          padding: 8px 12px !important;
           background: linear-gradient(135deg, #10b981, #059669) !important;
           color: white !important;
           text-decoration: none !important;
-          border-radius: 12px !important;
+          border-radius: 10px !important;
           font-weight: 600 !important;
-          font-size: 13px !important;
+          font-size: 12px !important;
           transition: all 0.3s ease !important;
           border: 1px solid rgba(255, 255, 255, 0.1) !important;
           box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15) !important;
@@ -208,8 +208,8 @@ export default function ExtensionPopupPage() {
         }
 
         .footer {
-          margin-top: 20px !important;
-          font-size: 11px !important;
+          margin-top: 10px !important;
+          font-size: 10px !important;
           text-align: center !important;
           opacity: 0.4 !important;
         }
