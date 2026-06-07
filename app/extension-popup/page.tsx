@@ -68,12 +68,9 @@ export default function ExtensionPopupPage() {
           const resData = await res.json();
           // دعم الصيغة الجديدة { tickets, totalCount } والقديمة [ array ]
           const tickets: Ticket[] = Array.isArray(resData) ? resData : (resData.tickets || []);
-          const exactTotal: number = Array.isArray(resData) ? tickets.length : (resData.totalCount ?? tickets.length);
 
           const calculatedCounts = calculateCounts(tickets);
           setCounts(calculatedCounts);
-          // العداد يعرض الإجمالي الحقيقي من count المنفصل
-          setTotalTickets(exactTotal);
 
           // حساب الموظف التالي بالدور - ترتيب الأولوية المعتمد
           const priorityOrder = [
@@ -91,6 +88,7 @@ export default function ExtensionPopupPage() {
             empCounts[emp.name] = 0;
           });
 
+          // نفس فلاتر الموقع الرئيسي (DashboardClient baseComplaints)
           const baseTickets = tickets.filter(t => 
             t.date && 
             t.date >= '2026-04-04' && 
@@ -98,6 +96,9 @@ export default function ExtensionPopupPage() {
             t.type !== 'تحديثات النظام' &&
             !(t.number && t.number.includes('📢'))
           );
+
+          // العداد = baseTickets.length مثل الموقع تماماً (1275 وليس 1280)
+          setTotalTickets(baseTickets.length);
 
           baseTickets.forEach(t => {
             // تنظيف المسافات مثل DashboardClient تماماً
@@ -125,7 +126,6 @@ export default function ExtensionPopupPage() {
             }
           }
           setNextEmployee(bestCandidate.name);
-          // ملاحظة: setTotalTickets تم تعيينه مسبقاً من exactTotal في بداية loadData
         }
       } catch (err) {
         console.error('Failed to load tickets in extension popup page:', err);
