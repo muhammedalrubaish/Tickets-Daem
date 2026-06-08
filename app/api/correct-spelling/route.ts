@@ -18,8 +18,6 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
     const systemPrompt = `
       مهمتك هي تصحيح الأخطاء الإملائية والنحوية في النص العربي المدخل والذي يمثل شرحاً أو إفادة أو حلاً لبلاغ في نظام بلدي.
       
@@ -29,10 +27,19 @@ export async function POST(req: Request) {
       3. أرجع النص المصحح فقط بدون أي مقدمات أو تحيات أو تفسيرات أو علامات تنصيص إضافية.
     `;
 
-    const result = await model.generateContent([systemPrompt, text]);
-    const response = await result.response;
-    const correctedText = response.text().trim();
+    let responseText = '';
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const result = await model.generateContent([systemPrompt, text]);
+      responseText = result.response.text();
+    } catch (e) {
+      console.warn("Gemini 2.5 Flash failed, trying Gemini 1.5 Flash fallback:", e);
+      const fallbackModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const result = await fallbackModel.generateContent([systemPrompt, text]);
+      responseText = result.response.text();
+    }
 
+    const correctedText = responseText.trim();
     return NextResponse.json({ correctedText });
   } catch (error: any) {
     console.error('Spelling Correction API Error:', error);
