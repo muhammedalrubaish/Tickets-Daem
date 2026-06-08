@@ -33,21 +33,30 @@ export async function POST(req: Request) {
     `;
 
     let responseText = '';
-    try {
-      const model = genAI.getGenerativeModel({ 
-        model: 'gemini-2.5-flash',
-        generationConfig: { responseMimeType: "application/json" }
-      });
-      const result = await model.generateContent([systemPrompt, text]);
-      responseText = result.response.text();
-    } catch (e) {
-      console.warn("Gemini 2.5 Flash failed, trying Gemini 1.5 Flash fallback:", e);
-      const fallbackModel = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
-        generationConfig: { responseMimeType: "application/json" }
-      });
-      const result = await fallbackModel.generateContent([systemPrompt, text]);
-      responseText = result.response.text();
+    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash'];
+    let lastError = null;
+
+    for (const modelName of modelsToTry) {
+      try {
+        console.log(`Trying spelling correction with model: ${modelName}`);
+        const model = genAI.getGenerativeModel({ 
+          model: modelName,
+          generationConfig: { responseMimeType: "application/json" }
+        });
+        const result = await model.generateContent([systemPrompt, text]);
+        responseText = result.response.text();
+        if (responseText) {
+          lastError = null;
+          break; // Succeeded!
+        }
+      } catch (e: any) {
+        console.warn(`Model ${modelName} failed:`, e.message || e);
+        lastError = e;
+      }
+    }
+
+    if (lastError) {
+      throw lastError;
     }
 
     let parsedData = { correctedText: text, errorCount: 0 };
