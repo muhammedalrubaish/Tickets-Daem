@@ -63,10 +63,10 @@ export async function POST(req: Request) {
           }
         }
 
-        // تحديث في Notion إذا كان رقم البلاغ والحل متوفرين
-        if (ticketNumber && solution !== undefined) {
+        // تحديث في Notion إذا كان رقم البلاغ والحل أو التاريخ متوفرين
+        if (ticketNumber && (solution !== undefined || date !== undefined)) {
           try {
-            await updateNotionTicket(ticketNumber, solution);
+            await updateNotionTicket(ticketNumber, solution, date);
           } catch (notionErr) {
             console.error('Failed to update Notion ticket:', notionErr);
           }

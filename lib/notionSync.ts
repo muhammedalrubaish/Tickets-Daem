@@ -7,11 +7,11 @@ const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID || "";
 const NOTION_STATUS_DATABASE_ID = process.env.NOTION_STATUS_DATABASE_ID || "";
 
 /**
- * تحديث الحالة/الحل المقترح في نويشن للبلاغ المحدد
+ * تحديث الحالة/الحل المقترح/تاريخ الاستحقاق في نويشن للبلاغ المحدد
  */
-export async function updateNotionTicket(ticketNumber: string, solution: string) {
+export async function updateNotionTicket(ticketNumber: string, solution?: string, dueDate?: string) {
   if (!ticketNumber || ticketNumber === "غير محدد") return;
-  console.log(`[Notion Sync] Updating ticket ${ticketNumber} to solution: ${solution}`);
+  console.log(`[Notion Sync] Updating ticket ${ticketNumber} with solution: ${solution}, dueDate: ${dueDate}`);
 
   // 1. تحديث قاعدة بيانات توزيع البلاغات (NOTION_DATABASE_ID) -> حقل 'الحل المقترح'
   if (NOTION_DATABASE_ID) {
@@ -27,22 +27,26 @@ export async function updateNotionTicket(ticketNumber: string, solution: string)
       });
 
       for (const page of response.results) {
-        await notion.pages.update({
-          page_id: page.id,
-          properties: {
-            "الحل المقترح": {
-              select: solution ? { name: solution } : null,
-            },
-          },
-        });
-        console.log(`[Notion Sync] Updated database_id ${NOTION_DATABASE_ID} for page ${page.id}`);
+        const updateProps: any = {};
+        if (solution !== undefined) {
+          updateProps["الحل المقترح"] = {
+            select: solution ? { name: solution } : null,
+          };
+        }
+        if (Object.keys(updateProps).length > 0) {
+          await notion.pages.update({
+            page_id: page.id,
+            properties: updateProps,
+          });
+          console.log(`[Notion Sync] Updated database_id ${NOTION_DATABASE_ID} for page ${page.id}`);
+        }
       }
     } catch (err: any) {
       console.error(`[Notion Sync Error] Failed to update NOTION_DATABASE_ID:`, err.message);
     }
   }
 
-  // 2. تحديث قاعدة بيانات الحالات (NOTION_STATUS_DATABASE_ID) -> حقل 'الحالة'
+  // 2. تحديث قاعدة بيانات الحالات (NOTION_STATUS_DATABASE_ID) -> حقل 'الحالة' و 'Due Date'
   if (NOTION_STATUS_DATABASE_ID) {
     try {
       const response = await notion.databases.query({
@@ -56,19 +60,88 @@ export async function updateNotionTicket(ticketNumber: string, solution: string)
       });
 
       for (const page of response.results) {
-        await notion.pages.update({
-          page_id: page.id,
-          properties: {
-            "الحالة": {
-              select: solution ? { name: solution } : null,
-            },
-          },
-        });
-        console.log(`[Notion Sync] Updated status_database_id ${NOTION_STATUS_DATABASE_ID} for page ${page.id}`);
+        const updateProps: any = {};
+        if (solution !== undefined) {
+          updateProps["الحالة"] = {
+            select: solution ? { name: solution } : null,
+          };
+        }
+        if (dueDate !== undefined) {
+          updateProps["Due Date"] = {
+            date: dueDate ? { start: dueDate } : null,
+          };
+        }
+        
+        if (Object.keys(updateProps).length > 0) {
+          await notion.pages.update({
+            page_id: page.id,
+            properties: updateProps,
+          });
+          console.log(`[Notion Sync] Updated status_database_id ${NOTION_STATUS_DATABASE_ID} for page ${page.id}`);
+        }
       }
     } catch (err: any) {
       console.error(`[Notion Sync Error] Failed to update NOTION_STATUS_DATABASE_ID:`, err.message);
     }
+  }
+}
+
+/**
+ * إنشاء صفحة بلاغ جديدة في قاعدة بيانات الحالات في نويشن
+ */
+export async function createNotionTicket(
+  ticketNumber: string,
+  category: string,
+  receiver: string,
+  date: string,
+  reportText: string,
+  phoneNumber: string
+) {
+  if (!NOTION_STATUS_DATABASE_ID) return;
+  console.log(`[Notion Sync] Creating ticket page in Notion: ${ticketNumber}`);
+  try {
+    const response = await notion.pages.create({
+      parent: { database_id: NOTION_STATUS_DATABASE_ID },
+      properties: {
+        "Name": {
+          title: [
+            {
+              text: {
+                content: ticketNumber
+              }
+            }
+          ]
+        },
+        "نوع التصنيف": {
+          select: category ? { name: category } : null
+        },
+        "المستقبل": {
+          select: receiver ? { name: receiver } : null
+        },
+        "الحالة": {
+          select: { name: "قيد الحل" }
+        },
+        "Due Date": {
+          date: date ? { start: date } : null
+        },
+        "سبب البلاغ": {
+          rich_text: [
+            {
+              text: {
+                content: reportText || ""
+              }
+            }
+          ]
+        },
+        "رقم الجوال": {
+          phone_number: phoneNumber || null
+        }
+      }
+    });
+    console.log(`[Notion Sync] Created Notion page: ${response.id}`);
+    return response.id;
+  } catch (err: any) {
+    console.error(`[Notion Sync Error] Failed to create Notion page:`, err.message);
   }
 }
 

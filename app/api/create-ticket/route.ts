@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
 import { sendPushNotification } from '../../../lib/push';
+import { createNotionTicket } from '../../../lib/notionSync';
 
 export async function POST(req: Request) {
   try {
@@ -21,6 +22,22 @@ export async function POST(req: Request) {
 
     if (insertError) {
       throw insertError;
+    }
+
+    // 2. If the user is admin (Mohamed Al-Robaish), insert to Notion database
+    if (data.role === 'admin') {
+      try {
+        await createNotionTicket(
+          data.ticketNumber,
+          data.type || data.serviceType || 'أخرى',
+          data.receiver || data.name || 'غير محدد',
+          data.date,
+          data.reportText || '',
+          data.phoneNumber || ''
+        );
+      } catch (notionErr) {
+        console.error('Failed to create ticket in Notion:', notionErr);
+      }
     }
 
     const insertedTicket = insertedData?.[0];
