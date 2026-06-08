@@ -59,6 +59,7 @@ export async function POST(req: Request) {
     if (!succeeded) {
       return NextResponse.json({
         error: 'Failed to process spelling correction with all models.',
+        keyPrefix: apiKey ? apiKey.substring(0, 7) + '...' : 'none',
         details: modelErrors
       }, { status: 500 });
     }
