@@ -768,6 +768,41 @@ const CATEGORIES = [
   "امتثال المباني", "منصة رسم تقديم منتجات التبغ", "فاتورة سداد آلياً", "أخرى"
 ];
 
+const getCategoryIconPath = (cat: string): string => {
+  const c = cat.trim();
+  if (["الرخص التجارية", "الرخص الإنشائية", "تصنيف مقدمي خدمات المدن"].includes(c)) {
+    return "M3 21h18M3 10h18M5 10V7a2 2 0 012-2h10a2 2 0 012 2v3M9 21v-4a2 2 0 012-2h2a2 2 0 012 2v4";
+  }
+  if (["بلدي أعمال", "منصة رسم تقديم منتجات التبغ", "خدمة الفرص الاستثمارية", "Investment Opportunities", "فاتورة سداد آلياً"].includes(c)) {
+    return "M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16";
+  }
+  if (["مسار منصة الحفريات", "خدمة الدمج والتجزئة", "الهوية العقارية", "امتثال المباني", "امتثال", "التشوه البصري"].includes(c)) {
+    return "M1 6v14l6-3 6 3 6-3 3 3V3l-3 3-6-3-6 3-6-3z M7 17V3 M13 21V7";
+  }
+  if (["التقرير المساحي", "الشهادات الصحية", "شؤون البلدية والقروية والإسكان", "رمز الاستجابة"].includes(c)) {
+    return "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8";
+  }
+  if (["الإدارة الذكية للنظافة", "رقابة الصحي والأسواق"].includes(c)) {
+    return "M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2";
+  }
+  if (["خدمة المواعيد الالكترونية", "إكرام الموتى"].includes(c)) {
+    return "M19 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2z M16 2v4 M8 2v4 M3 10h18";
+  }
+  if (["مستشارك بلدي", "صوت العميل", "شكوى المستفيد منصة بلدي", "شكوى المستفيد بلدي 940"].includes(c)) {
+    return "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z";
+  }
+  if (["نظام الصلاحيات", "لوحة التحكم"].includes(c)) {
+    return "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z";
+  }
+  if (["تطبيق بلدي", "صفحة بلدي"].includes(c)) {
+    return "M5 2h14a2 2 0 012 2v16a2 2 0 01-2 2H5a2 2 0 01-2-2V4a2 2 0 012-2z";
+  }
+  if (["GIS Web Portal", "الخرائط الجغرافية"].includes(c)) {
+    return "M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9-3-9";
+  }
+  return "M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z";
+};
+
 // --- دالة تحليل التاريخ المرن لدعم كافة التنسيقات ---
 const parseFlexibleDate = (str: string): Date => {
   if (!str || str === 'غير محدد') return new Date();
@@ -4023,7 +4058,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                     onClick={() => setIsEditCategoryOpen(!isEditCategoryOpen)}
                   >
                     <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg className={styles.optionIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                       </svg>
                       <span>{editingTicket.type || 'غير محدد'}</span>
@@ -4041,7 +4076,10 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                             setIsEditCategoryOpen(false);
                           }}
                         >
-                          📋 {cat}
+                          <svg className={styles.optionIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d={getCategoryIconPath(cat)} />
+                          </svg>
+                          {cat}
                         </div>
                       ))}
                     </div>
@@ -4059,7 +4097,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                       onClick={() => setIsEditReceiverOpen(!isEditReceiverOpen)}
                     >
                       <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className={styles.optionIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
                         </svg>
                         <span>{editingTicket.receiver || 'الجميع'}</span>
@@ -4069,7 +4107,13 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                     {isEditReceiverOpen && (
                       <div className={styles.customSelectOptions} style={{maxHeight:'250px', overflowY:'auto'}}>
                         <div className={styles.customOption} onClick={() => { setEditingTicket({...editingTicket, receiver:'الجميع'}); setIsEditReceiverOpen(false); }}>
-                          👤 الجميع
+                          <svg className={styles.optionIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                          </svg>
+                          الجميع
                         </div>
                         {(employeesList.length > 0 ? employeesList : DEFAULT_EMPLOYEES_WITH_PERMS).map(emp => (
                           <div 
@@ -4080,7 +4124,10 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                               setIsEditReceiverOpen(false);
                             }}
                           >
-                            👤 {emp.name}
+                            <svg className={styles.optionIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            {emp.name}
                           </div>
                         ))}
                       </div>
