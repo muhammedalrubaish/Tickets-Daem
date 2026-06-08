@@ -33,26 +33,56 @@ export async function POST(req: Request) {
     `;
 
     let responseText = '';
-    const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash'];
+    const modelsToTry = [
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-8b'
+    ];
     const modelErrors: Record<string, string> = {};
     let succeeded = false;
 
+    // Helper sleep function
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
     for (const modelName of modelsToTry) {
-      try {
-        console.log(`Trying spelling correction with model: ${modelName}`);
-        const model = genAI.getGenerativeModel({ 
-          model: modelName,
-          generationConfig: { responseMimeType: "application/json" }
-        });
-        const result = await model.generateContent([systemPrompt, text]);
-        responseText = result.response.text();
-        if (responseText) {
-          succeeded = true;
-          break; // Succeeded!
+      let attempts = 3; // Try up to 3 times for transient errors (503/429)
+      for (let attempt = 1; attempt <= attempts; attempt++) {
+        try {
+          console.log(`Trying spelling correction with model: ${modelName} (Attempt ${attempt}/${attempts})`);
+          const model = genAI.getGenerativeModel({ 
+            model: modelName,
+            generationConfig: { responseMimeType: "application/json" }
+          });
+          const result = await model.generateContent([systemPrompt, text]);
+          responseText = result.response.text();
+          if (responseText) {
+            succeeded = true;
+            break; // Succeeded!
+          }
+        } catch (e: any) {
+          const errMsg = e.message || String(e);
+          console.warn(`Model ${modelName} attempt ${attempt} failed:`, errMsg);
+          modelErrors[modelName] = errMsg;
+
+          const isTransient = errMsg.includes('503') || 
+                            errMsg.toLowerCase().includes('service unavailable') || 
+                            errMsg.includes('429') || 
+                            errMsg.toLowerCase().includes('too many requests') ||
+                            errMsg.toLowerCase().includes('overloaded');
+
+          if (isTransient && attempt < attempts) {
+            console.log(`Transient error detected on ${modelName}. Waiting 1.5s before retry...`);
+            await sleep(1500);
+          } else {
+            break; // Break the attempt loop if it's not transient, or we ran out of attempts
+          }
         }
-      } catch (e: any) {
-        console.warn(`Model ${modelName} failed:`, e.message || e);
-        modelErrors[modelName] = e.message || String(e);
+      }
+      if (succeeded) {
+        break; // Stop trying other models
       }
     }
 
