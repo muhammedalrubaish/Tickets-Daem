@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       const sol = solution || 'غير محدد';
       await sendPushNotification({
         title: `🗑️ تم حذف البلاغ رقم: ${ticketId}`,
-        body: `👤 المستقبل: ${rcv} ✦ 📁 التصنيف: ${cat} ✦ 💡 حالة المقترح: ${sol}`,
+        body: `👤 المستقبل: ${rcv}\n📁 التصنيف: ${cat}\n💡 حالة المقترح: ${sol}`,
         url: '/'
       }, rcv);
     } catch (pushErr) {
