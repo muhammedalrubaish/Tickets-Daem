@@ -36,6 +36,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ correctedText });
   } catch (error: any) {
     console.error('Spelling Correction API Error:', error);
-    return NextResponse.json({ error: 'Failed to process spelling correction.' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to process spelling correction.', 
+      details: error.message || String(error) 
+    }, { status: 500 });
   }
 }
+
