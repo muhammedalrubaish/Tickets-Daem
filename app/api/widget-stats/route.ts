@@ -28,7 +28,9 @@ export async function GET() {
       from += PAGE_SIZE;
     }
 
-    const totalCount = allTickets.length;
+    // فلترة البلاغات التي تبدأ بـ IM فقط (تخطي البلاغات أو التعاميم الأخرى المضافة)
+    const filteredTickets = allTickets.filter(t => t.ticket_number && t.ticket_number.trim().toUpperCase().startsWith('IM'));
+    const totalCount = filteredTickets.length;
 
     // 2. حساب المؤشرات والإحصائيات
     let newCount = 0;
@@ -38,7 +40,7 @@ export async function GET() {
     let solvedCount = 0;
     let otherCount = 0;
 
-    allTickets.forEach((ticket) => {
+    filteredTickets.forEach((ticket) => {
       // نعتمد على الحالة أو الحل لتحديد الإحصائية
       const status = ticket.status || 'غير محدد';
       const solution = ticket.solution || 'لم يتم الحل';
@@ -58,8 +60,8 @@ export async function GET() {
       }
     });
 
-    // 3. جلب آخر 5 بلاغات مضافة
-    const latestTickets = allTickets.slice(0, 5).map(t => ({
+    // 3. جلب آخر 5 بلاغات مضافة من القائمة المفلترة
+    const latestTickets = filteredTickets.slice(0, 5).map(t => ({
       number: t.ticket_number || 'غير محدد',
       type: t.category_type || 'أخرى',
       status: t.status || 'غير محدد',
