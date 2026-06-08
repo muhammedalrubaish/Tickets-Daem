@@ -34,7 +34,8 @@ export async function POST(req: Request) {
 
     let responseText = '';
     const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash'];
-    let lastError = null;
+    const modelErrors: Record<string, string> = {};
+    let succeeded = false;
 
     for (const modelName of modelsToTry) {
       try {
@@ -46,17 +47,20 @@ export async function POST(req: Request) {
         const result = await model.generateContent([systemPrompt, text]);
         responseText = result.response.text();
         if (responseText) {
-          lastError = null;
+          succeeded = true;
           break; // Succeeded!
         }
       } catch (e: any) {
         console.warn(`Model ${modelName} failed:`, e.message || e);
-        lastError = e;
+        modelErrors[modelName] = e.message || String(e);
       }
     }
 
-    if (lastError) {
-      throw lastError;
+    if (!succeeded) {
+      return NextResponse.json({
+        error: 'Failed to process spelling correction with all models.',
+        details: modelErrors
+      }, { status: 500 });
     }
 
     let parsedData = { correctedText: text, errorCount: 0 };
