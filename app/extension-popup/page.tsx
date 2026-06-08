@@ -28,7 +28,7 @@ export default function ExtensionPopupPage() {
   const [clientVersion, setClientVersion] = useState<string>('');
   
   const [role, setRole] = useState<'admin' | 'support' | null>(null);
-  const [password, setPassword] = useState<string>('');
+  const [password, setPassword] = useState<string>('Balady.20');
   const [showPasswordField, setShowPasswordField] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [nextEmployee, setNextEmployee] = useState<string>('غير محدد');
@@ -745,7 +745,13 @@ export default function ExtensionPopupPage() {
             👤 دخول (نسخ ولصق فقط)
           </button>
           
-          <button onClick={() => setShowPasswordField(true)} className="login-btn login-btn-primary">
+          <button 
+            onClick={() => {
+              setShowPasswordField(true);
+              if (!password) setPassword('Balady.20');
+            }} 
+            className="login-btn login-btn-primary"
+          >
             🔑 دخول بالصلاحيات الكاملة (إنشاء وإسناد)
           </button>
           
