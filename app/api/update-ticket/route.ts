@@ -78,10 +78,11 @@ export async function POST(req: Request) {
           const category = category_type || 'غير محدد';
           const sol = solution || 'غير محدد';
           const isVacation = solution === 'إجازة' || solution === 'في إجازة';
+          const ticketNum = ticketNumber || 'غير محدد';
 
           await sendPushNotification({
-            title: isVacation ? '🏖️ تم إضافة إجازة' : '✏️ تم تحديث بلاغ',
-            body: `المستقبل: ${rcv} | التصنيف: ${category} | حالة المقترح: ${sol}`,
+            title: isVacation ? '🏖️ تم إضافة إجازة' : `✏️ تم تحديث بلاغ رقم: ${ticketNum}`,
+            body: `👤 المستقبل: ${rcv} ✦ 📁 التصنيف: ${category} ✦ 💡 حالة المقترح: ${sol}`,
             url: '/'
           }, rcv);
         } catch (pushErr) {

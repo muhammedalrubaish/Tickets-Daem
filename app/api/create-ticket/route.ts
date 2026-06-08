@@ -51,8 +51,8 @@ export async function POST(req: Request) {
       const solutionText = data.solution || 'غير محدد';
 
       await sendPushNotification({
-        title: '🔔 بلاغ جديد - بلاغات بلدي',
-        body: `المستقبل: ${rcv} | التصنيف: ${category} | حالة المقترح: ${solutionText}`,
+        title: `🔔 إسناد بلاغ جديد رقم: ${ticketNum}`,
+        body: `👤 المستقبل: ${rcv} ✦ 📁 التصنيف: ${category} ✦ 💡 حالة المقترح: ${solutionText}`,
         url: '/'
       }, rcv);
     } catch (pushErr) {

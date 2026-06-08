@@ -28,17 +28,19 @@ export async function GET() {
     }
 
     const count = delayedTickets.length;
+    let title = '⚠️ بلاغات بلدي متأخرة';
     let body = '';
 
     if (count === 1) {
       const ticket = delayedTickets[0];
-      body = `⚠️ بلاغ متأخر لأكثر من يوم رقم: ${ticket.ticket_number || 'غير محدد'}\nالتصنيف: ${ticket.category_type || 'غير محدد'} | المستقبل: ${ticket.receiver || 'غير محدد'} | تاريخ الاستقبال: ${ticket.reception_date || 'غير محدد'}`;
+      title = `⚠️ بلاغ متأخر رقم: ${ticket.ticket_number || 'غير محدد'}`;
+      body = `👤 المستقبل: ${ticket.receiver || 'غير محدد'} ✦ 📁 التصنيف: ${ticket.category_type || 'غير محدد'} ✦ 📅 تاريخ الاستقبال: ${ticket.reception_date || 'غير محدد'}`;
     } else {
-      body = `⚠️ يوجد عدد (${count}) بلاغات متأخرة لأكثر من يوم دون معالجة. يرجى الدخول والمتابعة.`;
+      body = `⚠️ يوجد عدد (${count}) بلاغات متأخرة لأكثر من يوم دون معالجة. يرجى المتابعة.`;
     }
 
     const result = await sendPushNotification({
-      title: 'بلاغات بلدي',
+      title: title,
       body: body,
       url: '/'
     });
