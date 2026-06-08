@@ -44,8 +44,8 @@ export default function ExtensionPopupPage() {
       const savedRole = localStorage.getItem('daemRole') as 'admin' | 'support' | null;
       const savedPass = localStorage.getItem('daemPassword') || '';
       
-      const activeRole = savedRole || (paramRole && paramRole !== 'null' ? (paramRole as 'admin' | 'support') : null);
-      const activePass = savedPass || paramPass || '';
+      const activeRole = savedRole || (paramRole && paramRole !== 'null' ? (paramRole as 'admin' | 'support') : 'admin');
+      const activePass = savedPass || paramPass || 'Balady.20';
 
       if (activePass) {
         setPassword(activePass);
