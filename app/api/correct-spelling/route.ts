@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     }
 
     if (!text || text.trim() === '') {
-      return NextResponse.json({ correctedText: '' });
+      return NextResponse.json({ correctedText: '', errorCount: 0 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -24,23 +24,41 @@ export async function POST(req: Request) {
       القواعد:
       1. صحح الكلمات المكتوبة بشكل خاطئ إملائياً فقط (مثل الألف المقصورة، التاء المربوطة والهاء، همزات القطع والوصل، الظاء والضاد، إلخ).
       2. حافظ تماماً على نفس بنية الجملة والمعنى والمفردات المستخدمة دون أي تغيير أو تحوير في صياغة النص أو أسلوبه.
-      3. أرجع النص المصحح فقط بدون أي مقدمات أو تحيات أو تفسيرات أو علامات تنصيص إضافية.
+      3. قارن النص الأصلي بالمصحح واحسب عدد الكلمات التي تم تعديلها أو تصحيحها بدقة.
+      4. أرجع النتيجة حصراً بصيغة JSON تحتوي على الحقول التالية فقط دون أي نصوص إضافية أو علامات markdown خارج الـ JSON:
+         {
+           "correctedText": "النص المصحح بالكامل هنا",
+           "errorCount": 3
+         }
     `;
 
     let responseText = '';
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const model = genAI.getGenerativeModel({ 
+        model: 'gemini-2.5-flash',
+        generationConfig: { responseMimeType: "application/json" }
+      });
       const result = await model.generateContent([systemPrompt, text]);
       responseText = result.response.text();
     } catch (e) {
       console.warn("Gemini 2.5 Flash failed, trying Gemini 1.5 Flash fallback:", e);
-      const fallbackModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const fallbackModel = genAI.getGenerativeModel({ 
+        model: 'gemini-1.5-flash',
+        generationConfig: { responseMimeType: "application/json" }
+      });
       const result = await fallbackModel.generateContent([systemPrompt, text]);
       responseText = result.response.text();
     }
 
-    const correctedText = responseText.trim();
-    return NextResponse.json({ correctedText });
+    let parsedData = { correctedText: text, errorCount: 0 };
+    try {
+      parsedData = JSON.parse(responseText.trim());
+    } catch (parseError) {
+      console.error("Failed to parse JSON response from Gemini:", responseText);
+      parsedData = { correctedText: responseText.trim(), errorCount: 0 };
+    }
+
+    return NextResponse.json(parsedData);
   } catch (error: any) {
     console.error('Spelling Correction API Error:', error);
     return NextResponse.json({ 
@@ -49,4 +67,5 @@ export async function POST(req: Request) {
     }, { status: 500 });
   }
 }
+
 
