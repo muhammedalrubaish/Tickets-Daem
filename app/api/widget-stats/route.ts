@@ -28,8 +28,8 @@ export async function GET() {
       from += PAGE_SIZE;
     }
 
-    // فلترة البلاغات التي تبدأ بـ IM فقط (تخطي البلاغات أو التعاميم الأخرى المضافة)
-    const filteredTickets = allTickets.filter(t => t.ticket_number && t.ticket_number.trim().toUpperCase().startsWith('IM'));
+    // فلترة البلاغات واستبعاد التحديثات/الإعلانات التي تبدأ بـ 📢 ليتطابق الإجمالي مع الموقع (1306 بلاغ)
+    const filteredTickets = allTickets.filter(t => t.ticket_number && !t.ticket_number.trim().startsWith('📢'));
     const totalCount = filteredTickets.length;
 
     // 2. حساب المؤشرات والإحصائيات
