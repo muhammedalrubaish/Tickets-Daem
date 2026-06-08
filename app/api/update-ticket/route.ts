@@ -82,7 +82,7 @@ export async function POST(req: Request) {
 
           await sendPushNotification({
             title: isVacation ? '🏖️ تم إضافة إجازة' : `✏️ تم تحديث بلاغ رقم: ${ticketNum}`,
-            body: `👤 المستقبل: ${rcv}\n📁 التصنيف: ${category}\n💡 حالة المقترح: ${sol}`,
+            body: `👤 المستقبل: ${rcv} ✦ 📁 التصنيف: ${category} ✦ 💡 حالة المقترح: ${sol}`,
             url: '/'
           }, rcv);
         } catch (pushErr) {

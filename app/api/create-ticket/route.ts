@@ -52,7 +52,7 @@ export async function POST(req: Request) {
 
       await sendPushNotification({
         title: `🔔 إسناد بلاغ جديد رقم: ${ticketNum}`,
-        body: `👤 المستقبل: ${rcv}\n📁 التصنيف: ${category}\n💡 حالة المقترح: ${solutionText}`,
+        body: `👤 المستقبل: ${rcv} ✦ 📁 التصنيف: ${category} ✦ 💡 حالة المقترح: ${solutionText}`,
         url: '/'
       }, rcv);
     } catch (pushErr) {
