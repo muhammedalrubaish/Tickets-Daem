@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
 import { sendPushNotification } from '../../../lib/push';
+import { updateNotionTicket } from '../../../lib/notionSync';
 
 export async function POST(req: Request) {
   try {
@@ -47,6 +48,29 @@ export async function POST(req: Request) {
       if (conditions.length > 0) {
         const { error } = await query.or(conditions.join(','));
         if (error) throw error;
+
+        // الحصول على رقم البلاغ الفعلي للمزامنة مع Notion
+        let ticketNumber = number;
+        if (!ticketNumber && (ticketId || mainTicketId)) {
+          const { data } = await supabase
+            .from('tickets')
+            .select('ticket_number')
+            .or(conditions.join(','))
+            .limit(1)
+            .single();
+          if (data) {
+            ticketNumber = data.ticket_number;
+          }
+        }
+
+        // تحديث في Notion إذا كان رقم البلاغ والحل متوفرين
+        if (ticketNumber && solution !== undefined) {
+          try {
+            await updateNotionTicket(ticketNumber, solution);
+          } catch (notionErr) {
+            console.error('Failed to update Notion ticket:', notionErr);
+          }
+        }
         
         // إرسال إشعار Push حسب نوع التحديث
         try {
@@ -77,3 +101,4 @@ export async function POST(req: Request) {
     }, { status: 500 });
   }
 }
+

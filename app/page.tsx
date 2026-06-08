@@ -1,11 +1,19 @@
 import { supabase } from '../lib/supabase';
 import DashboardClient from './DashboardClient';
+import { syncRecentNotionChanges } from '../lib/notionSync';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0; 
 
 async function getComplaints() {
   try {
+    // تشغيل مزامنة التغييرات الأخيرة من نويشن إلى قاعدة البيانات قبل الاستعلام
+    try {
+      await syncRecentNotionChanges();
+    } catch (syncErr) {
+      console.error('Failed to run recent Notion changes sync on page load:', syncErr);
+    }
+
     // Supabase يعيد 1000 سجل كحد أقصى في الطلب الواحد
     // لذا نجلب البيانات على دفعات لضمان الحصول على الأرشيف الكامل
     let allData: any[] = [];
