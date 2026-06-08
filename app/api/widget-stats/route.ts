@@ -7,18 +7,27 @@ const START_DATE = '2026-04-04';
 
 export async function GET() {
   try {
-    // 1. جلب جميع التذاكر من تاريخ البداية
-    const { data: tickets, error } = await supabase
-      .from('tickets')
-      .select('id, notion_id, ticket_number, category_type, status, solution, receiver, reception_date')
-      .gte('reception_date', START_DATE)
-      .order('reception_date', { ascending: false });
+    // 1. جلب جميع التذاكر من تاريخ البداية مع التغلب على حد الـ 1000 سجل عبر الـ Pagination
+    const PAGE_SIZE = 1000;
+    let allTickets: any[] = [];
+    let from = 0;
 
-    if (error) {
-      throw error;
+    while (allTickets.length < 10000) {
+      const { data: page, error: pageError } = await supabase
+        .from('tickets')
+        .select('id, notion_id, ticket_number, category_type, status, solution, receiver, reception_date')
+        .gte('reception_date', START_DATE)
+        .order('reception_date', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (pageError) throw pageError;
+      if (!page || page.length === 0) break;
+
+      allTickets.push(...page);
+      if (page.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
     }
 
-    const allTickets = tickets || [];
     const totalCount = allTickets.length;
 
     // 2. حساب المؤشرات والإحصائيات
