@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
+import { supabase } from '../../../lib/supabase';
 
 // GET: Meta webhook verification
 export async function GET(req: Request) {
@@ -24,17 +25,26 @@ export async function POST(req: Request) {
     const change = entry?.changes?.[0];
     const messageData = change?.value?.messages?.[0];
 
-    // Ignore non-text messages or status updates
     if (!messageData || messageData.type !== 'text') {
       return NextResponse.json({ status: 'ok' });
     }
 
-    const userMessage = messageData.text.body;
-    const senderPhone = messageData.from;
+    const userMessage: string = messageData.text.body.trim();
+    const senderPhone: string = messageData.from;
 
-    const aiReply = await getAIResponse(userMessage);
-    await sendWhatsAppMessage(senderPhone, aiReply);
+    // Check if message contains a ticket number (e.g. IM4407072)
+    const ticketNumberMatch = userMessage.match(/IM\d+/i);
 
+    let reply: string;
+
+    if (ticketNumberMatch) {
+      const ticketNumber = ticketNumberMatch[0].toUpperCase();
+      reply = await getTicketStatusReply(ticketNumber);
+    } else {
+      reply = await getAIReply(userMessage);
+    }
+
+    await sendWhatsAppMessage(senderPhone, reply);
     return NextResponse.json({ status: 'ok' });
   } catch (error) {
     console.error('WhatsApp webhook error:', error);
@@ -42,7 +52,37 @@ export async function POST(req: Request) {
   }
 }
 
-async function getAIResponse(userMessage: string): Promise<string> {
+// Query Supabase and return official status reply
+async function getTicketStatusReply(ticketNumber: string): Promise<string> {
+  const { data, error } = await supabase
+    .from('tickets')
+    .select('ticket_number, solution, status')
+    .ilike('ticket_number', ticketNumber)
+    .maybeSingle();
+
+  if (error || !data) {
+    return `لم يتم العثور على البلاغ رقم ${ticketNumber}.\nيرجى التأكد من صحة رقم البلاغ أو التواصل مع الجهة المختصة.`;
+  }
+
+  const solution: string = (data.solution || '').trim();
+
+  const statusMessages: Record<string, string> = {
+    'بانتظار المستفيد': `بلاغكم رقم ${ticketNumber} قيد المعالجة حالياً.\nسيتم التواصل معكم عند الحاجة.`,
+    'لدى الوزارة':     `بلاغكم رقم ${ticketNumber} تمت إحالته إلى الوزارة المختصة.\nيرجى متابعة الجهة المختصة للاستفسار.`,
+    'تم الحل':         `بلاغكم رقم ${ticketNumber} تم إغلاقه بعد اتخاذ الإجراء المناسب.\nشكراً لتواصلكم مع وحدة بلدي.`,
+    'لم يتم الحل':     `بلاغكم رقم ${ticketNumber} لا يزال قيد الدراسة.\nسيتم إشعاركم عند اتخاذ الإجراء المناسب.`,
+    'بلاغ جديد':       `بلاغكم رقم ${ticketNumber} تم استلامه وهو قيد المراجعة الأولية.\nسيتم اتخاذ الإجراء اللازم في أقرب وقت.`,
+    'مشكلة عامة':      `بلاغكم رقم ${ticketNumber} قيد المعالجة ضمن البلاغات العامة.\nسيتم التعامل معه وفق الأولوية المحددة.`,
+  };
+
+  return (
+    statusMessages[solution] ||
+    `بلاغكم رقم ${ticketNumber} قيد المتابعة من قِبل الجهة المختصة.\nللاستفسار يرجى التواصل المباشر مع وحدة بلدي.`
+  );
+}
+
+// Strictly professional AI for work-related queries only
+async function getAIReply(userMessage: string): Promise<string> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
   if (!apiKey) return 'عذراً، الخدمة غير متاحة حالياً.';
 
@@ -50,18 +90,19 @@ async function getAIResponse(userMessage: string): Promise<string> {
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   const systemPrompt = `
-    أنت "مساعد بلدي الذكي" (Baladi AI Assistant) على واتساب.
-    مهمتك هي مساعدة موظفي "وحدة بلدي" في التعامل مع البلاغات وأنظمة بلدي.
+    أنت مساعد رسمي لوحدة بلدي على واتساب.
 
-    معلومات عنك:
-    - أنت خبير في أنظمة بلدي (الرخص التجارية، الرخص الإنشائية، الشهادات الصحية، إلخ).
-    - يمكنك مساعدة الموظفين في صياغة ردود احترافية على البلاغات.
-    - يمكنك شرح إجراءات بلدي وأنظمتها.
+    مهامك المسموح بها فقط:
+    - الإجابة على استفسارات المواطنين المتعلقة ببلاغات بلدي والخدمات البلدية.
+    - توجيه المواطن لإرسال رقم البلاغ (مثال: IM4407072) للاستعلام عن حالته.
+    - الإجابة على أسئلة متعلقة بأنظمة بلدي: الرخص التجارية، الرخص الإنشائية، الشهادات الصحية.
 
-    قواعدك:
-    - تحدث دائماً باللغة العربية بلهجة مهنية وودودة.
-    - كن مقتضباً وواضحاً — الردود القصيرة أفضل لواتساب.
-    - لا تستخدم تنسيق Markdown (بدون نجوم أو رموز).
+    قواعد صارمة:
+    - الرد باللغة العربية الفصحى الرسمية فقط.
+    - لا تجاوب على أي موضوع خارج نطاق عمل وحدة بلدي.
+    - إذا كان السؤال خارج نطاق العمل، رد بـ: "هذا الاستفسار خارج نطاق خدماتنا. للمساعدة في بلاغات بلدي يرجى إرسال رقم البلاغ."
+    - لا تستخدم رموز أو تنسيق markdown.
+    - الردود مختصرة ومهنية.
   `;
 
   const result = await model.generateContent([systemPrompt, userMessage]);
@@ -77,9 +118,7 @@ async function sendWhatsAppMessage(to: string, message: string): Promise<void> {
     throw new Error('WhatsApp credentials are missing');
   }
 
-  const url = `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`;
-
-  const res = await fetch(url, {
+  const res = await fetch(`https://graph.facebook.com/v19.0/${phoneNumberId}/messages`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
