@@ -6,6 +6,20 @@ const notion = new Client({ auth: process.env.NOTION_SECRET });
 const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID || "";
 const NOTION_STATUS_DATABASE_ID = process.env.NOTION_STATUS_DATABASE_ID || "";
 
+// دالة تحويل الحالات الخاصة في نويشن إلى حالة "بانتظار المستفيد" في الموقع
+function mapNotionStatus(status: string): string {
+  const targetStatuses = [
+    "بانتظار الموظف",
+    "بانتظار المكتب الهندسي",
+    "بانتظار الأمانة",
+    "بانتظار البلدية"
+  ];
+  if (targetStatuses.includes(status)) {
+    return "بانتظار المستفيد";
+  }
+  return status;
+}
+
 /**
  * تحديث الحالة/الحل المقترح/تاريخ الاستحقاق في نويشن للبلاغ المحدد
  */
@@ -173,7 +187,8 @@ export async function syncRecentNotionChanges() {
         const ticketNumber = page.properties.Name?.title?.[0]?.plain_text;
         if (!ticketNumber || !ticketNumber.startsWith("IM")) continue;
 
-        const solution = page.properties["الحل المقترح"]?.select?.name || "لم يتم الحل";
+        const rawSolution = page.properties["الحل المقترح"]?.select?.name || "لم يتم الحل";
+        const solution = mapNotionStatus(rawSolution);
         const receiver = page.properties["المستقبل"]?.select?.name || "غير محدد";
         const categoryType = page.properties["نوع التصنيف"]?.select?.name || "أخرى";
         const receptionDate = page.properties["تاريخ استقبال البلاغ"]?.date?.start || null;
@@ -224,8 +239,9 @@ export async function syncRecentNotionChanges() {
         const ticketNumber = page.properties.Name?.title?.[0]?.plain_text;
         if (!ticketNumber || !ticketNumber.startsWith("IM")) continue;
 
-        const solution = page.properties["الحالة"]?.select?.name;
-        if (!solution) continue;
+        const rawSolution = page.properties["الحالة"]?.select?.name;
+        if (!rawSolution) continue;
+        const solution = mapNotionStatus(rawSolution);
 
         const { error } = await supabase
           .from("tickets")
