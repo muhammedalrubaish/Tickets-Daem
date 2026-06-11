@@ -24,9 +24,9 @@ export async function POST(req: Request) {
       throw insertError;
     }
 
-    // 2. If the user is admin (Mohamed Al-Robaish) and the receiver is Mohamed Al-Robaish, insert to Notion database
+    // 2. If the receiver is Mohamed Al-Robaish, insert to Notion database
     const isReceiverRobaish = data.receiver && (data.receiver.includes('محمد الربيش') || data.receiver.includes('الربيش'));
-    if (data.role === 'admin' && isReceiverRobaish) {
+    if (isReceiverRobaish) {
       try {
         await createNotionTicket(
           data.ticketNumber,
