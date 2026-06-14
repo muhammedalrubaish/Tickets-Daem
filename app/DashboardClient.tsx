@@ -956,9 +956,14 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'whatsapp' | 'notion'>('notion');
   const [isDriveOpen, setIsDriveOpen] = useState(false);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilter, selectedReceiver, selectedType, selectedSolution, startDate, endDate]);
   const [isSupOpen, setIsSupOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -2247,6 +2252,14 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     });
   }, [complaints, activeFilter, searchTerm, selectedReceiver, selectedType, selectedSolution, startDate, endDate]);
 
+  const itemsPerPage = 100;
+  const totalPages = Math.ceil(filteredComplaints.length / itemsPerPage);
+
+  const paginatedComplaints = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredComplaints.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredComplaints, currentPage]);
+
   // تأثير الظهور السلس عند التمرير
   useEffect(() => {
     const observerOptions = {
@@ -2268,7 +2281,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     revealElements.forEach(el => observer.observe(el));
 
     return () => observer.disconnect();
-  }, [filteredComplaints]); // إعادة التشغيل عند تغيير القائمة
+  }, [paginatedComplaints]); // إعادة التشغيل عند تغيير القائمة المرقومة
 
   return (
     <main className={styles.container}>
@@ -4539,7 +4552,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         <div className={styles.listHeaderInner} style={{display:'flex', alignItems:'center', gap:'15px'}}>
           <h2 style={{fontSize:'1.1rem', color:'var(--text)', margin:0, display:'flex', alignItems:'center', gap:'8px'}}>
             <span>📑</span>
-            <span>قائمة البلاغات ({filteredComplaints.length})</span>
+            <span>قائمة البلاغات ({filteredComplaints.length}) {totalPages > 1 && `(الصفحة ${currentPage} من ${totalPages})`}</span>
           </h2>
           
           {(userRole === 'super_admin' || (userRole === 'editor' && currentUserPermissions?.createTicket)) && (
@@ -4661,7 +4674,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
       <div className={styles.grid} key={activeFilter + searchTerm + selectedReceiver + selectedType}>
         {filteredComplaints.length > 0 ? (
-          filteredComplaints.map((complaint, index) => {
+          paginatedComplaints.map((complaint, index) => {
              let statusClass = 'open';
              if (complaint.solution === 'تم الحل') statusClass = 'closed';
              else if (complaint.solution === 'لم يتم الحل') statusClass = 'open';
@@ -4777,6 +4790,169 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
           </div>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '8px',
+          margin: '24px 0 12px 0',
+          flexWrap: 'wrap',
+          direction: 'rtl'
+        }}>
+          {/* زر السابق */}
+          <button
+            onClick={() => {
+              setCurrentPage(prev => Math.max(prev - 1, 1));
+              const el = document.getElementById('complaints-list');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            disabled={currentPage === 1}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '20px',
+              border: '1.5px solid var(--border)',
+              background: 'transparent',
+              color: currentPage === 1 ? 'var(--text-muted)' : 'var(--text)',
+              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              opacity: currentPage === 1 ? 0.4 : 1,
+              transition: 'all 0.2s ease',
+              fontSize: '0.85rem',
+              fontWeight: 'bold',
+              fontFamily: 'inherit'
+            }}
+          >
+            السابق
+          </button>
+
+          {/* أرقام الصفحات */}
+          {(() => {
+            const pages = [];
+            const maxVisiblePages = 5;
+            
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage < maxVisiblePages - 1) {
+              startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            if (startPage > 1) {
+              pages.push(
+                <button
+                  key={1}
+                  onClick={() => {
+                    setCurrentPage(1);
+                    const el = document.getElementById('complaints-list');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    border: currentPage === 1 ? '1.5px solid #4C9A2A' : '1.5px solid var(--border)',
+                    background: currentPage === 1 ? 'rgba(76, 154, 42, 0.15)' : 'transparent',
+                    color: currentPage === 1 ? '#4C9A2A' : 'var(--text)',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    minWidth: '36px',
+                    fontFamily: 'inherit'
+                  }}
+                >
+                  1
+                </button>
+              );
+              if (startPage > 2) {
+                pages.push(<span key="dots-start" style={{ color: 'var(--text-muted)', padding: '0 4px' }}>...</span>);
+              }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+              pages.push(
+                <button
+                  key={i}
+                  onClick={() => {
+                    setCurrentPage(i);
+                    const el = document.getElementById('complaints-list');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    border: currentPage === i ? '1.5px solid #4C9A2A' : '1.5px solid var(--border)',
+                    background: currentPage === i ? 'rgba(76, 154, 42, 0.15)' : 'transparent',
+                    borderColor: currentPage === i ? '#4C9A2A' : 'var(--border)',
+                    color: currentPage === i ? '#4C9A2A' : 'var(--text)',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    minWidth: '36px',
+                    transition: 'all 0.2s ease',
+                    fontFamily: 'inherit'
+                  }}
+                >
+                  {i}
+                </button>
+              );
+            }
+
+            if (endPage < totalPages) {
+              if (endPage < totalPages - 1) {
+                pages.push(<span key="dots-end" style={{ color: 'var(--text-muted)', padding: '0 4px' }}>...</span>);
+              }
+              pages.push(
+                <button
+                  key={totalPages}
+                  onClick={() => {
+                    setCurrentPage(totalPages);
+                    const el = document.getElementById('complaints-list');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    border: currentPage === totalPages ? '1.5px solid #4C9A2A' : '1.5px solid var(--border)',
+                    background: currentPage === totalPages ? 'rgba(76, 154, 42, 0.15)' : 'transparent',
+                    color: currentPage === totalPages ? '#4C9A2A' : 'var(--text)',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    minWidth: '36px',
+                    fontFamily: 'inherit'
+                  }}
+                >
+                  {totalPages}
+                </button>
+              );
+            }
+
+            return pages;
+          })()}
+
+          {/* زر التالي */}
+          <button
+            onClick={() => {
+              setCurrentPage(prev => Math.min(prev + 1, totalPages));
+              const el = document.getElementById('complaints-list');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            disabled={currentPage === totalPages}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '20px',
+              border: '1.5px solid var(--border)',
+              background: 'transparent',
+              color: currentPage === totalPages ? 'var(--text-muted)' : 'var(--text)',
+              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              opacity: currentPage === totalPages ? 0.4 : 1,
+              transition: 'all 0.2s ease',
+              fontSize: '0.85rem',
+              fontWeight: 'bold',
+              fontFamily: 'inherit'
+            }}
+          >
+            التالي
+          </button>
+        </div>
+      )}
       {isDeleteConfirmOpen && (
         <div className={styles.modalOverlay} onClick={() => setIsDeleteConfirmOpen(false)} style={{ backdropFilter: 'blur(12px)', backgroundColor: 'rgba(15, 23, 42, 0.75)' }}>
           <div 
