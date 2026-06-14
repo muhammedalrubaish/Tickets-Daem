@@ -106,9 +106,21 @@ export default async function IndicatorsPage({
 
   const total = baseTickets.length;
   
-  // توقيت السعودية الفعلي للحسابات
-  const todayStr = new Date(new Date().getTime() + 3 * 60 * 60 * 1000).toISOString().split('T')[0];
-  const todayCount = baseTickets.filter(t => t.date === todayStr).length;
+  // حساب تصنيف الأكثر تكراراً (الأكثر تصنيفاً) مثل الرخص الإنشائية
+  const categoryCounts: Record<string, number> = {};
+  baseTickets.forEach(t => {
+    const cat = t.type ? t.type.trim() : 'أخرى';
+    if (cat && cat !== 'أخرى' && cat !== 'غير محدد') {
+      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+    }
+  });
+
+  const sortedCategories = Object.entries(categoryCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const topCategoryName = sortedCategories[0]?.name || 'غير محدد';
+  const topCategoryCount = sortedCategories[0]?.count || 0;
 
   const closed = baseTickets.filter(t => t.solution.trim() === 'تم الحل').length;
   const open = baseTickets.filter(t => t.solution.trim() === 'لم يتم الحل').length;
@@ -117,7 +129,6 @@ export default async function IndicatorsPage({
   const newTickets = baseTickets.filter(t => t.solution.trim() === 'بلاغ جديد').length;
   const general = baseTickets.filter(t => t.solution.trim() === 'مشكلة عامة').length;
 
-  const activePending = total - closed;
   const successRate = total > 0 ? Math.round((closed / total) * 100) : 0;
 
   // حساب توزيع البلاغات النشطة للموظفين (مجهولة لخصوصية التلفزيون)
@@ -157,64 +168,9 @@ export default async function IndicatorsPage({
 
   const closedTickets = baseTickets.filter(t => t.solution.trim() === 'تم الحل');
 
-  const closuresByEmployee: Record<string, { currentMonth: number; prevMonth: number }> = {};
-  const knownEmployees = [
-    'البراء النصيان', 'عبدالله العويد', 'عبدالرحمن العمري', 
-    'عزام الحربي', 'محمد الربيش', 'صالح الغصن', 
-    'طارق الهدياني', 'ثامر المنصور'
-  ];
-  knownEmployees.forEach(emp => {
-    closuresByEmployee[emp] = { currentMonth: 0, prevMonth: 0 };
-  });
-
-  closedTickets.forEach(t => {
-    const receiver = t.receiver ? t.receiver.trim() : 'غير محدد';
-    if (receiver === 'الجميع' || receiver === 'غير محدد') return;
-
-    const matchedEmployee = knownEmployees.find(emp => 
-      receiver.includes(emp.split(' ')[0]) || 
-      emp.includes(receiver.split(' ')[0])
-    ) || receiver;
-
-    if (!closuresByEmployee[matchedEmployee]) {
-      closuresByEmployee[matchedEmployee] = { currentMonth: 0, prevMonth: 0 };
-    }
-
-    if (t.date && t.date.startsWith(currentMonthStr)) {
-      closuresByEmployee[matchedEmployee].currentMonth++;
-    } else if (t.date && t.date.startsWith(prevMonthStr)) {
-      closuresByEmployee[matchedEmployee].prevMonth++;
-    }
-  });
-
-  const sortedClosureList = Object.entries(closuresByEmployee)
-    .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => b.currentMonth - a.currentMonth);
-
   const totalCurrentMonthClosures = closedTickets.filter(t => t.date && t.date.startsWith(currentMonthStr)).length;
   const totalPrevMonthClosures = closedTickets.filter(t => t.date && t.date.startsWith(prevMonthStr)).length;
-
-  // حساب مدد الحل
-  let totalDurationDays = 0;
-  let closedCountWithDuration = 0;
-
-  closedTickets.forEach(t => {
-    if (t.date && t.createdAt) {
-      try {
-        const recDate = new Date(t.date);
-        const clsDate = new Date(t.createdAt);
-        const diffTime = clsDate.getTime() - recDate.getTime();
-        const diffDays = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-        
-        totalDurationDays += diffDays;
-        closedCountWithDuration++;
-      } catch (e) {}
-    }
-  });
-
-  const averageResolutionTime = closedCountWithDuration > 0 
-    ? (totalDurationDays / closedCountWithDuration).toFixed(1) 
-    : '0';
+  const closuresDiff = totalCurrentMonthClosures - totalPrevMonthClosures;
 
   // أعمار المعلق
   let openUnder3Days = 0;
@@ -289,7 +245,7 @@ export default async function IndicatorsPage({
         <div className={styles.controls}>
           <div className={styles.refreshTimer}>
             <span className={styles.timerDot}></span>
-            <span>تحديث تلقائي للمتصفح كل 30 ثانية (بدون رامات)</span>
+            <span>تحديث تلقائي للمتصفح كل 30 ثانية</span>
           </div>
 
           <a href="/" className={styles.btn} style={{ backgroundColor: 'rgba(200, 165, 127, 0.15)', borderColor: 'rgba(200, 165, 127, 0.3)', color: '#C8A57F' }}>
@@ -308,20 +264,20 @@ export default async function IndicatorsPage({
 
         <div className={styles.statCard} style={{ '--card-accent': '#16a34a' } as React.CSSProperties}>
           <span className={styles.statLabel}>نسبة الإنجاز</span>
-          <span className={styles.statValue} style={{ color: '#16a34a' }}>{successRate}%</span>
+          <span className={styles.statValue} style={{ color: '#16a34a', fontSize: '2.5rem' }}>{successRate}%</span>
           <span className={styles.statDesc}>تم إنجاز {closed} بلاغ بنجاح</span>
         </div>
 
-        <div className={styles.statCard} style={{ '--card-accent': '#dc2626' } as React.CSSProperties}>
-          <span className={styles.statLabel}>البلاغات النشطة القائمة</span>
-          <span className={styles.statValue} style={{ color: '#dc2626' }}>{activePending}</span>
-          <span className={styles.statDesc}>تتطلب اتخاذ إجراء فوري</span>
+        <div className={styles.statCard} style={{ '--card-accent': '#3b82f6' } as React.CSSProperties}>
+          <span className={styles.statLabel}>البلاغات لدى الوزارة</span>
+          <span className={styles.statValue} style={{ color: '#3b82f6' }}>{ministry}</span>
+          <span className={styles.statDesc}>بلاغات معلقة لدى مركز الوزارة</span>
         </div>
 
         <div className={styles.statCard} style={{ '--card-accent': '#a855f7' } as React.CSSProperties}>
-          <span className={styles.statLabel}>بلاغات اليوم الجديدة</span>
-          <span className={styles.statValue} style={{ color: '#a855f7' }}>{todayCount}</span>
-          <span className={styles.statDesc}>المستلمة خلال الـ 24 ساعة الماضية</span>
+          <span className={styles.statLabel}>النوع الأكثر تصنيفاً</span>
+          <span className={styles.statValue} style={{ color: '#a855f7', fontSize: '1.25rem', padding: '0.4rem 0', fontWeight: 'bold' }}>{topCategoryName}</span>
+          <span className={styles.statDesc}>بواقع {topCategoryCount} بلاغ مسجل</span>
         </div>
       </section>
 
@@ -395,57 +351,33 @@ export default async function IndicatorsPage({
           </div>
         </div>
 
-        {/* المخطط 3: مقارنة تقفيل البلاغات مع إخفاء الأسماء */}
-        <div className={styles.chartCard}>
+        {/* المخطط 3: مقارنة تقفيل البلاغات العامة (مستندة للشهور دون ذكر موظفين) */}
+        <div className={styles.chartCard} style={{ justifyContent: 'center' }}>
           <h2 className={styles.chartTitle}>📅 مقارنة تقفيل البلاغات ({prevMonthName} 🆚 {currentMonthName})</h2>
           
-          <div style={{ display: 'flex', justifyContent: 'space-around', margin: '0.2rem 0 0.6rem', background: 'rgba(255,255,255,0.02)', padding: '0.4rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <div style={{ textAlign: 'center' }}>
-              <span style={{ fontSize: '0.7rem', color: '#cbd5e0' }}>تقفيل {prevMonthName} (السابق)</span>
-              <p style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#C8A57F', margin: '0' }}>{totalPrevMonthClosures} بلاغ</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', justifyContent: 'center', height: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-around', background: 'rgba(255,255,255,0.02)', padding: '1.2rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ textAlign: 'center' }}>
+                <span style={{ fontSize: '0.85rem', color: '#cbd5e0' }}>إجمالي منجز {prevMonthName} (السابق)</span>
+                <p style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#C8A57F', margin: '0.3rem 0 0' }}>{totalPrevMonthClosures} بلاغ</p>
+              </div>
+              <div style={{ width: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+              <div style={{ textAlign: 'center' }}>
+                <span style={{ fontSize: '0.85rem', color: '#cbd5e0' }}>إجمالي منجز {currentMonthName} (الجاري)</span>
+                <p style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#16a34a', margin: '0.3rem 0 0' }}>{totalCurrentMonthClosures} بلاغ</p>
+              </div>
             </div>
-            <div style={{ width: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
-            <div style={{ textAlign: 'center' }}>
-              <span style={{ fontSize: '0.7rem', color: '#cbd5e0' }}>تقفيل {currentMonthName} (الجاري)</span>
-              <p style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#16a34a', margin: '0' }}>{totalCurrentMonthClosures} بلاغ</p>
+
+            <div style={{ textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.8rem', background: 'rgba(200, 165, 127, 0.05)', padding: '0.8rem 1.2rem', borderRadius: '12px', border: '1px dashed rgba(200, 165, 127, 0.2)' }}>
+              <span style={{ fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 'bold' }}>مؤشر نمو الإغلاقات:</span>
+              {closuresDiff === 0 ? (
+                <span style={{ fontSize: '1rem', color: '#94a3b8', fontWeight: 'bold' }}>➖ مستقر</span>
+              ) : closuresDiff > 0 ? (
+                <span style={{ fontSize: '1.1rem', color: '#22c55e', fontWeight: 'bold' }}>📈 +{closuresDiff} بلاغ إضافي منجز</span>
+              ) : (
+                <span style={{ fontSize: '1.1rem', color: '#ef4444', fontWeight: 'bold' }}>📉 {closuresDiff} بلاغ إنجاز أقل</span>
+              )}
             </div>
-          </div>
-
-          <div className={styles.tableContainer}>
-            <table className={styles.comparisonTable}>
-              <thead>
-                <tr>
-                  <th>العضو</th>
-                  <th>إغلاق ({prevMonthName})</th>
-                  <th>إغلاق ({currentMonthName})</th>
-                  <th>مؤشر الأداء</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedClosureList.slice(0, 6).map((emp, idx) => {
-                  const diff = emp.currentMonth - emp.prevMonth;
-                  const isPositive = diff > 0;
-                  const isNeutral = diff === 0;
-
-                  return (
-                    <tr key={idx}>
-                      <td>الموظف {idx + 1}</td>
-                      <td>{emp.prevMonth}</td>
-                      <td style={{ fontWeight: 'bold', color: emp.currentMonth > 0 ? '#16a34a' : '#e2e8f0' }}>{emp.currentMonth}</td>
-                      <td>
-                        {isNeutral ? (
-                          <span className={`${styles.trendIndicator} ${styles.trendNeutral}`}>➖ مستقر</span>
-                        ) : isPositive ? (
-                          <span className={`${styles.trendIndicator} ${styles.trendUp}`}>📈 +{diff}</span>
-                        ) : (
-                          <span className={`${styles.trendIndicator} ${styles.trendDown}`}>📉 {diff}</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
           </div>
         </div>
 
@@ -454,22 +386,16 @@ export default async function IndicatorsPage({
           <h2 className={styles.chartTitle}>⏱️ إحصائيات مدة معالجة وحل البلاغات</h2>
           
           <div className={styles.durationContainer}>
-            <div className={styles.durationMiniCard}>
-              <span className={styles.durationLabel}>متوسط مدة حل البلاغ</span>
-              <p className={styles.durationVal}>{averageResolutionTime}</p>
-              <span style={{ fontSize: '0.7rem', color: '#718096' }}>يوم لكل بلاغ مغلق</span>
-            </div>
-            
-            <div className={styles.durationMiniCard}>
-              <span className={styles.durationLabel}>معدل الاستجابة اليومي</span>
-              <p className={styles.durationVal} style={{ color: '#16a34a' }}>
+            <div className={styles.durationMiniCard} style={{ gridColumn: 'span 2' }}>
+              <span className={styles.durationLabel}>معدل الاستجابة اليومي للوحدة</span>
+              <p className={styles.durationVal} style={{ color: '#16a34a', fontSize: '1.8rem' }}>
                 {total > 0 ? Math.round((closed / total) * 100) : 0}%
               </p>
-              <span style={{ fontSize: '0.7rem', color: '#718096' }}>نسبة البلاغات المقفلة</span>
+              <span style={{ fontSize: '0.7rem', color: '#718096' }}>نسبة البلاغات المقفلة من الإجمالي</span>
             </div>
           </div>
 
-          <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
+          <div style={{ marginTop: '0.8rem', display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
             <h3 style={{ fontSize: '0.8rem', color: '#C8A57F', marginBottom: '0.4rem', fontWeight: 'bold' }}>⏳ أعمار البلاغات القائمة المعلقة حالياً:</h3>
             
             <div className={styles.distributionList}>
