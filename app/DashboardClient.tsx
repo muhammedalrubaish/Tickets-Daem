@@ -2032,7 +2032,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const baseComplaints = useMemo(() => {
     return complaints.filter(c => 
       c.date && 
-      c.date >= '2026-04-04' && 
+      c.date >= '2025-04-04' &&
       c.type !== 'تحديث نظام' && 
       c.type !== 'تحديثات النظام' &&
       !c.number.includes('📢')
@@ -4624,6 +4624,38 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       </div>
 
 
+
+      {/* تبويبات التصفية السريعة */}
+      <div style={{display:'flex', gap:'8px', flexWrap:'wrap', padding:'0 0 12px 0', borderBottom:'1px solid var(--border)', marginBottom:'12px'}}>
+        {[
+          { label: 'الكل', filter: 'all' as const, color: 'var(--primary)' },
+          { label: '🟣 بلاغ جديد', filter: 'new' as const, color: '#8b5cf6' },
+          { label: '🩷 بانتظار المستفيد', filter: 'waiting' as const, color: '#ec4899' },
+          { label: '🌊 مشكلة عامة', filter: 'general' as const, color: '#06b6d4' },
+          { label: '🟡 لدى الوزارة', filter: 'ministry' as const, color: '#f59e0b' },
+          { label: '🔴 لم يتم الحل', filter: 'open' as const, color: '#ef4444' },
+          { label: '✅ تم الحل', filter: 'closed' as const, color: '#22c55e' },
+        ].map(tab => (
+          <button
+            key={tab.filter}
+            onClick={() => setActiveFilter(tab.filter)}
+            style={{
+              padding:'5px 14px',
+              borderRadius:'20px',
+              border: `1.5px solid ${activeFilter === tab.filter ? tab.color : 'var(--border)'}`,
+              background: activeFilter === tab.filter ? `${tab.color}22` : 'transparent',
+              color: activeFilter === tab.filter ? tab.color : 'var(--text-muted)',
+              fontWeight: activeFilter === tab.filter ? 'bold' : 'normal',
+              fontSize:'0.82rem',
+              cursor:'pointer',
+              transition:'all 0.2s ease',
+              fontFamily:'inherit'
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       <div className={styles.grid} key={activeFilter + searchTerm + selectedReceiver + selectedType}>
         {filteredComplaints.length > 0 ? (
