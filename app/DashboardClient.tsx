@@ -2032,7 +2032,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const baseComplaints = useMemo(() => {
     return complaints.filter(c => 
       c.date && 
-      c.date >= '2025-04-04' &&
+      c.date >= '2026-04-04' &&
       c.type !== 'تحديث نظام' && 
       c.type !== 'تحديثات النظام' &&
       !c.number.includes('📢')
@@ -2682,7 +2682,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               </div>
             )}
 
-            {/* دليل تفعيل إشعارات الهاتف */}
+            {/* دليل تفعيل إشعارات الهاتف - تم إخفاؤه بناءً على طلب المستخدم */}
+            {/* 
             <div 
               className={styles.noteItem} 
               onClick={(e) => {
@@ -2715,6 +2716,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               <span style={{color:'#10b981', display: 'flex', alignItems: 'center'}}>💡</span>
               <span style={{fontWeight:'bold', fontSize:'0.8rem', color: '#10b981'}}>دليل تعليمي: كيف تفعل إشعارات الهاتف؟ (اضغط هنا)</span>
             </div>
+            */}
           </div>
         </div>
 
