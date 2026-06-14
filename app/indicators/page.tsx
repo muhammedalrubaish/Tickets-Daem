@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import styles from './indicators.module.css';
 
 type KPIStats = {
@@ -57,7 +56,6 @@ const defaultStats: KPIStats = {
 };
 
 export default function IndicatorsPage() {
-  const router = useRouter();
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [stats, setStats] = useState<KPIStats>(defaultStats);
   const [countdown, setCountdown] = useState(30);
@@ -66,45 +64,41 @@ export default function IndicatorsPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenSupported, setFullscreenSupported] = useState(false);
 
-  // 1. التحقق من صلاحيات المشرف ودعم توكن التلفزيون المباشر
+  // 1. التحقق من صلاحيات المشرف ودعم توكن التلفزيون المباشر (باستخدام دوال متوافقة بالكامل)
   useEffect(() => {
     try {
-      const params = new URLSearchParams(window.location.search);
-      const token = params.get('token');
-      
-      if (token === 'BaladyTV2026') {
-        setAuthorized(true);
-        return;
-      }
+      if (typeof window !== 'undefined') {
+        const currentUrl = window.location.href;
+        
+        // التحقق من التوكن باستخدام البحث النصي البسيط المتوافق مع جميع المتصفحات القديمة
+        if (currentUrl.indexOf('token=BaladyTV2026') !== -1) {
+          setAuthorized(true);
+          return;
+        }
 
-      const cookies = document.cookie.split('; ');
-      const authCookie = cookies.find(c => c.startsWith('auth_token='));
-      
-      if (!authCookie) {
-        setAuthorized(false);
-        router.push('/login');
-        return;
-      }
-
-      const value = authCookie.split('=')[1];
-      if (
-        value === 'super_admin' || 
-        value === 'viewer' || 
-        value === 'admin' || 
-        value === 'true' || 
-        value.includes('محمد%20الربيش') ||
-        decodeURIComponent(value).includes('محمد الربيش')
-      ) {
-        setAuthorized(true);
-      } else {
-        setAuthorized(false);
-        setTimeout(() => router.push('/login'), 3000);
+        // التحقق الاحتياطي من الكوكيز
+        const cookies = document.cookie || '';
+        if (
+          cookies.indexOf('auth_token=super_admin') !== -1 ||
+          cookies.indexOf('auth_token=viewer') !== -1 ||
+          cookies.indexOf('auth_token=admin') !== -1 ||
+          cookies.indexOf('auth_token=true') !== -1 ||
+          cookies.indexOf('%D9%85%D8%AD%D9%85%D8%AF') !== -1 || // محمد بالترميز
+          cookies.indexOf('محمد') !== -1
+        ) {
+          setAuthorized(true);
+        } else {
+          setAuthorized(false);
+          // استخدام التوجيه المباشر للمتصفح لتجنب مشاكل راوتر Next.js
+          window.location.href = '/login';
+        }
       }
     } catch (e) {
       console.error('Auth check error:', e);
-      setAuthorized(false);
+      // وضع الأمان الاحتياطي (Fail-Safe): فتح الصفحة للمشاهدة في حال حدوث أي خطأ بالمتصفح القديم للشاشة
+      setAuthorized(true);
     }
-  }, [router]);
+  }, []);
 
   // 2. تحديث الساعة والتاريخ
   useEffect(() => {
@@ -114,9 +108,12 @@ export default function IndicatorsPage() {
         setCurrentTime(now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
         setCurrentDate(now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
       } catch (e) {
-        const now = new Date();
-        setCurrentTime(now.toTimeString().split(' ')[0]);
-        setCurrentDate(now.toDateString());
+        // حماية للمتصفحات القديمة جداً
+        try {
+          const now = new Date();
+          setCurrentTime(now.toTimeString().split(' ')[0]);
+          setCurrentDate(now.toDateString());
+        } catch (innerErr) {}
       }
     };
     updateTime();
@@ -144,7 +141,9 @@ export default function IndicatorsPage() {
       const res = await fetch('/api/kpi-stats');
       if (!res.ok) throw new Error('API Fetch failed');
       const data = await res.json();
-      setStats(data);
+      if (data && !data.error) {
+        setStats(data);
+      }
     } catch (err) {
       console.error('Error fetching computed indicators:', err);
     }
@@ -304,7 +303,7 @@ export default function IndicatorsPage() {
             </button>
           )}
 
-          <button onClick={() => router.push('/')} className={styles.btn} style={{ backgroundColor: 'rgba(200, 165, 127, 0.15)', borderColor: 'rgba(200, 165, 127, 0.3)', color: '#C8A57F' }}>
+          <button onClick={() => { if (typeof window !== 'undefined') window.location.href = '/'; }} className={styles.btn} style={{ backgroundColor: 'rgba(200, 165, 127, 0.15)', borderColor: 'rgba(200, 165, 127, 0.3)', color: '#C8A57F' }}>
             العودة للرئيسية &larr;
           </button>
         </div>
