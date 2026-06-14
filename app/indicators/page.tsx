@@ -30,11 +30,36 @@ type KPIStats = {
   openOver7DaysPercent: number;
 };
 
+const defaultStats: KPIStats = {
+  total: 0,
+  todayCount: 0,
+  closed: 0,
+  open: 0,
+  ministry: 0,
+  waiting: 0,
+  newTickets: 0,
+  general: 0,
+  activePending: 0,
+  successRate: 0,
+  employeeList: [],
+  closureList: [],
+  currentMonthName: '...',
+  prevMonthName: '...',
+  totalCurrentMonthClosures: 0,
+  totalPrevMonthClosures: 0,
+  averageResolutionTime: '0.0',
+  openUnder3Days: 0,
+  open3To7Days: 0,
+  openOver7Days: 0,
+  openUnder3DaysPercent: 0,
+  open3To7DaysPercent: 0,
+  openOver7DaysPercent: 0
+};
+
 export default function IndicatorsPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const [stats, setStats] = useState<KPIStats | null>(null);
+  const [stats, setStats] = useState<KPIStats>(defaultStats);
   const [countdown, setCountdown] = useState(30);
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
@@ -44,7 +69,6 @@ export default function IndicatorsPage() {
   // 1. التحقق من صلاحيات المشرف ودعم توكن التلفزيون المباشر
   useEffect(() => {
     try {
-      // التحقق أولاً من وجود توكن وصول مباشر في الرابط لتسهيل فتح الصفحة على التلفزيون دون الحاجة لتسجيل الدخول
       const params = new URLSearchParams(window.location.search);
       const token = params.get('token');
       
@@ -53,7 +77,6 @@ export default function IndicatorsPage() {
         return;
       }
 
-      // الخيار الاحتياطي: التحقق من الكوكيز
       const cookies = document.cookie.split('; ');
       const authCookie = cookies.find(c => c.startsWith('auth_token='));
       
@@ -79,7 +102,6 @@ export default function IndicatorsPage() {
       }
     } catch (e) {
       console.error('Auth check error:', e);
-      // حماية ضد الانهيار في المتصفحات القديمة
       setAuthorized(false);
     }
   }, [router]);
@@ -92,7 +114,6 @@ export default function IndicatorsPage() {
         setCurrentTime(now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
         setCurrentDate(now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
       } catch (e) {
-        // حماية للمتصفحات القديمة التي قد لا تدعم خيارات التنسيق لـ ar-SA
         const now = new Date();
         setCurrentTime(now.toTimeString().split(' ')[0]);
         setCurrentDate(now.toDateString());
@@ -124,10 +145,8 @@ export default function IndicatorsPage() {
       if (!res.ok) throw new Error('API Fetch failed');
       const data = await res.json();
       setStats(data);
-      setLoading(false);
     } catch (err) {
       console.error('Error fetching computed indicators:', err);
-      setLoading(false);
     }
   };
 
@@ -214,7 +233,6 @@ export default function IndicatorsPage() {
 
   // حساب نسب المخطط الدائري (Donut Chart) بناءً على القيم القادمة من السيرفر
   const donutChartData = useMemo(() => {
-    if (!stats) return [];
     const data = [
       { name: 'تم الحل', val: stats.closed, color: '#16a34a' },
       { name: 'لم يتم الحل', val: stats.open, color: '#dc2626' },
@@ -250,13 +268,9 @@ export default function IndicatorsPage() {
     );
   }
 
-  if (loading || authorized === null || !stats) {
-    return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.spinner}></div>
-        <p style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>جاري تحميل مؤشرات أداء وحدة بلدي...</p>
-      </div>
-    );
+  // إذا لم يتم تحديد التصريح بعد، نعرض واجهة فارغة سوداء خفيفة جداً لتجنب أي وميض أبيض على التلفزيون
+  if (authorized === null) {
+    return <div style={{ minHeight: '100vh', background: '#090c0a' }} />;
   }
 
   return (
@@ -267,7 +281,7 @@ export default function IndicatorsPage() {
           <img src="/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8A%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A.png" alt="شعار بلدي" className={styles.logo} />
           <div>
             <h1 className={styles.title}>شاشة مؤشرات الأداء الفنية | وحدة بلدي</h1>
-            <p className={styles.subtitle}>{currentDate} | {currentTime}</p>
+            <p className={styles.subtitle}>{currentDate || 'جاري التحميل...'} | {currentTime || '00:00:00'}</p>
           </div>
         </div>
 
@@ -363,6 +377,9 @@ export default function IndicatorsPage() {
                   <span className={styles.legendVal}>{seg.val} ({seg.percent}%)</span>
                 </div>
               ))}
+              {donutChartData.length === 0 && (
+                <div style={{ color: '#718096', fontSize: '0.9rem' }}>جاري جلب إحصائيات الحالات...</div>
+              )}
             </div>
           </div>
         </div>
@@ -444,6 +461,11 @@ export default function IndicatorsPage() {
                     </tr>
                   );
                 })}
+                {stats.closureList.length === 0 && (
+                  <tr>
+                    <td colSpan={4} style={{ textAlign: 'center', color: '#718096', padding: '1rem' }}>جاري جلب إحصائيات الإغلاقات المقارنة...</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
