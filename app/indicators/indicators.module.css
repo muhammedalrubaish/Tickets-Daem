@@ -132,11 +132,22 @@
   background: var(--card-accent, #4C9A2A);
 }
 
+.statHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.15rem;
+}
+
 .statLabel {
   font-size: 0.75rem;
   color: #a0aec0;
   font-weight: 600;
-  margin-bottom: 0.1rem;
+}
+
+.statIcon {
+  font-size: 0.95rem;
+  opacity: 0.8;
 }
 
 .statValue {
@@ -156,7 +167,7 @@
 .dashboardGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 0.6rem;
   flex-grow: 1;
   min-height: 0;
