@@ -24,7 +24,7 @@ async function getComplaints() {
       const { data, error } = await supabase
         .from('tickets')
         .select('*')
-        .gte('reception_date', '2025-04-04')
+        .gte('reception_date', '2026-04-04')
         .order('reception_date', { ascending: false })
         .range(from, from + batchSize - 1);
 
