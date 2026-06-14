@@ -39,44 +39,82 @@ export default function IndicatorsPage() {
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenSupported, setFullscreenSupported] = useState(false);
 
-  // 1. التحقق من صلاحيات المشرف
+  // 1. التحقق من صلاحيات المشرف ودعم توكن التلفزيون المباشر
   useEffect(() => {
-    const cookies = document.cookie.split('; ');
-    const authCookie = cookies.find(c => c.startsWith('auth_token='));
-    
-    if (!authCookie) {
-      setAuthorized(false);
-      router.push('/login');
-      return;
-    }
+    try {
+      // التحقق أولاً من وجود توكن وصول مباشر في الرابط لتسهيل فتح الصفحة على التلفزيون دون الحاجة لتسجيل الدخول
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+      
+      if (token === 'BaladyTV2026') {
+        setAuthorized(true);
+        return;
+      }
 
-    const value = authCookie.split('=')[1];
-    if (
-      value === 'super_admin' || 
-      value === 'viewer' || 
-      value === 'admin' || 
-      value === 'true' || 
-      value.includes('محمد%20الربيش') ||
-      decodeURIComponent(value).includes('محمد الربيش')
-    ) {
-      setAuthorized(true);
-    } else {
+      // الخيار الاحتياطي: التحقق من الكوكيز
+      const cookies = document.cookie.split('; ');
+      const authCookie = cookies.find(c => c.startsWith('auth_token='));
+      
+      if (!authCookie) {
+        setAuthorized(false);
+        router.push('/login');
+        return;
+      }
+
+      const value = authCookie.split('=')[1];
+      if (
+        value === 'super_admin' || 
+        value === 'viewer' || 
+        value === 'admin' || 
+        value === 'true' || 
+        value.includes('محمد%20الربيش') ||
+        decodeURIComponent(value).includes('محمد الربيش')
+      ) {
+        setAuthorized(true);
+      } else {
+        setAuthorized(false);
+        setTimeout(() => router.push('/login'), 3000);
+      }
+    } catch (e) {
+      console.error('Auth check error:', e);
+      // حماية ضد الانهيار في المتصفحات القديمة
       setAuthorized(false);
-      setTimeout(() => router.push('/login'), 3000);
     }
   }, [router]);
 
   // 2. تحديث الساعة والتاريخ
   useEffect(() => {
     const updateTime = () => {
-      const now = new Date();
-      setCurrentTime(now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-      setCurrentDate(now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+      try {
+        const now = new Date();
+        setCurrentTime(now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+        setCurrentDate(now.toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+      } catch (e) {
+        // حماية للمتصفحات القديمة التي قد لا تدعم خيارات التنسيق لـ ar-SA
+        const now = new Date();
+        setCurrentTime(now.toTimeString().split(' ')[0]);
+        setCurrentDate(now.toDateString());
+      }
     };
     updateTime();
     const timer = setInterval(updateTime, 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  // التحقق من دعم ميزة ملء الشاشة في المتصفح الحالي
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const docEl = document.documentElement;
+      const hasFullscreen = !!(
+        docEl.requestFullscreen || 
+        (docEl as any).mozRequestFullScreen || 
+        (docEl as any).webkitRequestFullScreen || 
+        (docEl as any).msRequestFullscreen
+      );
+      setFullscreenSupported(hasFullscreen);
+    }
   }, []);
 
   // 3. جلب البيانات من الخادم (مؤشر واحد خفيف جداً)
@@ -89,7 +127,6 @@ export default function IndicatorsPage() {
       setLoading(false);
     } catch (err) {
       console.error('Error fetching computed indicators:', err);
-      // في حالة فشل الاتصال، لا نوقف المراقبة
       setLoading(false);
     }
   };
@@ -117,27 +154,62 @@ export default function IndicatorsPage() {
     return () => clearInterval(interval);
   }, [authorized]);
 
-  // وضع ملء الشاشة
+  // وضع ملء الشاشة متوافق مع المتصفحات القديمة لتفادي الانهيار
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch(err => {
-        console.error('Error enabling fullscreen:', err);
-      });
-    } else {
-      document.exitFullscreen().then(() => {
-        setIsFullscreen(false);
-      });
+    try {
+      const docEl = document.documentElement;
+      const requestMethod = docEl.requestFullscreen || 
+                            (docEl as any).mozRequestFullScreen || 
+                            (docEl as any).webkitRequestFullScreen || 
+                            (docEl as any).msRequestFullscreen;
+      
+      const exitMethod = document.exitFullscreen || 
+                         (document as any).mozCancelFullScreen || 
+                         (document as any).webkitExitFullscreen || 
+                         (document as any).msExitFullscreen;
+
+      if (!document.fullscreenElement && !(document as any).mozFullScreenElement && !(document as any).webkitFullscreenElement) {
+        if (requestMethod) {
+          requestMethod.call(docEl);
+          setIsFullscreen(true);
+        }
+      } else {
+        if (exitMethod) {
+          exitMethod.call(document);
+          setIsFullscreen(false);
+        }
+      }
+    } catch (e) {
+      console.error('Fullscreen API error:', e);
     }
   };
 
+  // مراقبة تغيير وضع الشاشة عبر الأحداث المتوافقة
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const isFull = !!(
+        document.fullscreenElement || 
+        (document as any).mozFullScreenElement || 
+        (document as any).webkitFullscreenElement
+      );
+      setIsFullscreen(isFull);
     };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    }
+
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('fullscreenchange', handleFullscreenChange);
+        document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      }
+    };
   }, []);
 
   // حساب نسب المخطط الدائري (Donut Chart) بناءً على القيم القادمة من السيرفر
@@ -205,16 +277,18 @@ export default function IndicatorsPage() {
             <span>تحديث تلقائي خلال: {countdown} ثانية</span>
           </div>
 
-          <button onClick={toggleFullscreen} className={styles.btn}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              {isFullscreen ? (
-                <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />
-              ) : (
-                <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3M10 21v-6H4M14 3v6h6" />
-              )}
-            </svg>
-            {isFullscreen ? 'خروج من ملء الشاشة' : 'ملء الشاشة للتلفزيون'}
-          </button>
+          {fullscreenSupported && (
+            <button onClick={toggleFullscreen} className={styles.btn}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                {isFullscreen ? (
+                  <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />
+                ) : (
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3M10 21v-6H4M14 3v6h6" />
+                )}
+              </svg>
+              {isFullscreen ? 'خروج من ملء الشاشة' : 'ملء الشاشة للتلفزيون'}
+            </button>
+          )}
 
           <button onClick={() => router.push('/')} className={styles.btn} style={{ backgroundColor: 'rgba(200, 165, 127, 0.15)', borderColor: 'rgba(200, 165, 127, 0.3)', color: '#C8A57F' }}>
             العودة للرئيسية &larr;

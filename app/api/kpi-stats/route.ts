@@ -9,7 +9,7 @@ export async function GET() {
     let allData: any[] = [];
     let from = 0;
     const batchSize = 1000;
-    
+
     // جلب البيانات على دفعات من Supabase
     while (true) {
       const { data, error } = await supabase
@@ -31,10 +31,10 @@ export async function GET() {
     }
 
     // تصفية بلاغات النظام والإعلانات
-    const baseTickets = allData.filter(t => 
-      t.reception_date && 
-      t.reception_date >= '2026-04-04' && 
-      t.category_type !== 'تحديث نظام' && 
+    const baseTickets = allData.filter(t =>
+      t.reception_date &&
+      t.reception_date >= '2026-04-04' &&
+      t.category_type !== 'تحديث نظام' &&
       t.category_type !== 'تحديثات النظام' &&
       !(t.ticket_number && t.ticket_number.includes('📢'))
     );
@@ -70,7 +70,7 @@ export async function GET() {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth(); // 0-indexed
-    
+
     const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 
@@ -94,8 +94,8 @@ export async function GET() {
     // توزيع الموظفين لإغلاق البلاغات
     const closuresByEmployee: Record<string, { currentMonth: number; prevMonth: number }> = {};
     const knownEmployees = [
-      'البراء النصيان', 'عبدالله العويد', 'عبدالرحمن العمري', 
-      'عزام الحربي', 'محمد الربيش', 'صالح الغصن', 
+      'البراء النصيان', 'عبدالله العويد', 'عبدالرحمن العمري',
+      'عزام الحربي', 'محمد الربيش', 'صالح الغصن',
       'طارق الهدياني', 'ثامر المنصور'
     ];
     knownEmployees.forEach(emp => {
@@ -106,8 +106,8 @@ export async function GET() {
       const receiver = t.receiver ? t.receiver.trim() : 'غير محدد';
       if (receiver === 'الجميع' || receiver === 'غير محدد') return;
 
-      const matchedEmployee = knownEmployees.find(emp => 
-        receiver.includes(emp.split(' ')[0]) || 
+      const matchedEmployee = knownEmployees.find(emp =>
+        receiver.includes(emp.split(' ')[0]) ||
         emp.includes(receiver.split(' ')[0])
       ) || receiver;
 
@@ -140,15 +140,15 @@ export async function GET() {
           const clsDate = new Date(t.created_at);
           const diffTime = clsDate.getTime() - recDate.getTime();
           const diffDays = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-          
+
           totalDurationDays += diffDays;
           closedCountWithDuration++;
-        } catch (e) {}
+        } catch (e) { }
       }
     });
 
-    const averageResolutionTime = closedCountWithDuration > 0 
-      ? (totalDurationDays / closedCountWithDuration).toFixed(1) 
+    const averageResolutionTime = closedCountWithDuration > 0
+      ? (totalDurationDays / closedCountWithDuration).toFixed(1)
       : '0';
 
     // حساب أعمار البلاغات القائمة النشطة معلقة حالياً
@@ -167,7 +167,7 @@ export async function GET() {
           if (diffDays < 3) openUnder3Days++;
           else if (diffDays <= 7) open3To7Days++;
           else openOver7Days++;
-        } catch (e) {}
+        } catch (e) { }
       }
     });
 
