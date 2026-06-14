@@ -157,31 +157,7 @@ export default async function IndicatorsPage({
 
   const totalCurrentMonthClosures = closedTickets.filter(t => t.date && t.date.startsWith(currentMonthStr)).length;
   const totalPrevMonthClosures = closedTickets.filter(t => t.date && t.date.startsWith(prevMonthStr)).length;
-  const closuresDiff = totalCurrentMonthClosures - totalPrevMonthClosures;
-
-  // أعمار المعلق
-  let openUnder3Days = 0;
-  let open3To7Days = 0;
-  let openOver7Days = 0;
-
-  activeTickets.forEach(t => {
-    if (t.date && t.date !== 'غير محدد') {
-      try {
-        const recDate = new Date(t.date);
-        const diffTime = now.getTime() - recDate.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays < 3) openUnder3Days++;
-        else if (diffDays <= 7) open3To7Days++;
-        else openOver7Days++;
-      } catch (e) {}
-    }
-  });
-
-  const activeCount = activeTickets.length || 1;
-  const openUnder3DaysPercent = Math.round((openUnder3Days / activeCount) * 100);
-  const open3To7DaysPercent = Math.round((open3To7Days / activeCount) * 100);
-  const openOver7DaysPercent = Math.round((openOver7Days / activeCount) * 100);
+  // تم حذف متغيرات أعمار البلاغات القائمة بناءً على رغبة المستخدم لتفادي المتغيرات غير المستخدمة وعرض معدل الاستجابة مباشرة
 
   // حساب بيانات المخطط الدائري (الحالة التشغيلية تظهر فقط: تم الحل، لدى الوزارة، بانتظار المستفيد)
   const donutRawData = [
@@ -213,7 +189,7 @@ export default async function IndicatorsPage({
   return (
     <div className={styles.container}>
       {/* وسم التحديث التلقائي الفوري لراحة رامات التلفزيون وسرعته */}
-      <meta httpEquiv="refresh" content="30" />
+      <meta httpEquiv="refresh" content="60" />
       
       {/* الشريط العلوي */}
       <header className={styles.header}>
@@ -228,7 +204,7 @@ export default async function IndicatorsPage({
         <div className={styles.controls}>
           <div className={styles.refreshTimer}>
             <span className={styles.timerDot}></span>
-            <span>تحديث تلقائي للمتصفح كل 30 ثانية</span>
+            <span>تحديث تلقائي للمتصفح كل دقيقة</span>
           </div>
 
           <a href="/" className={styles.btn} style={{ backgroundColor: 'rgba(200, 165, 127, 0.15)', borderColor: 'rgba(200, 165, 127, 0.3)', color: '#C8A57F' }}>
@@ -245,7 +221,6 @@ export default async function IndicatorsPage({
             <span className={styles.statIcon}>📋</span>
           </div>
           <span className={styles.statValue}>{total}</span>
-          <span className={styles.statDesc}>منذ تاريخ 4 إبريل 2026</span>
         </div>
 
         <div className={styles.statCard} style={{ '--card-accent': '#16a34a' } as React.CSSProperties}>
@@ -264,15 +239,6 @@ export default async function IndicatorsPage({
           </div>
           <span className={styles.statValue} style={{ color: '#3b82f6' }}>{ministry}</span>
           <span className={styles.statDesc}>بلاغات معلقة لدى مركز الوزارة</span>
-        </div>
-
-        <div className={styles.statCard} style={{ '--card-accent': '#dc2626' } as React.CSSProperties}>
-          <div className={styles.statHeader}>
-            <span className={styles.statLabel}>البلاغات النشطة القائمة</span>
-            <span className={styles.statIcon}>⚡</span>
-          </div>
-          <span className={styles.statValue} style={{ color: '#dc2626' }}>{activePending}</span>
-          <span className={styles.statDesc}>بلاغات قيد الحل لدى الفريق</span>
         </div>
       </section>
 
@@ -368,70 +334,28 @@ export default async function IndicatorsPage({
                 <p style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#16a34a', margin: '0.1rem 0 0' }}>{totalCurrentMonthClosures} بلاغ</p>
               </div>
             </div>
-
-            {/* مؤشر بصري للنمو مع الأسهم الملونة لمنع التداخل */}
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.4rem 0.8rem', borderRadius: '10px', border: '1px dashed rgba(255, 255, 255, 0.08)' }}>
-              <span style={{ fontSize: '0.8rem', color: '#e2e8f0', fontWeight: 'bold' }}>مؤشر النمو:</span>
-              {closuresDiff === 0 ? (
-                <span style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                  ➖ مستقر
-                </span>
-              ) : closuresDiff > 0 ? (
-                <span style={{ fontSize: '0.9rem', color: '#22c55e', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  ▲ +{closuresDiff} بلاغ إضافي
-                </span>
-              ) : (
-                <span style={{ fontSize: '0.9rem', color: '#ef4444', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  ▼ {closuresDiff} بلاغ إنجاز أقل
-                </span>
-              )}
-            </div>
           </div>
         </div>
 
-        {/* المخطط 4: إحصائيات مدد حل البلاغات وأعمار المعلق */}
-        <div className={styles.chartCard}>
-          <h2 className={styles.chartTitle}>⏱️ إحصائيات مدة معالجة وحل البلاغات</h2>
-          
-          <div className={styles.durationContainer}>
-            <div className={styles.durationMiniCard} style={{ gridColumn: 'span 2' }}>
-              <span className={styles.durationLabel}>🎯 معدل الاستجابة اليومي للوحدة</span>
-              <p className={styles.durationVal} style={{ color: '#16a34a', fontSize: '1.4rem' }}>
-                {total > 0 ? Math.round((closed / total) * 100) : 0}%
-              </p>
-              <span style={{ fontSize: '0.7rem', color: '#718096' }}>نسبة البلاغات المقفلة من الإجمالي</span>
-            </div>
-          </div>
-
-          <div style={{ marginTop: '0.4rem', display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
-            <h3 style={{ fontSize: '0.8rem', color: '#C8A57F', marginBottom: '0.2rem', fontWeight: 'bold' }}>⏳ أعمار البلاغات القائمة المعلقة حالياً:</h3>
-            
-            <div className={styles.distributionList}>
-              {/* أقل من 3 أيام */}
-              <div className={styles.distributionItem}>
-                <span className={styles.distLabel}>🟢 حديثة (&lt; 3 أيام)</span>
-                <div className={styles.distProgressBg}>
-                  <div className={styles.distProgressFill} style={{ width: `${openUnder3DaysPercent}%`, backgroundColor: '#16a34a' }}></div>
-                </div>
-                <span className={styles.distCount}>{openUnder3Days} ({openUnder3DaysPercent}%)</span>
+        {/* المخطط 4: معدل الاستجابة اليومي */}
+        <div className={styles.chartCard} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+          <h2 className={styles.chartTitle} style={{ width: '100%' }}>🎯 معدل الاستجابة اليومي للوحدة</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexGrow: 1, gap: '0.4rem', width: '100%' }}>
+            <span style={{ fontSize: '3.5rem', fontWeight: '900', color: '#16a34a', textShadow: '0 0 15px rgba(22, 163, 74, 0.3)', lineHeight: 1 }}>
+              {successRate}%
+            </span>
+            <span style={{ fontSize: '0.8rem', color: '#cbd5e0', fontWeight: '600' }}>
+              نسبة البلاغات المقفلة من الإجمالي
+            </span>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', width: '80%', justifyContent: 'space-around' }}>
+              <div>
+                <span style={{ fontSize: '0.7rem', color: '#a0aec0', display: 'block' }}>✅ المقفلة</span>
+                <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#16a34a' }}>{closed}</span>
               </div>
-
-              {/* من 3 إلى 7 أيام */}
-              <div className={styles.distributionItem}>
-                <span className={styles.distLabel}>🟡 متوسطة (3-7 أيام)</span>
-                <div className={styles.distProgressBg}>
-                  <div className={styles.distProgressFill} style={{ width: `${open3To7DaysPercent}%`, backgroundColor: '#eab308' }}></div>
-                </div>
-                <span className={styles.distCount}>{open3To7Days} ({open3To7DaysPercent}%)</span>
-              </div>
-
-              {/* أكثر من 7 أيام */}
-              <div className={styles.distributionItem}>
-                <span className={styles.distLabel}>🔴 متأخرة (&gt; 7 أيام)</span>
-                <div className={styles.distProgressBg}>
-                  <div className={styles.distProgressFill} style={{ width: `${openOver7DaysPercent}%`, backgroundColor: '#dc2626' }}></div>
-                </div>
-                <span className={styles.distCount}>{openOver7Days} ({openOver7DaysPercent}%)</span>
+              <div style={{ width: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+              <div>
+                <span style={{ fontSize: '0.7rem', color: '#a0aec0', display: 'block' }}>⏳ القائمة</span>
+                <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#ef4444' }}>{activePending}</span>
               </div>
             </div>
           </div>

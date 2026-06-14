@@ -102,7 +102,7 @@
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.6rem;
   margin-bottom: 0.6rem;
   flex-shrink: 0;
