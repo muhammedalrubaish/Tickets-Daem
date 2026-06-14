@@ -325,9 +325,10 @@ export default async function IndicatorsPage({
         </div>
       </section>
 
-      {/* المخططات التفصيلية */}
-      <section className={styles.chartsSection}>
-        {/* مخطط توزيع الحالات */}
+      {/* شبكة المؤشرات الكلية (صفحة واحدة 2x2 بدون شريط تمرير) */}
+      <section className={styles.dashboardGrid}>
+        
+        {/* المخطط 1: الحالة التشغيلية للبلاغات */}
         <div className={styles.chartCard}>
           <h2 className={styles.chartTitle}>📊 الحالة التشغيلية للبلاغات</h2>
           <div className={styles.donutChartContainer}>
@@ -369,7 +370,7 @@ export default async function IndicatorsPage({
           </div>
         </div>
 
-        {/* مخطط توزيع أعباء البلاغات القائمة مع إخفاء الأسماء */}
+        {/* المخطط 2: توزيع أعباء البلاغات القائمة مع إخفاء الأسماء */}
         <div className={styles.chartCard}>
           <h2 className={styles.chartTitle}>👥 توزيع البلاغات النشطة (غير المغلقة) على أعضاء الفريق</h2>
           <div className={styles.employeeList}>
@@ -389,27 +390,24 @@ export default async function IndicatorsPage({
               );
             })}
             {sortedEmployeeList.length === 0 && (
-              <p style={{ textAlign: 'center', color: '#718096', padding: '2rem' }}>لا توجد بلاغات نشطة معلقة حالياً.</p>
+              <p style={{ textAlign: 'center', color: '#718096', padding: '1rem', fontSize: '0.8rem' }}>لا توجد بلاغات نشطة معلقة حالياً.</p>
             )}
           </div>
         </div>
-      </section>
 
-      {/* القسم الثاني (التقفيل الشهري ومؤشرات المدة مع إخفاء الأسماء) */}
-      <section className={styles.chartsSection}>
-        {/* قائمة مقارنة تقفيل البلاغات مع إخفاء الأسماء */}
+        {/* المخطط 3: مقارنة تقفيل البلاغات مع إخفاء الأسماء */}
         <div className={styles.chartCard}>
           <h2 className={styles.chartTitle}>📅 مقارنة تقفيل البلاغات ({prevMonthName} 🆚 {currentMonthName})</h2>
           
-          <div style={{ display: 'flex', justifyContent: 'space-around', margin: '0.5rem 0 1.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-around', margin: '0.2rem 0 0.6rem', background: 'rgba(255,255,255,0.02)', padding: '0.4rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
             <div style={{ textAlign: 'center' }}>
-              <span style={{ fontSize: '0.85rem', color: '#cbd5e0' }}>إجمالي تقفيل {prevMonthName} (السابق)</span>
-              <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#C8A57F', margin: '0.2rem 0 0' }}>{totalPrevMonthClosures} بلاغ</p>
+              <span style={{ fontSize: '0.7rem', color: '#cbd5e0' }}>تقفيل {prevMonthName} (السابق)</span>
+              <p style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#C8A57F', margin: '0' }}>{totalPrevMonthClosures} بلاغ</p>
             </div>
             <div style={{ width: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
             <div style={{ textAlign: 'center' }}>
-              <span style={{ fontSize: '0.85rem', color: '#cbd5e0' }}>إجمالي تقفيل {currentMonthName} (الجاري)</span>
-              <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#16a34a', margin: '0.2rem 0 0' }}>{totalCurrentMonthClosures} بلاغ</p>
+              <span style={{ fontSize: '0.7rem', color: '#cbd5e0' }}>تقفيل {currentMonthName} (الجاري)</span>
+              <p style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#16a34a', margin: '0' }}>{totalCurrentMonthClosures} بلاغ</p>
             </div>
           </div>
 
@@ -424,7 +422,7 @@ export default async function IndicatorsPage({
                 </tr>
               </thead>
               <tbody>
-                {sortedClosureList.map((emp, idx) => {
+                {sortedClosureList.slice(0, 6).map((emp, idx) => {
                   const diff = emp.currentMonth - emp.prevMonth;
                   const isPositive = diff > 0;
                   const isNeutral = diff === 0;
@@ -438,9 +436,9 @@ export default async function IndicatorsPage({
                         {isNeutral ? (
                           <span className={`${styles.trendIndicator} ${styles.trendNeutral}`}>➖ مستقر</span>
                         ) : isPositive ? (
-                          <span className={`${styles.trendIndicator} ${styles.trendUp}`}>📈 +{diff} نمو</span>
+                          <span className={`${styles.trendIndicator} ${styles.trendUp}`}>📈 +{diff}</span>
                         ) : (
-                          <span className={`${styles.trendIndicator} ${styles.trendDown}`}>📉 {diff} تراجع</span>
+                          <span className={`${styles.trendIndicator} ${styles.trendDown}`}>📉 {diff}</span>
                         )}
                       </td>
                     </tr>
@@ -451,7 +449,7 @@ export default async function IndicatorsPage({
           </div>
         </div>
 
-        {/* إحصائيات مدد حل البلاغات وأعمار المعلق */}
+        {/* المخطط 4: إحصائيات مدد حل البلاغات وأعمار المعلق */}
         <div className={styles.chartCard}>
           <h2 className={styles.chartTitle}>⏱️ إحصائيات مدة معالجة وحل البلاغات</h2>
           
@@ -459,7 +457,7 @@ export default async function IndicatorsPage({
             <div className={styles.durationMiniCard}>
               <span className={styles.durationLabel}>متوسط مدة حل البلاغ</span>
               <p className={styles.durationVal}>{averageResolutionTime}</p>
-              <span style={{ fontSize: '0.8rem', color: '#718096' }}>يوم لكل بلاغ مغلق</span>
+              <span style={{ fontSize: '0.7rem', color: '#718096' }}>يوم لكل بلاغ مغلق</span>
             </div>
             
             <div className={styles.durationMiniCard}>
@@ -467,12 +465,12 @@ export default async function IndicatorsPage({
               <p className={styles.durationVal} style={{ color: '#16a34a' }}>
                 {total > 0 ? Math.round((closed / total) * 100) : 0}%
               </p>
-              <span style={{ fontSize: '0.8rem', color: '#718096' }}>نسبة البلاغات المقفلة</span>
+              <span style={{ fontSize: '0.7rem', color: '#718096' }}>نسبة البلاغات المقفلة</span>
             </div>
           </div>
 
-          <div style={{ marginTop: '1.5rem' }}>
-            <h3 style={{ fontSize: '1rem', color: '#C8A57F', marginBottom: '1rem', fontWeight: 'bold' }}>⏳ أعمار البلاغات القائمة المعلقة حالياً:</h3>
+          <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
+            <h3 style={{ fontSize: '0.8rem', color: '#C8A57F', marginBottom: '0.4rem', fontWeight: 'bold' }}>⏳ أعمار البلاغات القائمة المعلقة حالياً:</h3>
             
             <div className={styles.distributionList}>
               {/* أقل من 3 أيام */}
@@ -504,6 +502,7 @@ export default async function IndicatorsPage({
             </div>
           </div>
         </div>
+
       </section>
     </div>
   );
