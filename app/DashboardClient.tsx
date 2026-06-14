@@ -2537,6 +2537,22 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               </button>
             )}
 
+            {/* زر صفحة المؤشرات للمشرفين */}
+            {(userRole === 'super_admin' || userRole === 'viewer' || loggedInUser?.includes('محمد الربيش')) && (
+              <button 
+                className={styles.navIconButton} 
+                onClick={() => router.push('/indicators')} 
+                title="صفحة المؤشرات والإحصائيات للعرض التلفزيوني" 
+                style={{ backgroundColor: 'var(--secondary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s ease' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10"/>
+                  <line x1="12" y1="20" x2="12" y2="4"/>
+                  <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+              </button>
+            )}
+
             {/* 0. الانتقال لمنصة داعم الرسمية */}
             <a 
               href="https://daem.momah.gov.sa/sm/index.do" 
