@@ -2,25 +2,39 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../lib/supabase';
 import styles from './indicators.module.css';
 
-type Ticket = {
-  id: string;
-  number: string;
-  type: string;
-  status: string;
-  solution: string;
-  date: string;
-  receiver: string;
-  createdAt?: string;
+type KPIStats = {
+  total: number;
+  todayCount: number;
+  closed: number;
+  open: number;
+  ministry: number;
+  waiting: number;
+  newTickets: number;
+  general: number;
+  activePending: number;
+  successRate: number;
+  employeeList: { name: string; count: number }[];
+  closureList: { name: string; currentMonth: number; prevMonth: number }[];
+  currentMonthName: string;
+  prevMonthName: string;
+  totalCurrentMonthClosures: number;
+  totalPrevMonthClosures: number;
+  averageResolutionTime: string;
+  openUnder3Days: number;
+  open3To7Days: number;
+  openOver7Days: number;
+  openUnder3DaysPercent: number;
+  open3To7DaysPercent: number;
+  openOver7DaysPercent: number;
 };
 
 export default function IndicatorsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [stats, setStats] = useState<KPIStats | null>(null);
   const [countdown, setCountdown] = useState(30);
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
@@ -28,33 +42,29 @@ export default function IndicatorsPage() {
 
   // 1. التحقق من صلاحيات المشرف
   useEffect(() => {
-    const checkAuth = () => {
-      const cookies = document.cookie.split('; ');
-      const authCookie = cookies.find(c => c.startsWith('auth_token='));
-      
-      if (!authCookie) {
-        setAuthorized(false);
-        router.push('/login');
-        return;
-      }
+    const cookies = document.cookie.split('; ');
+    const authCookie = cookies.find(c => c.startsWith('auth_token='));
+    
+    if (!authCookie) {
+      setAuthorized(false);
+      router.push('/login');
+      return;
+    }
 
-      const value = authCookie.split('=')[1];
-      if (
-        value === 'super_admin' || 
-        value === 'viewer' || 
-        value === 'admin' || 
-        value === 'true' || 
-        value.includes('محمد%20الربيش') ||
-        decodeURIComponent(value).includes('محمد الربيش')
-      ) {
-        setAuthorized(true);
-      } else {
-        setAuthorized(false);
-        setTimeout(() => router.push('/login'), 3000);
-      }
-    };
-
-    checkAuth();
+    const value = authCookie.split('=')[1];
+    if (
+      value === 'super_admin' || 
+      value === 'viewer' || 
+      value === 'admin' || 
+      value === 'true' || 
+      value.includes('محمد%20الربيش') ||
+      decodeURIComponent(value).includes('محمد الربيش')
+    ) {
+      setAuthorized(true);
+    } else {
+      setAuthorized(false);
+      setTimeout(() => router.push('/login'), 3000);
+    }
   }, [router]);
 
   // 2. تحديث الساعة والتاريخ
@@ -69,55 +79,24 @@ export default function IndicatorsPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // 3. جلب البيانات من Supabase
-  const fetchTicketsData = async () => {
+  // 3. جلب البيانات من الخادم (مؤشر واحد خفيف جداً)
+  const fetchKpiData = async () => {
     try {
-      let allData: any[] = [];
-      let from = 0;
-      const batchSize = 1000;
-      
-      while (true) {
-        const { data, error } = await supabase
-          .from('tickets')
-          .select('*')
-          .gte('reception_date', '2026-04-04')
-          .order('reception_date', { ascending: false })
-          .range(from, from + batchSize - 1);
-
-        if (error) {
-          console.error('Supabase error fetching kpis:', error);
-          break;
-        }
-
-        if (!data || data.length === 0) break;
-        allData = allData.concat(data);
-        if (data.length < batchSize) break;
-        from += batchSize;
-      }
-
-      const formatted = allData.map((ticket: any) => ({
-        id: ticket.notion_id || ticket.id || ticket.ticket_number,
-        number: ticket.ticket_number || 'غير محدد',
-        type: ticket.category_type || 'غير محدد',
-        status: ticket.status || 'غير محدد',
-        solution: ticket.solution || 'غير محدد',
-        date: ticket.reception_date || 'غير محدد',
-        receiver: ticket.receiver || 'غير محدد',
-        createdAt: ticket.created_at
-      }));
-
-      setTickets(formatted);
+      const res = await fetch('/api/kpi-stats');
+      if (!res.ok) throw new Error('API Fetch failed');
+      const data = await res.json();
+      setStats(data);
       setLoading(false);
     } catch (err) {
-      console.error('Error fetching tickets for indicators:', err);
+      console.error('Error fetching computed indicators:', err);
+      // في حالة فشل الاتصال، لا نوقف المراقبة
       setLoading(false);
     }
   };
 
-  // جلب البيانات لأول مرة عند التصريح بالدخول
   useEffect(() => {
     if (authorized) {
-      fetchTicketsData();
+      fetchKpiData();
     }
   }, [authorized]);
 
@@ -128,7 +107,7 @@ export default function IndicatorsPage() {
     const interval = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
-          fetchTicketsData();
+          fetchKpiData();
           return 30;
         }
         return prev - 1;
@@ -137,186 +116,6 @@ export default function IndicatorsPage() {
 
     return () => clearInterval(interval);
   }, [authorized]);
-
-  // 5. احتساب الإحصائيات والمؤشرات
-  const stats = useMemo(() => {
-    // تصفية بلاغات النظام والإعلانات
-    const baseTickets = tickets.filter(t => 
-      t.date && 
-      t.date >= '2026-04-04' && 
-      t.type !== 'تحديث نظام' && 
-      t.type !== 'تحديثات النظام' &&
-      !t.number.includes('📢')
-    );
-
-    const total = baseTickets.length;
-    const todayStr = new Date().toISOString().split('T')[0];
-    const todayCount = baseTickets.filter(t => t.date === todayStr).length;
-
-    const closed = baseTickets.filter(t => t.solution.trim() === 'تم الحل').length;
-    const open = baseTickets.filter(t => t.solution.trim() === 'لم يتم الحل').length;
-    const ministry = baseTickets.filter(t => t.solution.trim() === 'لدى الوزارة').length;
-    const waiting = baseTickets.filter(t => t.solution.trim() === 'بانتظار المستفيد').length;
-    const newTickets = baseTickets.filter(t => t.solution.trim() === 'بلاغ جديد').length;
-    const general = baseTickets.filter(t => t.solution.trim() === 'مشكلة عامة').length;
-
-    const activePending = total - closed;
-    const successRate = total > 0 ? Math.round((closed / total) * 100) : 0;
-
-    // حساب توزيع الموظفين للبلاغات النشطة حالياً
-    const employeeCounts: Record<string, number> = {};
-    baseTickets.forEach(t => {
-      const name = t.receiver ? t.receiver.trim() : 'غير محدد';
-      if (name !== 'الجميع' && name !== 'غير محدد') {
-        employeeCounts[name] = (employeeCounts[name] || 0) + 1;
-      }
-    });
-
-    const employeeList = Object.entries(employeeCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count);
-
-    // حسابات مقارنة إغلاق البلاغات (الشهر الجاري والشهر السابق)
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth(); // 0-indexed (June = 5)
-    
-    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-
-    const currentMonthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-    const prevMonthStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`;
-
-    const getArabicMonthName = (monthIdx: number) => {
-      const arabicMonths = [
-        'يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو',
-        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-      ];
-      return arabicMonths[monthIdx];
-    };
-
-    const currentMonthName = getArabicMonthName(currentMonth);
-    const prevMonthName = getArabicMonthName(prevMonth);
-
-    // تصفية البلاغات المغلقة فقط
-    const closedTickets = baseTickets.filter(t => t.solution.trim() === 'تم الحل');
-
-    // توزيع الموظفين لإغلاق البلاغات
-    const closuresByEmployee: Record<string, { currentMonth: number; prevMonth: number }> = {};
-    
-    // تهيئة جميع الموظفين المعروفين في النظام
-    const knownEmployees = [
-      'البراء النصيان', 'عبدالله العويد', 'عبدالرحمن العمري', 
-      'عزام الحربي', 'محمد الربيش', 'صالح الغصن', 
-      'طارق الهدياني', 'ثامر المنصور'
-    ];
-    knownEmployees.forEach(emp => {
-      closuresByEmployee[emp] = { currentMonth: 0, prevMonth: 0 };
-    });
-
-    closedTickets.forEach(t => {
-      const receiver = t.receiver ? t.receiver.trim() : 'غير محدد';
-      if (receiver === 'الجميع' || receiver === 'غير محدد') return;
-
-      // مطابقة مرنة مع قائمة الموظفين
-      const matchedEmployee = knownEmployees.find(emp => 
-        receiver.includes(emp.split(' ')[0]) || 
-        emp.includes(receiver.split(' ')[0])
-      ) || receiver;
-
-      if (!closuresByEmployee[matchedEmployee]) {
-        closuresByEmployee[matchedEmployee] = { currentMonth: 0, prevMonth: 0 };
-      }
-
-      if (t.date && t.date.startsWith(currentMonthStr)) {
-        closuresByEmployee[matchedEmployee].currentMonth++;
-      } else if (t.date && t.date.startsWith(prevMonthStr)) {
-        closuresByEmployee[matchedEmployee].prevMonth++;
-      }
-    });
-
-    const closureList = Object.entries(closuresByEmployee)
-      .map(([name, data]) => ({ name, ...data }))
-      .sort((a, b) => b.currentMonth - a.currentMonth);
-
-    // إجمالي الإغلاق العام للشهر الحالي والماضي
-    const totalCurrentMonthClosures = closedTickets.filter(t => t.date && t.date.startsWith(currentMonthStr)).length;
-    const totalPrevMonthClosures = closedTickets.filter(t => t.date && t.date.startsWith(prevMonthStr)).length;
-
-    // حساب إحصائيات مدد حل البلاغات
-    let totalDurationDays = 0;
-    let closedCountWithDuration = 0;
-
-    closedTickets.forEach(t => {
-      if (t.date && t.createdAt) {
-        try {
-          const recDate = new Date(t.date);
-          const clsDate = new Date(t.createdAt);
-          const diffTime = clsDate.getTime() - recDate.getTime();
-          const diffDays = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-          
-          totalDurationDays += diffDays;
-          closedCountWithDuration++;
-        } catch (e) {}
-      }
-    });
-
-    const averageResolutionTime = closedCountWithDuration > 0 
-      ? (totalDurationDays / closedCountWithDuration).toFixed(1) 
-      : '0';
-
-    // توزيع أعمار البلاغات القائمة النشطة حالياً
-    let openUnder3Days = 0;
-    let open3To7Days = 0;
-    let openOver7Days = 0;
-    const activeTickets = baseTickets.filter(t => t.solution.trim() !== 'تم الحل');
-
-    activeTickets.forEach(t => {
-      if (t.date && t.date !== 'غير محدد') {
-        try {
-          const recDate = new Date(t.date);
-          const diffTime = now.getTime() - recDate.getTime();
-          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-          if (diffDays < 3) openUnder3Days++;
-          else if (diffDays <= 7) open3To7Days++;
-          else openOver7Days++;
-        } catch (e) {}
-      }
-    });
-
-    const activeCount = activeTickets.length || 1;
-    const openUnder3DaysPercent = Math.round((openUnder3Days / activeCount) * 100);
-    const open3To7DaysPercent = Math.round((open3To7Days / activeCount) * 100);
-    const openOver7DaysPercent = Math.round((openOver7Days / activeCount) * 100);
-
-    return {
-      total,
-      todayCount,
-      closed,
-      open,
-      title: 'إحصائيات المؤشرات',
-      ministry,
-      waiting,
-      newTickets,
-      general,
-      activePending,
-      successRate,
-      employeeList,
-      closureList,
-      currentMonthName,
-      prevMonthName,
-      totalCurrentMonthClosures,
-      totalPrevMonthClosures,
-      averageResolutionTime,
-      openUnder3Days,
-      open3To7Days,
-      openOver7Days,
-      openUnder3DaysPercent,
-      open3To7DaysPercent,
-      openOver7DaysPercent
-    };
-  }, [tickets]);
 
   // وضع ملء الشاشة
   const toggleFullscreen = () => {
@@ -341,8 +140,9 @@ export default function IndicatorsPage() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // حساب نسب المخطط الدائري
+  // حساب نسب المخطط الدائري (Donut Chart) بناءً على القيم القادمة من السيرفر
   const donutChartData = useMemo(() => {
+    if (!stats) return [];
     const data = [
       { name: 'تم الحل', val: stats.closed, color: '#16a34a' },
       { name: 'لم يتم الحل', val: stats.open, color: '#dc2626' },
@@ -378,7 +178,7 @@ export default function IndicatorsPage() {
     );
   }
 
-  if (loading || authorized === null) {
+  if (loading || authorized === null || !stats) {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.spinner}></div>
