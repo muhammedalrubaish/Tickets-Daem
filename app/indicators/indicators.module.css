@@ -275,6 +275,134 @@
   margin-right: auto;
 }
 
+/* Table Style for Monthly Comparison */
+.tableContainer {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.comparisonTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+}
+
+.comparisonTable th {
+  padding: 0.8rem 1rem;
+  color: #C8A57F;
+  border-bottom: 2px solid rgba(200, 165, 127, 0.2);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.comparisonTable td {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  font-size: 0.9rem;
+}
+
+.comparisonTable tr:hover td {
+  background: rgba(76, 154, 42, 0.05);
+}
+
+.trendIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.trendUp {
+  background: rgba(22, 163, 74, 0.15);
+  color: #22c55e;
+}
+
+.trendDown {
+  background: rgba(220, 38, 38, 0.15);
+  color: #ef4444;
+}
+
+.trendNeutral {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+}
+
+/* Duration stats styling */
+.durationContainer {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .durationContainer {
+    grid-template-columns: 1fr;
+  }
+}
+
+.durationMiniCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.durationVal {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #C8A57F;
+  margin: 0.3rem 0;
+}
+
+.durationLabel {
+  font-size: 0.85rem;
+  color: #a0aec0;
+}
+
+.distributionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.distributionItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.distLabel {
+  width: 90px;
+  font-size: 0.85rem;
+  color: #cbd5e0;
+}
+
+.distProgressBg {
+  flex-grow: 1;
+  background: rgba(255, 255, 255, 0.05);
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.distProgressFill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.distCount {
+  width: 50px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-align: left;
+}
+
 .loadingContainer {
   min-height: 100vh;
   background: #090c0a;

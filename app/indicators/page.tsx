@@ -13,6 +13,7 @@ type Ticket = {
   solution: string;
   date: string;
   receiver: string;
+  createdAt?: string;
 };
 
 export default function IndicatorsPage() {
@@ -102,6 +103,7 @@ export default function IndicatorsPage() {
         solution: ticket.solution || 'غير محدد',
         date: ticket.reception_date || 'غير محدد',
         receiver: ticket.receiver || 'غير محدد',
+        createdAt: ticket.created_at
       }));
 
       setTickets(formatted);
@@ -157,12 +159,11 @@ export default function IndicatorsPage() {
     const waiting = baseTickets.filter(t => t.solution.trim() === 'بانتظار المستفيد').length;
     const newTickets = baseTickets.filter(t => t.solution.trim() === 'بلاغ جديد').length;
     const general = baseTickets.filter(t => t.solution.trim() === 'مشكلة عامة').length;
-    const undefinedStatus = baseTickets.filter(t => t.solution.trim() === 'غير محدد' || t.solution.trim() === '').length;
 
     const activePending = total - closed;
     const successRate = total > 0 ? Math.round((closed / total) * 100) : 0;
 
-    // حساب توزيع الموظفين
+    // حساب توزيع الموظفين للبلاغات النشطة حالياً
     const employeeCounts: Record<string, number> = {};
     baseTickets.forEach(t => {
       const name = t.receiver ? t.receiver.trim() : 'غير محدد';
@@ -175,19 +176,145 @@ export default function IndicatorsPage() {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
 
+    // حسابات مقارنة إغلاق البلاغات (الشهر الجاري والشهر السابق)
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-indexed (June = 5)
+    
+    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+    const currentMonthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+    const prevMonthStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}`;
+
+    const getArabicMonthName = (monthIdx: number) => {
+      const arabicMonths = [
+        'يناير', 'فبراير', 'مارس', 'إبريل', 'مايو', 'يونيو',
+        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+      ];
+      return arabicMonths[monthIdx];
+    };
+
+    const currentMonthName = getArabicMonthName(currentMonth);
+    const prevMonthName = getArabicMonthName(prevMonth);
+
+    // تصفية البلاغات المغلقة فقط
+    const closedTickets = baseTickets.filter(t => t.solution.trim() === 'تم الحل');
+
+    // توزيع الموظفين لإغلاق البلاغات
+    const closuresByEmployee: Record<string, { currentMonth: number; prevMonth: number }> = {};
+    
+    // تهيئة جميع الموظفين المعروفين في النظام
+    const knownEmployees = [
+      'البراء النصيان', 'عبدالله العويد', 'عبدالرحمن العمري', 
+      'عزام الحربي', 'محمد الربيش', 'صالح الغصن', 
+      'طارق الهدياني', 'ثامر المنصور'
+    ];
+    knownEmployees.forEach(emp => {
+      closuresByEmployee[emp] = { currentMonth: 0, prevMonth: 0 };
+    });
+
+    closedTickets.forEach(t => {
+      const receiver = t.receiver ? t.receiver.trim() : 'غير محدد';
+      if (receiver === 'الجميع' || receiver === 'غير محدد') return;
+
+      // مطابقة مرنة مع قائمة الموظفين
+      const matchedEmployee = knownEmployees.find(emp => 
+        receiver.includes(emp.split(' ')[0]) || 
+        emp.includes(receiver.split(' ')[0])
+      ) || receiver;
+
+      if (!closuresByEmployee[matchedEmployee]) {
+        closuresByEmployee[matchedEmployee] = { currentMonth: 0, prevMonth: 0 };
+      }
+
+      if (t.date && t.date.startsWith(currentMonthStr)) {
+        closuresByEmployee[matchedEmployee].currentMonth++;
+      } else if (t.date && t.date.startsWith(prevMonthStr)) {
+        closuresByEmployee[matchedEmployee].prevMonth++;
+      }
+    });
+
+    const closureList = Object.entries(closuresByEmployee)
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.currentMonth - a.currentMonth);
+
+    // إجمالي الإغلاق العام للشهر الحالي والماضي
+    const totalCurrentMonthClosures = closedTickets.filter(t => t.date && t.date.startsWith(currentMonthStr)).length;
+    const totalPrevMonthClosures = closedTickets.filter(t => t.date && t.date.startsWith(prevMonthStr)).length;
+
+    // حساب إحصائيات مدد حل البلاغات
+    let totalDurationDays = 0;
+    let closedCountWithDuration = 0;
+
+    closedTickets.forEach(t => {
+      if (t.date && t.createdAt) {
+        try {
+          const recDate = new Date(t.date);
+          const clsDate = new Date(t.createdAt);
+          const diffTime = clsDate.getTime() - recDate.getTime();
+          const diffDays = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+          
+          totalDurationDays += diffDays;
+          closedCountWithDuration++;
+        } catch (e) {}
+      }
+    });
+
+    const averageResolutionTime = closedCountWithDuration > 0 
+      ? (totalDurationDays / closedCountWithDuration).toFixed(1) 
+      : '0';
+
+    // توزيع أعمار البلاغات القائمة النشطة حالياً
+    let openUnder3Days = 0;
+    let open3To7Days = 0;
+    let openOver7Days = 0;
+    const activeTickets = baseTickets.filter(t => t.solution.trim() !== 'تم الحل');
+
+    activeTickets.forEach(t => {
+      if (t.date && t.date !== 'غير محدد') {
+        try {
+          const recDate = new Date(t.date);
+          const diffTime = now.getTime() - recDate.getTime();
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diffDays < 3) openUnder3Days++;
+          else if (diffDays <= 7) open3To7Days++;
+          else openOver7Days++;
+        } catch (e) {}
+      }
+    });
+
+    const activeCount = activeTickets.length || 1;
+    const openUnder3DaysPercent = Math.round((openUnder3Days / activeCount) * 100);
+    const open3To7DaysPercent = Math.round((open3To7Days / activeCount) * 100);
+    const openOver7DaysPercent = Math.round((openOver7Days / activeCount) * 100);
+
     return {
       total,
       todayCount,
       closed,
       open,
+      title: 'إحصائيات المؤشرات',
       ministry,
       waiting,
       newTickets,
       general,
-      undefinedStatus,
       activePending,
       successRate,
-      employeeList
+      employeeList,
+      closureList,
+      currentMonthName,
+      prevMonthName,
+      totalCurrentMonthClosures,
+      totalPrevMonthClosures,
+      averageResolutionTime,
+      openUnder3Days,
+      open3To7Days,
+      openOver7Days,
+      openUnder3DaysPercent,
+      open3To7DaysPercent,
+      openOver7DaysPercent
     };
   }, [tickets]);
 
@@ -214,7 +341,7 @@ export default function IndicatorsPage() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // حساب نسب المخطط الدائري (Donut Chart) لتمثيله باستخدام SVG
+  // حساب نسب المخطط الدائري
   const donutChartData = useMemo(() => {
     const data = [
       { name: 'تم الحل', val: stats.closed, color: '#16a34a' },
@@ -281,13 +408,9 @@ export default function IndicatorsPage() {
           <button onClick={toggleFullscreen} className={styles.btn}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               {isFullscreen ? (
-                <>
-                  <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />
-                </>
+                <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />
               ) : (
-                <>
-                  <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3M10 21v-6H4M14 3v6h6" />
-                </>
+                <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3M10 21v-6H4M14 3v6h6" />
               )}
             </svg>
             {isFullscreen ? 'خروج من ملء الشاشة' : 'ملء الشاشة للتلفزيون'}
@@ -299,7 +422,7 @@ export default function IndicatorsPage() {
         </div>
       </header>
 
-      {/* لوحة المؤشرات الرقمية */}
+      {/* لوحة المؤشرات الرقمية الرئيسية */}
       <section className={styles.statsGrid}>
         <div className={styles.statCard} style={{ '--card-accent': '#C8A57F' } as React.CSSProperties}>
           <span className={styles.statLabel}>إجمالي البلاغات</span>
@@ -348,7 +471,7 @@ export default function IndicatorsPage() {
                   className={styles.donutSegment}
                 ></circle>
               ))}
-              <g className={styles.chartText}>
+              <g>
                 <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fill="#ffffff" fontSize="4" fontWeight="bold" style={{ transform: 'rotate(90deg)', transformOrigin: '50% 50%' }}>
                   {stats.total}
                 </text>
@@ -370,18 +493,18 @@ export default function IndicatorsPage() {
           </div>
         </div>
 
-        {/* مخطط أعباء العمل وتوزيع الموظفين */}
+        {/* مخطط توزيع أعباء البلاغات القائمة مع إخفاء الأسماء */}
         <div className={styles.chartCard}>
-          <h2 className={styles.chartTitle}>👥 أعباء العمل وتوزيع البلاغات النشطة</h2>
+          <h2 className={styles.chartTitle}>👥 توزيع البلاغات النشطة (غير المغلقة) على أعضاء الفريق</h2>
           <div className={styles.employeeList}>
-            {stats.employeeList.slice(0, 7).map((emp, idx) => {
+            {stats.employeeList.slice(0, 6).map((emp, idx) => {
               const maxCount = stats.employeeList[0]?.count || 1;
               const percent = Math.round((emp.count / maxCount) * 100);
               return (
                 <div key={idx} className={styles.employeeRow}>
                   <div className={styles.employeeInfo}>
-                    <span className={styles.employeeName}>{idx + 1}. {emp.name}</span>
-                    <span className={styles.employeeCount}>{emp.count} بلاغ</span>
+                    <span className={styles.employeeName}>{idx + 1}. الموظف {idx + 1}</span>
+                    <span className={styles.employeeCount}>{emp.count} بلاغ معلق</span>
                   </div>
                   <div className={styles.progressBarBg}>
                     <div className={styles.progressBarFill} style={{ width: `${percent}%` }}></div>
@@ -390,8 +513,119 @@ export default function IndicatorsPage() {
               );
             })}
             {stats.employeeList.length === 0 && (
-              <p style={{ textAlign: 'center', color: '#718096', padding: '2rem' }}>لا توجد بيانات موظفين حالية.</p>
+              <p style={{ textAlign: 'center', color: '#718096', padding: '2rem' }}>لا توجد بلاغات نشطة معلقة حالياً.</p>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* القسم الثاني (التقفيل الشهري ومؤشرات المدة مع إخفاء الأسماء) */}
+      <section className={styles.chartsSection}>
+        {/* قائمة مقارنة تقفيل البلاغات مع إخفاء الأسماء */}
+        <div className={styles.chartCard}>
+          <h2 className={styles.chartTitle}>📅 مقارنة تقفيل البلاغات ({stats.prevMonthName} 🆚 {stats.currentMonthName})</h2>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-around', margin: '0.5rem 0 1.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ textAlign: 'center' }}>
+              <span style={{ fontSize: '0.85rem', color: '#cbd5e0' }}>إجمالي تقفيل {stats.prevMonthName} (السابق)</span>
+              <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#C8A57F', margin: '0.2rem 0 0' }}>{stats.totalPrevMonthClosures} بلاغ</p>
+            </div>
+            <div style={{ width: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+            <div style={{ textAlign: 'center' }}>
+              <span style={{ fontSize: '0.85rem', color: '#cbd5e0' }}>إجمالي تقفيل {stats.currentMonthName} (الجاري)</span>
+              <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#16a34a', margin: '0.2rem 0 0' }}>{stats.totalCurrentMonthClosures} بلاغ</p>
+            </div>
+          </div>
+
+          <div className={styles.tableContainer}>
+            <table className={styles.comparisonTable}>
+              <thead>
+                <tr>
+                  <th>العضو</th>
+                  <th>إغلاق ({stats.prevMonthName})</th>
+                  <th>إغلاق ({stats.currentMonthName})</th>
+                  <th>مؤشر الأداء</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.closureList.map((emp, idx) => {
+                  const diff = emp.currentMonth - emp.prevMonth;
+                  const isPositive = diff > 0;
+                  const isNeutral = diff === 0;
+
+                  return (
+                    <tr key={idx}>
+                      <td>الموظف {idx + 1}</td>
+                      <td>{emp.prevMonth}</td>
+                      <td style={{ fontWeight: 'bold', color: emp.currentMonth > 0 ? '#16a34a' : '#e2e8f0' }}>{emp.currentMonth}</td>
+                      <td>
+                        {isNeutral ? (
+                          <span className={`${styles.trendIndicator} ${styles.trendNeutral}`}>➖ مستقر</span>
+                        ) : isPositive ? (
+                          <span className={`${styles.trendIndicator} ${styles.trendUp}`}>📈 +{diff} نمو</span>
+                        ) : (
+                          <span className={`${styles.trendIndicator} ${styles.trendDown}`}>📉 {diff} تراجع</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* إحصائيات مدد حل البلاغات وأعمار المعلق */}
+        <div className={styles.chartCard}>
+          <h2 className={styles.chartTitle}>⏱️ إحصائيات مدة معالجة وحل البلاغات</h2>
+          
+          <div className={styles.durationContainer}>
+            <div className={styles.durationMiniCard}>
+              <span className={styles.durationLabel}>متوسط مدة حل البلاغ</span>
+              <p className={styles.durationVal}>{stats.averageResolutionTime}</p>
+              <span style={{ fontSize: '0.8rem', color: '#718096' }}>يوم لكل بلاغ مغلق</span>
+            </div>
+            
+            <div className={styles.durationMiniCard}>
+              <span className={styles.durationLabel}>معدل الاستجابة اليومي</span>
+              <p className={styles.durationVal} style={{ color: '#16a34a' }}>
+                {stats.total > 0 ? Math.round((stats.closed / stats.total) * 100) : 0}%
+              </p>
+              <span style={{ fontSize: '0.8rem', color: '#718096' }}>نسبة البلاغات المقفلة</span>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '1.5rem' }}>
+            <h3 style={{ fontSize: '1rem', color: '#C8A57F', marginBottom: '1rem', fontWeight: 'bold' }}>⏳ أعمار البلاغات القائمة المعلقة حالياً:</h3>
+            
+            <div className={styles.distributionList}>
+              {/* أقل من 3 أيام */}
+              <div className={styles.distributionItem}>
+                <span className={styles.distLabel}>حديثة (&lt; 3 أيام)</span>
+                <div className={styles.distProgressBg}>
+                  <div className={styles.distProgressFill} style={{ width: `${stats.openUnder3DaysPercent}%`, backgroundColor: '#16a34a' }}></div>
+                </div>
+                <span className={styles.distCount}>{stats.openUnder3Days} ({stats.openUnder3DaysPercent}%)</span>
+              </div>
+
+              {/* من 3 إلى 7 أيام */}
+              <div className={styles.distributionItem}>
+                <span className={styles.distLabel}>متوسطة (3-7 أيام)</span>
+                <div className={styles.distProgressBg}>
+                  <div className={styles.distProgressFill} style={{ width: `${stats.open3To7DaysPercent}%`, backgroundColor: '#eab308' }}></div>
+                </div>
+                <span className={styles.distCount}>{stats.open3To7Days} ({stats.open3To7DaysPercent}%)</span>
+              </div>
+
+              {/* أكثر من 7 أيام */}
+              <div className={styles.distributionItem}>
+                <span className={styles.distLabel}>متأخرة (&gt; 7 أيام)</span>
+                <div className={styles.distProgressBg}>
+                  <div className={styles.distProgressFill} style={{ width: `${stats.openOver7DaysPercent}%`, backgroundColor: '#dc2626' }}></div>
+                </div>
+                <span className={styles.distCount}>{stats.openOver7Days} ({stats.openOver7DaysPercent}%)</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
