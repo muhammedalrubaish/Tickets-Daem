@@ -1,145 +1,278 @@
-// Icon: 📱
-// Scriptable Widget for Baladi Unit (وحدة بلدي)
-// Developer: Antigravity AI
-// Description: Displays real-time ticket statistics on iPhone Home Screen.
+// ─────────────────────────────────────────────────────────────
+// 📱 ويدجت بلاغات وحدة بلدي — إصدار الموظف
+// Developer: Balady Unit / Claude AI
+// متطلبات: تطبيق Scriptable (iOS) — مجاني من App Store
+// ─────────────────────────────────────────────────────────────
 
-// ⚠️ استبدل الرابط أدناه برابط موقعك الفعلي على Netlify أو Vercel
-const BASE_URL = "https://balaghat-unit.netlify.app"; // ضع رابط موقعك هنا
-const API_URL = `${BASE_URL}/api/widget-stats`;
+const BASE_URL  = "https://balaghat-unit.netlify.app";
+const API_URL   = `${BASE_URL}/api/widget-employee`;
+const WIDGET_URL = `${BASE_URL}/mobile-widget`;
 
-let data = await fetchStats();
+// مفاتيح التخزين الآمن في iOS Keychain
+const KC_MODE   = "balady_widget_mode";
+const KC_USER   = "balady_widget_user";
+const KC_PASS   = "balady_widget_pass";
 
+// ─────────────────────────────────────────────────────────────
+// 1. قراءة أو جلب بيانات الدخول
+// ─────────────────────────────────────────────────────────────
+let creds = loadCredentials();
+
+if (!creds && !config.runsInWidget) {
+  // طلب بيانات الدخول عند التشغيل داخل التطبيق
+  creds = await promptLogin();
+}
+
+// ─────────────────────────────────────────────────────────────
+// 2. جلب البيانات من الـ API
+// ─────────────────────────────────────────────────────────────
+let data = await fetchStats(creds);
+
+// ─────────────────────────────────────────────────────────────
+// 3. بناء وعرض الويدجت
+// ─────────────────────────────────────────────────────────────
 if (config.runsInWidget) {
-  let widget = await createWidget(data);
+  let widget = createWidget(data);
   Script.setWidget(widget);
   Script.complete();
 } else {
-  // عند تشغيل السكربت داخل التطبيق مباشرة، يعرض معاينة للويدجت
-  let widget = await createWidget(data);
-  await widget.presentMedium();
+  // قائمة خيارات عند التشغيل اليدوي
+  let choice = await showMenu(data);
+  if (choice === 0) {
+    let w = createWidget(data);
+    await w.presentMedium();
+  } else if (choice === 1) {
+    Keychain.remove(KC_MODE);
+    Keychain.remove(KC_USER);
+    Keychain.remove(KC_PASS);
+    let newCreds = await promptLogin();
+    let newData  = await fetchStats(newCreds);
+    let w = createWidget(newData);
+    await w.presentMedium();
+  } else if (choice === 2) {
+    // فتح صفحة الويدجت الكاملة
+    Safari.open(WIDGET_URL);
+  }
 }
 
-// دالة جلب البيانات من الـ API
-async function fetchStats() {
-  try {
-    let req = new Request(API_URL);
-    req.method = "GET";
-    req.headers = { "Content-Type": "application/json" };
-    let res = await req.loadJSON();
-    if (res && res.success) {
-      return res;
-    }
-  } catch (e) {
-    console.log("Error fetching stats: " + e);
-  }
-  
-  // بيانات تجريبية في حال فشل الاتصال بالخادم
+// ═════════════════════════════════════════════════════════════
+// الدوال المساعدة
+// ═════════════════════════════════════════════════════════════
+
+function loadCredentials() {
+  if (!Keychain.contains(KC_PASS)) return null;
   return {
-    success: false,
-    stats: { total: 0, new: 0, waiting: 0, unsolved: 0, solved: 0 },
-    latest: []
+    mode:     Keychain.contains(KC_MODE) ? Keychain.get(KC_MODE) : "employee",
+    username: Keychain.contains(KC_USER) ? Keychain.get(KC_USER) : "",
+    password: Keychain.get(KC_PASS),
   };
 }
 
-// دالة تصميم وبناء الويدجت
-async function createWidget(data) {
+async function promptLogin() {
+  // 1) اختيار نوع الدخول
+  let modeAlert = new Alert();
+  modeAlert.title   = "وحدة بلدي 🏙️";
+  modeAlert.message = "اختر نوع الدخول";
+  modeAlert.addAction("موظف 👨‍💼");
+  modeAlert.addAction("مشرف 👁️");
+  modeAlert.addCancelAction("إلغاء");
+  let modeIdx = await modeAlert.presentAlert();
+
+  if (modeIdx === 0) {
+    // دخول الموظف
+    let form = new Alert();
+    form.title = "دخول الموظف";
+    form.addTextField("اسم المستخدم (مثال: s.alghosen)");
+    form.addSecureTextField("كلمة السر");
+    form.addAction("دخول ✅");
+    form.addCancelAction("إلغاء");
+    let ok = await form.presentAlert();
+    if (ok === 0) {
+      let user = form.textFieldValue(0);
+      let pass = form.textFieldValue(1);
+      Keychain.set(KC_MODE, "employee");
+      Keychain.set(KC_USER, user);
+      Keychain.set(KC_PASS, pass);
+      return { mode: "employee", username: user, password: pass };
+    }
+  } else if (modeIdx === 1) {
+    // دخول المشرف
+    let form = new Alert();
+    form.title = "دخول المشرف";
+    form.addSecureTextField("كلمة مرور المشرف");
+    form.addAction("دخول ✅");
+    form.addCancelAction("إلغاء");
+    let ok = await form.presentAlert();
+    if (ok === 0) {
+      let pass = form.textFieldValue(0);
+      Keychain.set(KC_MODE, "admin");
+      Keychain.set(KC_USER, "admin");
+      Keychain.set(KC_PASS, pass);
+      return { mode: "admin", username: "admin", password: pass };
+    }
+  }
+  // تسجيل دخول افتراضي فاشل إذا ألغى المستخدم
+  return null;
+}
+
+async function fetchStats(credentials) {
+  if (!credentials) return buildEmptyData("لم يتم تسجيل الدخول");
+  try {
+    let req    = new Request(API_URL);
+    req.method = "POST";
+    req.headers = { "Content-Type": "application/json" };
+    req.body   = JSON.stringify(credentials);
+    let res    = await req.loadJSON();
+
+    if (res && res.success) return res;
+
+    // مصادقة فاشلة: احذف البيانات المحفوظة
+    if (res && (res.error || "").includes("غير صحيح")) {
+      Keychain.remove(KC_PASS);
+    }
+    return buildEmptyData(res?.error ?? "خطأ في الاستجابة");
+  } catch (e) {
+    return buildEmptyData("لا يوجد اتصال");
+  }
+}
+
+function buildEmptyData(reason) {
+  return {
+    success: false,
+    employeeName: "—",
+    isAdmin: false,
+    stats: { total:0, new:0, waiting:0, ministry:0, unsolved:0, solved:0, other:0 },
+    latest: [],
+    hasNewTickets: false,
+    error: reason,
+  };
+}
+
+async function showMenu(data) {
+  let name = data.employeeName ?? "—";
+  let a = new Alert();
+  a.title   = `وحدة بلدي — ${name}`;
+  a.message = data.success
+    ? `الإجمالي: ${data.stats.total} | جديد: ${data.stats.new}`
+    : (data.error ?? "غير متصل");
+  a.addAction("🖼️ معاينة الويدجت");
+  a.addAction("🔑 تغيير بيانات الدخول");
+  a.addAction("🌐 فتح صفحة الويدجت");
+  a.addCancelAction("إلغاء");
+  return await a.presentAlert();
+}
+
+// ═════════════════════════════════════════════════════════════
+// بناء الويدجت المرئي
+// ═════════════════════════════════════════════════════════════
+
+function createWidget(data) {
   let widget = new ListWidget();
-  
-  // إعدادات الخلفية (تدرج لوني فخم متناسق مع هوية بلدي الداكنة)
+
+  // ── الخلفية ──────────────────────────────────────────────
   let gradient = new LinearGradient();
-  gradient.colors = [new Color("#0f172a"), new Color("#1e293b")]; // داكن فاخر
-  gradient.locations = [0, 1];
+  if (data.hasNewTickets) {
+    gradient.colors    = [new Color("#1a0a2e"), new Color("#2d1060"), new Color("#0f172a")];
+    gradient.locations = [0, 0.5, 1];
+  } else {
+    gradient.colors    = [new Color("#0f172a"), new Color("#1e293b")];
+    gradient.locations = [0, 1];
+  }
   widget.backgroundGradient = gradient;
-  widget.padding = new Rect(12, 12, 12, 12);
+  widget.padding = new Rect(14, 14, 14, 14);
+  widget.url     = WIDGET_URL;
+  // تحديث تلقائي كل 15 دقيقة
+  widget.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
 
-  // عند الضغط على الويدجت يفتح لوحة التحكم مباشرة
-  widget.url = BASE_URL;
+  // ── رأس الويدجت ──────────────────────────────────────────
+  let header = widget.addStack();
+  header.layoutHorizontally();
+  header.centerAlignContent();
 
-  // --- الهيدر (العنوان والشعار) ---
-  let headerStack = widget.addStack();
-  headerStack.layoutHorizontally();
-  headerStack.centerAlignContent();
-  
-  // العنوان
-  let titleText = headerStack.addText("📊 إحصائيات بلاغات بلدي");
-  titleText.font = Font.boldSystemFont(14);
-  titleText.textColor = new Color("#ffffff");
-  
-  headerStack.addSpacer();
-  
-  // مؤشر الحالة العامة
-  let statusBadge = headerStack.addStack();
-  statusBadge.backgroundColor = data.success ? new Color("#10b981", 0.2) : new Color("#ef4444", 0.2);
-  statusBadge.cornerRadius = 4;
-  statusBadge.padding = new Rect(2, 6, 2, 6);
-  let statusText = statusBadge.addText(data.success ? "متصل" : "أوفلاين");
-  statusText.font = Font.boldSystemFont(9);
-  statusText.textColor = data.success ? new Color("#10b981") : new Color("#ef4444");
+  let title = header.addText("📊 " + (data.employeeName ?? "وحدة بلدي"));
+  title.font      = Font.boldSystemFont(13);
+  title.textColor = new Color("#f1f5f9");
+
+  header.addSpacer();
+
+  let badge = header.addStack();
+  badge.backgroundColor = data.success
+    ? new Color("#10b981", 0.2)
+    : new Color("#ef4444", 0.2);
+  badge.cornerRadius = 5;
+  badge.padding = new Rect(2, 7, 2, 7);
+  let badgeTxt = badge.addText(data.success ? "● متصل" : "● أوفلاين");
+  badgeTxt.font      = Font.boldSystemFont(9);
+  badgeTxt.textColor = data.success ? new Color("#10b981") : new Color("#ef4444");
+
+  // ── تنبيه البلاغات الجديدة ────────────────────────────────
+  if (data.hasNewTickets) {
+    widget.addSpacer(6);
+    let alertRow = widget.addStack();
+    alertRow.backgroundColor = new Color("#7c3aed", 0.3);
+    alertRow.cornerRadius    = 8;
+    alertRow.padding         = new Rect(5, 10, 5, 10);
+    let alertTxt = alertRow.addText(
+      `🔔 لديك ${data.stats.new} بلاغ جديد!`
+    );
+    alertTxt.font      = Font.boldSystemFont(11);
+    alertTxt.textColor = new Color("#c4b5fd");
+  }
 
   widget.addSpacer(8);
 
-  // --- صف المؤشرات الرقمية (الكرت الذكي) ---
-  let statsStack = widget.addStack();
-  statsStack.layoutHorizontally();
-  statsStack.spacing = 6;
-
-  // كرت الإجمالي
-  addStatCard(statsStack, "الإجمالي", data.stats.total.toString(), "#f8fafc");
-  // كرت البلاغات الجديدة
-  addStatCard(statsStack, "جديد", data.stats.new.toString(), "#8b5cf6");
-  // كرت معلق/لم يحل
-  addStatCard(statsStack, "غير محلول", data.stats.unsolved.toString(), "#ef4444");
-  // كرت تم الحل
-  addStatCard(statsStack, "تم الحل", data.stats.solved.toString(), "#10b981");
+  // ── صف الإحصائيات ────────────────────────────────────────
+  let row = widget.addStack();
+  row.layoutHorizontally();
+  row.spacing = 6;
+  addCard(row, "الإجمالي",  String(data.stats.total),    "#f8fafc");
+  addCard(row, "جديد",      String(data.stats.new),      "#8b5cf6");
+  addCard(row, "غير محلول", String(data.stats.unsolved),  "#ef4444");
+  addCard(row, "تم الحل",   String(data.stats.solved),    "#10b981");
 
   widget.addSpacer(10);
 
-  // --- قسم آخر البلاغات المستلمة ---
-  let sectionTitle = widget.addText("🕒 آخر التحديثات:");
-  sectionTitle.font = Font.boldSystemFont(11);
-  sectionTitle.textColor = new Color("#94a3b8");
-  
+  // ── آخر البلاغات ─────────────────────────────────────────
+  let secTitle = widget.addText("🕒 آخر البلاغات:");
+  secTitle.font      = Font.boldSystemFont(10);
+  secTitle.textColor = new Color("#94a3b8");
   widget.addSpacer(4);
 
-  let latestTickets = data.latest || [];
-  if (latestTickets.length === 0) {
-    let emptyText = widget.addText(data.success ? "لا توجد بلاغات مسجلة حالياً" : "يرجى التحقق من اتصال الإنترنت ورابط الـ API");
-    emptyText.font = Font.systemFont(10);
-    emptyText.textColor = new Color("#64748b");
+  let list = data.latest ?? [];
+  if (list.length === 0) {
+    let empty = widget.addText(
+      data.success ? "لا توجد بلاغات" : (data.error ?? "تحقق من الاتصال")
+    );
+    empty.font      = Font.systemFont(10);
+    empty.textColor = new Color("#64748b");
   } else {
-    // عرض آخر تذكرتين لتوفير المساحة في الويدجت المتوسط (Medium)
-    let displayList = latestTickets.slice(0, 2);
-    for (let ticket of displayList) {
-      let row = widget.addStack();
-      row.layoutHorizontally();
-      row.centerAlignContent();
-      row.spacing = 4;
+    for (let t of list.slice(0, 2)) {
+      let tRow = widget.addStack();
+      tRow.layoutHorizontally();
+      tRow.centerAlignContent();
+      tRow.spacing = 4;
 
-      // رقم التذكرة
-      let numText = row.addText(`🎫 ${ticket.number}`);
-      numText.font = Font.boldSystemFont(10);
-      numText.textColor = new Color("#ffffff");
+      let num = tRow.addText(`🎫 ${t.number}`);
+      num.font      = Font.boldSystemFont(10);
+      num.textColor = new Color("#f1f5f9");
 
-      row.addSpacer(6);
+      tRow.addSpacer(4);
 
-      // نوع البلاغ
-      let typeText = row.addText(ticket.type);
-      typeText.font = Font.systemFont(10);
-      typeText.textColor = new Color("#cbd5e1");
-      typeText.lineLimit = 1;
+      let typ = tRow.addText(t.type);
+      typ.font      = Font.systemFont(10);
+      typ.textColor = new Color("#cbd5e1");
+      typ.lineLimit = 1;
 
-      row.addSpacer();
+      tRow.addSpacer();
 
-      // حالة البلاغ
-      let stateBadge = row.addStack();
-      let stateColor = getStatusColor(ticket.status);
-      stateBadge.backgroundColor = new Color(stateColor, 0.15);
-      stateBadge.cornerRadius = 4;
-      stateBadge.padding = new Rect(1, 4, 1, 4);
-      
-      let stateText = stateBadge.addText(ticket.status);
-      stateText.font = Font.boldSystemFont(8);
-      stateText.textColor = new Color(stateColor);
+      let sb = tRow.addStack();
+      let sc = statusColor(t.status);
+      sb.backgroundColor = new Color(sc, 0.15);
+      sb.cornerRadius    = 4;
+      sb.padding         = new Rect(1, 5, 1, 5);
+      let st = sb.addText(t.status);
+      st.font      = Font.boldSystemFont(8);
+      st.textColor = new Color(sc);
 
       widget.addSpacer(3);
     }
@@ -148,36 +281,34 @@ async function createWidget(data) {
   return widget;
 }
 
-// دالة مساعدة لإنشاء كرت إحصائي مصغر
-function addStatCard(parent, title, value, colorHex) {
+function addCard(parent, label, value, colorHex) {
   let card = parent.addStack();
   card.layoutVertically();
-  card.backgroundColor = new Color("#1e293b", 0.6);
-  card.cornerRadius = 6;
-  card.padding = new Rect(6, 6, 6, 6);
+  card.backgroundColor = new Color("#1e293b", 0.65);
+  card.cornerRadius    = 8;
+  card.padding         = new Rect(7, 7, 7, 7);
   card.centerAlignContent();
-  
-  let valText = card.addText(value);
-  valText.font = Font.boldSystemFont(15);
-  valText.textColor = new Color(colorHex);
-  valText.textOpacity = 0.95;
 
-  let titleText = card.addText(title);
-  titleText.font = Font.systemFont(8);
-  titleText.textColor = new Color("#94a3b8");
-  titleText.textOpacity = 0.8;
+  let v = card.addText(value);
+  v.font        = Font.boldSystemFont(16);
+  v.textColor   = new Color(colorHex);
+  v.textOpacity = 0.95;
+
+  let l = card.addText(label);
+  l.font        = Font.systemFont(8);
+  l.textColor   = new Color("#94a3b8");
+  l.textOpacity = 0.8;
 }
 
-// دالة مساعدة لتلوين الحالات
-function getStatusColor(status) {
-  switch (status) {
-    case 'بلاغ جديد': return '#8b5cf6';
-    case 'بانتظار المستفيد': return '#ec4899';
-    case 'لدى الوزارة': return '#f59e0b';
-    case 'مشكلة عامة': return '#0ea5e9';
-    case 'لم يتم الحل': return '#ef4444';
-    case 'تم الحل': return '#10b981';
-    case 'مجاز': return '#6b7280';
-    default: return '#3b82f6';
-  }
+function statusColor(status) {
+  const MAP = {
+    "بلاغ جديد":          "#8b5cf6",
+    "بانتظار المستفيد":   "#ec4899",
+    "لدى الوزارة":        "#f59e0b",
+    "مشكلة عامة":         "#0ea5e9",
+    "لم يتم الحل":        "#ef4444",
+    "تم الحل":            "#10b981",
+    "مجاز":               "#6b7280",
+  };
+  return MAP[status] ?? "#3b82f6";
 }
