@@ -832,7 +832,7 @@ export default function ExtensionPopupPage() {
                 <option value="aalowaid">عبدالله العويد (aalowaid)</option>
                 <option value="af.alamri">عبدالرحمن العمري (af.alamri)</option>
                 <option value="azz.alharbi">عزام الحربي (azz.alharbi)</option>
-                <option value="mialrubaish">محمد الربيش (mialrubaish) - المشرف</option>
+                <option value="mialrubaish">محمد الربيش (mialrubaish) - موزع البلاغات</option>
                 <option value="s.alghosen">صالح الغصن (s.alghosen)</option>
                 <option value="t.alhedyani">طارق الهدياني (t.alhedyani)</option>
                 <option value="t.almansour">ثامر المنصور (t.almansour)</option>
