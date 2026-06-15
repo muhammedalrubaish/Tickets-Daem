@@ -797,6 +797,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [endDate, setEndDate] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'whatsapp' | 'notion'>('notion');
+  const [urlTicketParam, setUrlTicketParam] = useState<string | null>(null);
+  const [prefilledTicket, setPrefilledTicket] = useState('');
   const [isDriveOpen, setIsDriveOpen] = useState(false);
   const [isSupOpen, setIsSupOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -847,6 +849,26 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [userRole, setUserRole] = useState<'viewer' | 'editor' | 'super_admin' | null>(null);
   const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
+
+  // قراءة بارامترات URL لتفعيل داعم بلس من الـ Bookmarklet
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('create') === '1') {
+      const ticket = params.get('ticket') || '';
+      setUrlTicketParam(ticket);
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
+
+  // فتح نموذج إنشاء البلاغ تلقائياً عند الوصول من داعم بلس
+  useEffect(() => {
+    if (urlTicketParam !== null && (userRole === 'editor' || userRole === 'super_admin')) {
+      setPrefilledTicket(urlTicketParam);
+      setFormMode('notion');
+      setIsFormOpen(true);
+      setUrlTicketParam(null);
+    }
+  }, [urlTicketParam, userRole]);
 
   // التحقق من وجود تحديثات جديدة غير مقروءة وتنظيف الذاكرة
   useEffect(() => {
@@ -1976,12 +1998,13 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       {isFormOpen && (
         <div className={styles.modalOverlay} onClick={() => setIsFormOpen(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <TicketForm 
-              mode={formMode} 
-              currentUser={loggedInUser} 
+            <TicketForm
+              mode={formMode}
+              currentUser={loggedInUser}
               suggestedReceiver={userRole === 'super_admin' ? stats.leastReceiver.name : undefined}
               onLoading={(val) => setIsUpdating(val)}
-              onClose={() => setIsFormOpen(false)} 
+              onClose={() => { setIsFormOpen(false); setPrefilledTicket(''); }}
+              initialTicketNumber={prefilledTicket}
               onAddOptimistic={(newTicket) => {
                 setComplaints(prev => [newTicket, ...prev]);
                 setNewTicketToast('✅ تم إضافة البلاغ بنجاح');
