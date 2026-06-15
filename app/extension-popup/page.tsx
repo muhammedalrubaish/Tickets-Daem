@@ -33,6 +33,9 @@ export default function ExtensionPopupPage() {
   const [nextEmployee, setNextEmployee] = useState<string>('غير محدد');
   const [totalTickets, setTotalTickets] = useState<number>(0);
 
+  const [selectedUser, setSelectedUser] = useState<string>('mialrubaish');
+  const [userArabic, setUserArabic] = useState<string>('');
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -42,12 +45,21 @@ export default function ExtensionPopupPage() {
       const paramPass = params.get('p') || '';
       const savedRole = localStorage.getItem('daemRole') as 'admin' | 'support' | null;
       const savedPass = localStorage.getItem('daemPassword') || '';
+      const savedUsername = localStorage.getItem('daemUsername') || '';
+      const savedUserKey = localStorage.getItem('daemUserKey') || '';
+      const savedUserArabic = localStorage.getItem('daemUserArabic') || '';
       
-      const activeRole = savedRole || (paramRole && paramRole !== 'null' ? (paramRole as 'admin' | 'support') : 'admin');
-      const activePass = savedPass || paramPass || 'Balady.20';
+      const activeRole = savedRole || (paramRole && paramRole !== 'null' ? (paramRole as 'admin' | 'support') : null);
+      const activePass = savedPass || paramPass || '';
 
       if (activePass) {
         setPassword(activePass);
+      }
+      if (savedUsername) {
+        setSelectedUser(savedUsername);
+      }
+      if (savedUserArabic) {
+        setUserArabic(savedUserArabic);
       }
 
       if (activeRole) {
@@ -56,10 +68,19 @@ export default function ExtensionPopupPage() {
         if (activePass) {
           localStorage.setItem('daemPassword', activePass);
         }
-        window.parent.postMessage({ action: 'SET_ROLE', role: activeRole, password: activePass }, '*');
+        window.parent.postMessage({ 
+          action: 'SET_ROLE', 
+          role: activeRole, 
+          password: activePass,
+          username: savedUsername,
+          userKey: savedUserKey,
+          userArabic: savedUserArabic
+        }, '*');
       }
     }
+  }, []);
 
+  useEffect(() => {
     async function loadData() {
       try {
         const res = await fetch('/api/tickets-json');
@@ -68,18 +89,19 @@ export default function ExtensionPopupPage() {
           // دعم الصيغة الجديدة { tickets, totalCount } والقديمة [ array ]
           const tickets: Ticket[] = Array.isArray(resData) ? resData : (resData.tickets || []);
 
-          const calculatedCounts = calculateCounts(tickets);
+          const calculatedCounts = calculateCounts(tickets, userArabic || null);
           setCounts(calculatedCounts);
 
           // حساب الموظف التالي بالدور - ترتيب الأولوية المعتمد
           const priorityOrder = [
-            { name: 'البراء النصيان', user: 'a.alnesayan' },
-            { name: 'محمد الربيش', user: 'mialrubaish' },
-            { name: 'عبدالرحمن العمري', user: 'af.alamri' },
-            { name: 'عزام الحربي', user: 'azz.alharbi' },
-            { name: 'صالح الغصن', user: 's.alghosen' },
-            { name: 'طارق الهدياني', user: 't.alhedyani' },
-            { name: 'ثامر المنصور', user: 't.almansour' }
+            { name: 'البراء النصيان', user: 'a.alnesayan', key: 'alnesayan' },
+            { name: 'عبدالله العويد', user: 'aalowaid', key: 'alowaid' },
+            { name: 'عبدالرحمن العمري', user: 'af.alamri', key: 'alamri' },
+            { name: 'عزام الحربي', user: 'azz.alharbi', key: 'alharbi' },
+            { name: 'محمد الربيش', user: 'mialrubaish', key: 'alrubaish' },
+            { name: 'صالح الغصن', user: 's.alghosen', key: 'alghosen' },
+            { name: 'طارق الهدياني', user: 't.alhedyani', key: 'alhedyani' },
+            { name: 'ثامر المنصور', user: 't.almansour', key: 'almansour' }
           ];
 
           const empCounts: Record<string, number> = {};
@@ -96,13 +118,21 @@ export default function ExtensionPopupPage() {
             !(t.number && t.number.includes('📢'))
           );
 
-          // العداد = baseTickets.length مثل الموقع تماماً (1275 وليس 1280)
-          setTotalTickets(baseTickets.length);
+          // إجمالي البلاغات بناءً على الموظف
+          const userBaseTickets = baseTickets.filter(t => {
+            if (!userArabic) return true;
+            const receiver = (t.receiver || '').trim();
+            const isNew = t.solution === 'بلاغ جديد' || t.solution === 'غير محدد' || !t.solution;
+            const isAssignedToMe = receiver.includes(userArabic.split(' ')[0]) || userArabic.includes(receiver.split(' ')[0]);
+            return isAssignedToMe || isNew;
+          });
+
+          setTotalTickets(userBaseTickets.length);
 
           baseTickets.forEach(t => {
             // تنظيف المسافات مثل DashboardClient تماماً
             const receiver = (t.receiver || '').trim().replace(/\s+/g, ' ');
-            if (!receiver || receiver === 'غير محدد') return;
+            if (!receiver || receiver === 'غير حدد' || receiver === 'غير محدد') return;
 
             const matched = priorityOrder.find(p => 
               receiver.includes(p.name.split(' ')[0]) || 
@@ -133,28 +163,31 @@ export default function ExtensionPopupPage() {
       }
     }
     loadData();
-    // Auto-refresh every 30 seconds to keep live counts perfectly updated
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [userArabic]);
 
   const handleLoginSupport = () => {
     setRole('support');
     localStorage.setItem('daemRole', 'support');
     localStorage.removeItem('daemPassword');
+    localStorage.removeItem('daemUsername');
+    localStorage.removeItem('daemUserKey');
+    localStorage.removeItem('daemUserArabic');
     window.parent.postMessage({ action: 'SET_ROLE', role: 'support', password: '' }, '*');
+    setUserArabic('');
   };
 
   const handleLoginAdmin = () => {
     const EMPLOYEES = [
-      { name: 'البراء النصيان', user: 'a.alnesayan', pass: '1111' },
-      { name: 'عبدالله العويد', user: 'aalowaid', pass: '2222' },
-      { name: 'عبدالرحمن العمري', user: 'af.alamri', pass: '3333' },
-      { name: 'عزام الحربي', user: 'azz.alharbi', pass: '4444' },
-      { name: 'محمد الربيش', user: 'mialrubaish', pass: 'Balady.20' },
-      { name: 'صالح الغصن', user: 's.alghosen', pass: '6666' },
-      { name: 'طارق الهدياني', user: 't.alhedyani', pass: '7777' },
-      { name: 'ثامر المنصور', user: 't.almansour', pass: '8888' },
+      { name: 'البراء النصيان', user: 'a.alnesayan', key: 'alnesayan', pass: '1111' },
+      { name: 'عبدالله العويد', user: 'aalowaid', key: 'alowaid', pass: '2222' },
+      { name: 'عبدالرحمن العمري', user: 'af.alamri', key: 'alamri', pass: '3333' },
+      { name: 'عزام الحربي', user: 'azz.alharbi', key: 'alharbi', pass: '4444' },
+      { name: 'محمد الربيش', user: 'mialrubaish', key: 'alrubaish', pass: 'Balady.20' },
+      { name: 'صالح الغصن', user: 's.alghosen', key: 'alghosen', pass: '6666' },
+      { name: 'طارق الهدياني', user: 't.alhedyani', key: 'alhedyani', pass: '7777' },
+      { name: 'ثامر المنصور', user: 't.almansour', key: 'almansour', pass: '8888' },
     ];
 
     let currentEmployees = EMPLOYEES;
@@ -167,14 +200,31 @@ export default function ExtensionPopupPage() {
       }
     }
 
-    const adminUser = currentEmployees.find(e => e.user === 'mialrubaish');
-    const correctPassword = adminUser ? adminUser.pass : 'Balady.20';
+    const matchedEmp = currentEmployees.find(e => e.user === selectedUser);
+    if (!matchedEmp) {
+      setErrorMsg('الموظف غير موجود! ⚠️');
+      return;
+    }
 
-    if (password.trim() === correctPassword.trim()) {
-      setRole('admin');
-      localStorage.setItem('daemRole', 'admin');
+    if (password.trim() === matchedEmp.pass.trim()) {
+      const userRole = matchedEmp.user === 'mialrubaish' ? 'admin' : 'support';
+      setRole(userRole);
+      localStorage.setItem('daemRole', userRole);
       localStorage.setItem('daemPassword', password);
-      window.parent.postMessage({ action: 'SET_ROLE', role: 'admin', password: password }, '*');
+      localStorage.setItem('daemUsername', matchedEmp.user);
+      localStorage.setItem('daemUserKey', matchedEmp.key || '');
+      localStorage.setItem('daemUserArabic', matchedEmp.name);
+      
+      setUserArabic(matchedEmp.name);
+      
+      window.parent.postMessage({ 
+        action: 'SET_ROLE', 
+        role: userRole, 
+        password: password,
+        username: matchedEmp.user,
+        userKey: matchedEmp.key || '',
+        userArabic: matchedEmp.name
+      }, '*');
       setErrorMsg('');
     } else {
       setErrorMsg('كلمة المرور غير صحيحة! ⚠️');
@@ -186,18 +236,35 @@ export default function ExtensionPopupPage() {
     setRole(null);
     localStorage.removeItem('daemRole');
     localStorage.removeItem('daemPassword');
+    localStorage.removeItem('daemUsername');
+    localStorage.removeItem('daemUserKey');
+    localStorage.removeItem('daemUserArabic');
     window.parent.postMessage({ action: 'SET_ROLE', role: 'support', password: '' }, '*');
     setShowPasswordField(false);
     setPassword('');
     setErrorMsg('');
+    setUserArabic('');
   };
 
-  function calculateCounts(tickets: Ticket[]): Counts {
+  function calculateCounts(tickets: Ticket[], loggedInEmpName: string | null): Counts {
     let counts = { new: 0, recent: 0, old: 0, veryOld: 0, unassigned: 0, notSolved: 0 };
     if (!Array.isArray(tickets)) return counts;
 
     tickets.forEach(ticket => {
       const status = (ticket.solution || '').trim();
+      const receiver = (ticket.receiver || '').trim();
+
+      const isAssignedToMe = loggedInEmpName ? (
+        receiver.includes(loggedInEmpName.split(' ')[0]) || 
+        loggedInEmpName.includes(receiver.split(' ')[0])
+      ) : false;
+
+      const isNew = status === 'بلاغ جديد' || status === 'غير محدد' || status === 'غير حدد' || status === '';
+
+      // إذا كان الموظف مسجل دخوله، لا نعرض إلا البلاغات المسندة له أو الجديدة غير الموزعة
+      if (loggedInEmpName && !isAssignedToMe && !isNew) {
+        return;
+      }
 
       if (status === 'بلاغ جديد') {
         counts.new++;
@@ -212,8 +279,7 @@ export default function ExtensionPopupPage() {
       }
 
       // حساب التذاكر المتأخرة لأكثر من أسبوع
-      const isNew = status === 'بلاغ جديد' || status === 'غير محدد' || status === '';
-      if (isNew && ticket.date && ticket.date !== 'غير محدد') {
+      if (isNew && ticket.date && ticket.date !== 'غير محدد' && ticket.date !== 'غير حدد') {
         try {
           const ticketDate = new Date(ticket.date);
           const oneWeekAgo = new Date();
@@ -737,59 +803,79 @@ export default function ExtensionPopupPage() {
           <div className="logo-container">
             <img src="/ايقونة داعم.png" alt="Daem Plus Logo" className="logo-img-login" />
           </div>
-          <h2 className="login-title">🚀 مرحباً بك في داعم بلس</h2>
-          <p className="login-desc">الرجاء اختيار صلاحية الدخول لبدء الاستخدام</p>
+          <h2 className="login-title">🚀 تسجيل الدخول إلى داعم بلس</h2>
+          <p className="login-desc">الرجاء اختيار حسابك وإدخال كلمة المرور للبدء</p>
           
-          <button onClick={handleLoginSupport} className="login-btn login-btn-secondary">
-            👤 دخول (نسخ ولصق فقط)
-          </button>
-          
-          <button 
-            onClick={() => {
-              setShowPasswordField(true);
-              if (!password) setPassword('Balady.20');
-            }} 
-            className="login-btn login-btn-primary"
-          >
-            🔑 دخول بالصلاحيات الكاملة (إنشاء وإسناد)
-          </button>
-          
-          {showPasswordField && (
-            <div id="password-section">
-              <div className="password-input-container">
-                <input 
-                  type={showPasswordText ? "text" : "password"} 
-                  className="login-input" 
-                  placeholder="أدخل كلمة مرور محمد الربيش"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleLoginAdmin();
-                  }}
-                />
-                <button 
-                  type="button" 
-                  className="password-toggle-btn"
-                  onClick={() => setShowPasswordText(!showPasswordText)}
-                  title={showPasswordText ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
-                >
-                  {showPasswordText ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                      <line x1="1" y1="1" x2="23" y2="23"></line>
-                    </svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  )}
-                </button>
-              </div>
-              <button onClick={handleLoginAdmin} className="login-btn login-btn-primary">تأكيد الدخول</button>
-              {errorMsg && <div className="error-message">{errorMsg}</div>}
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="password-input-container">
+              <select 
+                className="login-input" 
+                style={{ 
+                  cursor: 'pointer', 
+                  padding: '10px 12px',
+                  textAlign: 'center',
+                  border: '1px solid #334155',
+                  borderRadius: '8px',
+                  backgroundColor: '#1e293b',
+                  color: 'white',
+                  width: '100%',
+                  fontFamily: 'Cairo, sans-serif'
+                }}
+                value={selectedUser}
+                onChange={(e) => {
+                  setSelectedUser(e.target.value);
+                  setPassword('');
+                  setErrorMsg('');
+                }}
+              >
+                <option value="a.alnesayan">البراء النصيان (a.alnesayan)</option>
+                <option value="aalowaid">عبدالله العويد (aalowaid)</option>
+                <option value="af.alamri">عبدالرحمن العمري (af.alamri)</option>
+                <option value="azz.alharbi">عزام الحربي (azz.alharbi)</option>
+                <option value="mialrubaish">محمد الربيش (mialrubaish) - المشرف</option>
+                <option value="s.alghosen">صالح الغصن (s.alghosen)</option>
+                <option value="t.alhedyani">طارق الهدياني (t.alhedyani)</option>
+                <option value="t.almansour">ثامر المنصور (t.almansour)</option>
+              </select>
             </div>
-          )}
+
+            <div className="password-input-container">
+              <input 
+                type={showPasswordText ? "text" : "password"} 
+                className="login-input" 
+                style={{ padding: '10px 38px 10px 12px', borderRadius: '8px' }}
+                placeholder="أدخل كلمة المرور الخاصة بك"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleLoginAdmin();
+                }}
+              />
+              <button 
+                type="button" 
+                className="password-toggle-btn"
+                onClick={() => setShowPasswordText(!showPasswordText)}
+                title={showPasswordText ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+              >
+                {showPasswordText ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            <button onClick={handleLoginAdmin} className="login-btn login-btn-primary">
+              🔑 تسجيل الدخول
+            </button>
+            {errorMsg && <div className="error-message">{errorMsg}</div>}
+          </div>
         </div>
       ) : (
         <>
@@ -931,8 +1017,8 @@ export default function ExtensionPopupPage() {
           <div className="footer">
             <div>تطوير ذكي - 2026 (تحديث فوري تلقائي ⚡)</div>
             <div className="logout-footer">
-              <span className="badge-role" style={{ color: role === 'admin' ? '#10b981' : '#94a3b8' }}>
-                الدور: {role === 'admin' ? '🔑 صلاحيات كاملة' : '👤 نسخ ولصق فقط'}
+              <span className="badge-role" style={{ color: role === 'admin' ? '#10b981' : '#38bdf8' }}>
+                الدور: {role === 'admin' ? '🔑 صلاحيات كاملة' : '👤 معالجة ودمج'}
               </span>
               <button onClick={handleLogout} className="btn-switch-account">
                 ❌ تبديل الحساب

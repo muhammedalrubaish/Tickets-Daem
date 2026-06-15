@@ -36,6 +36,9 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "scratch",
+    "نسخ_احتياطية_وأرشيف",
+    "نسخة احتياطية"
   ]
 }
