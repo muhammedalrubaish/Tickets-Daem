@@ -194,10 +194,10 @@ export default async function IndicatorsPage({
       {/* الشريط العلوي */}
       <header className={styles.header}>
         <div className={styles.titleSection}>
-          <img src="/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8I%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8I.png" alt="شعار بلدي" className={styles.logo} />
+          <img src="/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8A%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A.png" alt="شعار بلدي" className={styles.logo} />
           <div>
             <h1 className={styles.title}>شاشة مؤشرات الأداء الفنية | وحدة بلدي</h1>
-            <p className={styles.subtitle}>📅 {serverDateFormatted} | ⏱️ آخر تحديث: {serverTimeFormatted}</p>
+            <p className={styles.subtitle}><span className={styles.iconWhite}>📅</span> {serverDateFormatted} | <span className={styles.iconWhite}>⏱️</span> آخر تحديث: {serverTimeFormatted}</p>
           </div>
         </div>
 
@@ -247,7 +247,7 @@ export default async function IndicatorsPage({
         
         {/* المخطط 1: الحالة التشغيلية للبلاغات */}
         <div className={styles.chartCard}>
-          <h2 className={styles.chartTitle}>📊 الحالة التشغيلية للبلاغات</h2>
+          <h2 className={styles.chartTitle}><span className={styles.iconGreen}>📊</span> الحالة التشغيلية للبلاغات</h2>
           <div className={styles.donutChartContainer}>
             <svg width="200" height="200" viewBox="0 0 42 42" className={styles.donutSvg}>
               <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="4.2"></circle>
@@ -289,7 +289,7 @@ export default async function IndicatorsPage({
 
         {/* المخطط 2: الأكثر تصنيفاً (أعلى 4 خدمات) */}
         <div className={styles.chartCard}>
-          <h2 className={styles.chartTitle}>📁 أكثر 4 تصنيفات للبلاغات</h2>
+          <h2 className={styles.chartTitle}><span className={styles.iconGreen}>📁</span> أكثر 4 تصنيفات للبلاغات</h2>
           <div className={styles.employeeList}>
             {topFourCategories.map((cat, idx) => {
               const maxCount = topFourCategories[0]?.count || 1;
@@ -319,18 +319,18 @@ export default async function IndicatorsPage({
 
         {/* المخطط 3: مقارنة تقفيل البلاغات العامة (مخطط ذو تباعد جيد لتجنب التداخل) */}
         <div className={styles.chartCard}>
-          <h2 className={styles.chartTitle}>📅 مقارنة تقفيل البلاغات ({prevMonthName} 🆚 {currentMonthName})</h2>
+          <h2 className={styles.chartTitle}><span className={styles.iconGreen}>📅</span> مقارنة تقفيل البلاغات ({prevMonthName} <span className={styles.iconWhite}>🆚</span> {currentMonthName})</h2>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', justifyContent: 'center', flexGrow: 1, minHeight: 0 }}>
             {/* بطاقات الإجمالي */}
             <div style={{ display: 'flex', justifyContent: 'space-around', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
               <div style={{ textAlign: 'center' }}>
-                <span style={{ fontSize: '0.75rem', color: '#cbd5e0', display: 'block' }}>📉 إجمالي منجز {prevMonthName} (السابق)</span>
+                <span style={{ fontSize: '0.75rem', color: '#cbd5e0', display: 'block' }}><span className={styles.iconWhite}>📉</span> إجمالي منجز {prevMonthName} (السابق)</span>
                 <p style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#C8A57F', margin: '0.1rem 0 0' }}>{totalPrevMonthClosures} بلاغ</p>
               </div>
               <div style={{ width: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
               <div style={{ textAlign: 'center' }}>
-                <span style={{ fontSize: '0.75rem', color: '#cbd5e0', display: 'block' }}>📈 إجمالي منجز {currentMonthName} (الجاري)</span>
+                <span style={{ fontSize: '0.75rem', color: '#cbd5e0', display: 'block' }}><span className={styles.iconWhite}>📈</span> إجمالي منجز {currentMonthName} (الجاري)</span>
                 <p style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#16a34a', margin: '0.1rem 0 0' }}>{totalCurrentMonthClosures} بلاغ</p>
               </div>
             </div>
@@ -339,7 +339,7 @@ export default async function IndicatorsPage({
 
         {/* المخطط 4: معدل الاستجابة اليومي */}
         <div className={styles.chartCard} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-          <h2 className={styles.chartTitle} style={{ width: '100%' }}>🎯 معدل الاستجابة اليومي للوحدة</h2>
+          <h2 className={styles.chartTitle} style={{ width: '100%' }}><span className={styles.iconGreen}>🎯</span> معدل الاستجابة اليومي للوحدة</h2>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexGrow: 1, gap: '0.4rem', width: '100%' }}>
             <span style={{ fontSize: '3.5rem', fontWeight: '900', color: '#16a34a', textShadow: '0 0 15px rgba(22, 163, 74, 0.3)', lineHeight: 1 }}>
               {successRate}%
@@ -349,12 +349,12 @@ export default async function IndicatorsPage({
             </span>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', width: '80%', justifyContent: 'space-around' }}>
               <div>
-                <span style={{ fontSize: '0.7rem', color: '#a0aec0', display: 'block' }}>✅ المقفلة</span>
+                <span style={{ fontSize: '0.7rem', color: '#a0aec0', display: 'block' }}><span className={styles.iconWhite}>✅</span> المقفلة</span>
                 <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#16a34a' }}>{closed}</span>
               </div>
               <div style={{ width: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
               <div>
-                <span style={{ fontSize: '0.7rem', color: '#a0aec0', display: 'block' }}>⏳ القائمة</span>
+                <span style={{ fontSize: '0.7rem', color: '#a0aec0', display: 'block' }}><span className={styles.iconWhite}>⏳</span> القائمة</span>
                 <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#ef4444' }}>{activePending}</span>
               </div>
             </div>
