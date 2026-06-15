@@ -114,43 +114,50 @@ export async function createNotionTicket(
   if (!NOTION_STATUS_DATABASE_ID) return;
   console.log(`[Notion Sync] Creating ticket page in Notion: ${ticketNumber}`);
   try {
+    const db = await notion.databases.retrieve({ database_id: NOTION_STATUS_DATABASE_ID });
+
+    const properties: any = {
+      "Name": {
+        title: [
+          {
+            text: {
+              content: ticketNumber
+            }
+          }
+        ]
+      },
+      "نوع التصنيف": {
+        select: category ? { name: category } : null
+      },
+      "الحالة": {
+        select: { name: "قيد الحل" }
+      },
+      "Due Date": {
+        date: date ? { start: date } : null
+      },
+      "سبب البلاغ": {
+        rich_text: [
+          {
+            text: {
+              content: reportText || ""
+            }
+          }
+        ]
+      },
+      "رقم الجوال": {
+        phone_number: phoneNumber || null
+      }
+    };
+
+    if (db.properties["المستقبل"]) {
+      properties["المستقبل"] = {
+        select: receiver ? { name: receiver } : null
+      };
+    }
+
     const response = await notion.pages.create({
       parent: { database_id: NOTION_STATUS_DATABASE_ID },
-      properties: {
-        "Name": {
-          title: [
-            {
-              text: {
-                content: ticketNumber
-              }
-            }
-          ]
-        },
-        "نوع التصنيف": {
-          select: category ? { name: category } : null
-        },
-        "المستقبل": {
-          select: receiver ? { name: receiver } : null
-        },
-        "الحالة": {
-          select: { name: "قيد الحل" }
-        },
-        "Due Date": {
-          date: date ? { start: date } : null
-        },
-        "سبب البلاغ": {
-          rich_text: [
-            {
-              text: {
-                content: reportText || ""
-              }
-            }
-          ]
-        },
-        "رقم الجوال": {
-          phone_number: phoneNumber || null
-        }
-      }
+      properties: properties
     });
     console.log(`[Notion Sync] Created Notion page: ${response.id}`);
     return response.id;
