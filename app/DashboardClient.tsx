@@ -26,6 +26,17 @@ type Props = {
 
 const SYSTEM_UPDATES = [
   {
+    version: 'v8.0.1',
+    title: '📱 تفعيل داعم بلس على الآيباد',
+    points: [
+      'دعم كامل لإنشاء وإسناد البلاغات من أجهزة الآيباد والأجهزة اللوحية',
+      'إضافة زر الإنشاء السريع العائم (داعم بلس) في أسفل يسار الشاشة على الجوال والآيباد',
+      'تحسين تخطيط قائمة أزرار البلاغات لتكون قابلة للتمرير على الشاشات الصغيرة',
+      'ضمان توافق نماذج البلاغات مع متصفح سفاري على أجهزة Apple اللوحية'
+    ],
+    date: '15-06-2026'
+  },
+  {
     version: 'v8.0.0',
     title: '⚡ التحول الكامل لقواعد البيانات فائقة السرعة',
     points: [
@@ -2650,8 +2661,23 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         </div>
       )}
 
+      {/* زر داعم بلس العائم - للأجهزة اللوحية والجوال فقط */}
+      {(userRole === 'editor' || (loggedInUser && loggedInUser.includes('محمد الربيش'))) && (
+        <button
+          className={styles.fabCreateBtn}
+          onClick={() => { setFormMode('notion'); setIsFormOpen(true); }}
+          title="داعم بلس - إنشاء بلاغ جديد"
+          aria-label="إنشاء بلاغ جديد"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+      )}
+
       <AIChat />
-      
+
       {/* تم نقل نافذة تبديل البوابة لتكون تحت الأيقونة مباشرة في الهيدر العلوي */}
 
     </main>
