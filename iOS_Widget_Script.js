@@ -4,7 +4,7 @@
 // متطلبات: تطبيق Scriptable (iOS) — مجاني من App Store
 // ─────────────────────────────────────────────────────────────
 
-const BASE_URL  = "https://balaghat-unit.netlify.app";
+const BASE_URL  = "https://tickets-daem.vercel.app";
 const API_URL   = `${BASE_URL}/api/widget-employee`;
 const WIDGET_URL = `${BASE_URL}/mobile-widget`;
 
