@@ -1,0 +1,19 @@
+/* أنماط تلوين خلية "رقم التذكرة" v19 */
+
+.daem-cell-new { background-color: rgba(59, 130, 246, 0.15) !important; border-right: 5px solid #3b82f6 !important; }
+.daem-cell-recent { background-color: rgba(236, 72, 153, 0.15) !important; border-right: 5px solid #ec4899 !important; }
+.daem-cell-very-old { background-color: rgba(251, 191, 36, 0.15) !important; border-right: 5px solid #fbbf24 !important; }
+.daem-cell-old { background-color: rgba(6, 182, 212, 0.15) !important; border-right: 5px solid #06b6d4 !important; }
+.daem-cell-not-solved { background-color: rgba(239, 68, 68, 0.15) !important; border-right: 5px solid #ef4444 !important; }
+.daem-cell-unassigned { background-image: linear-gradient(to left, rgba(239, 68, 68, 0.2), rgba(153, 27, 27, 0.05)) !important; border-right: 5px solid #991b1b !important; }
+.daem-cell-mismatch { background-color: rgba(245, 158, 11, 0.15) !important; border-right: 5px solid #f59e0b !important; }
+
+/* تنسيق النص داخل الخلية الملونة - تمت إزالة التعديلات على الخط للحفاظ على الشكل الأصلي */
+td.daem-cell-new, td.daem-cell-recent, td.daem-cell-old, td.daem-cell-very-old, td.daem-cell-not-solved, td.daem-cell-unassigned {
+    /* تم حذف font-weight و text-align للحفاظ على التنسيق الأصلي للمنصة */
+}
+
+/* ضمان بقاء الرابط بلونه الأصلي وشكله الطبيعي */
+td.daem-cell-new a, td.daem-cell-recent a, td.daem-cell-old a, td.daem-cell-very-old a, td.daem-cell-not-solved a, td.daem-cell-unassigned a {
+    /* تم حذف color و text-decoration لكي لا يتغير شكل الأرقام */
+}
