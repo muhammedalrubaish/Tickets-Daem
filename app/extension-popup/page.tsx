@@ -35,6 +35,7 @@ export default function ExtensionPopupPage() {
 
   const [selectedUser, setSelectedUser] = useState<string>('mialrubaish');
   const [userArabic, setUserArabic] = useState<string>('');
+  const [spellingEnabled, setSpellingEnabled] = useState<boolean>(true);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -43,6 +44,14 @@ export default function ExtensionPopupPage() {
       
       const paramRole = params.get('role');
       const paramPass = params.get('p') || '';
+      const paramSpelling = params.get('spelling');
+      
+      if (paramSpelling === 'false') {
+        setSpellingEnabled(false);
+      } else {
+        setSpellingEnabled(true);
+      }
+      
       const savedRole = localStorage.getItem('daemRole') as 'admin' | 'support' | null;
       const savedPass = localStorage.getItem('daemPassword') || '';
       const savedUsername = localStorage.getItem('daemUsername') || '';
@@ -244,6 +253,11 @@ export default function ExtensionPopupPage() {
     setPassword('');
     setErrorMsg('');
     setUserArabic('');
+  };
+
+  const handleToggleSpelling = (checked: boolean) => {
+    setSpellingEnabled(checked);
+    window.parent.postMessage({ action: 'SET_SPELLING', enabled: checked }, '*');
   };
 
   function calculateCounts(tickets: Ticket[], loggedInEmpName: string | null): Counts {
@@ -999,6 +1013,60 @@ export default function ExtensionPopupPage() {
                 {nextEmployee}
               </span>
             </div>
+          </div>
+
+          {/* خيار التصحيح الإملائي */}
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '12px',
+            padding: '10px 14px',
+            marginTop: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontFamily: 'Cairo, sans-serif'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 'bold' }}>🪄 وضع التصحيح الإملائي:</span>
+              <span style={{ fontSize: '11px', color: spellingEnabled ? '#10b981' : '#94a3b8', fontWeight: 'bold' }}>
+                {spellingEnabled ? 'مفعل' : 'غير مفعل'}
+              </span>
+            </div>
+            <label style={{
+              position: 'relative',
+              display: 'inline-block',
+              width: '40px',
+              height: '20px',
+              cursor: 'pointer'
+            }}>
+              <input 
+                type="checkbox" 
+                style={{ opacity: 0, width: 0, height: 0 }}
+                checked={spellingEnabled}
+                onChange={(e) => handleToggleSpelling(e.target.checked)}
+              />
+              <span style={{
+                position: 'absolute',
+                top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: spellingEnabled ? '#10b981' : '#475569',
+                transition: '0.3s',
+                borderRadius: '20px',
+                boxShadow: spellingEnabled ? '0 0 6px rgba(16, 185, 129, 0.4)' : 'none'
+              }}>
+                <span style={{
+                  position: 'absolute',
+                  content: '""',
+                  height: '14px',
+                  width: '14px',
+                  left: spellingEnabled ? '22px' : '4px',
+                  bottom: '3px',
+                  backgroundColor: 'white',
+                  transition: '0.3s',
+                  borderRadius: '50%'
+                }} />
+              </span>
+            </label>
           </div>
 
           {/* منصة داعم الرسمية */}
