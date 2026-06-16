@@ -808,6 +808,11 @@
   transform: scale(1.05);
 }
 
+/* زر داعم بلس العائم - مخفي افتراضياً على سطح المكتب */
+.fabCreateBtn {
+  display: none;
+}
+
 /* ===== RESPONSIVE MOBILE DESIGN ===== */
 @media (max-width: 768px) {
 
@@ -934,6 +939,47 @@
 
   .loginTitle {
     font-size: 1.2rem;
+  }
+
+  /* قائمة البلاغات والأزرار - الآيباد والجوال */
+  .listHeader {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .quickActions {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-shrink: 0;
+    max-width: 100%;
+    padding-bottom: 2px;
+  }
+
+  /* زر داعم بلس العائم للآيباد والجوال */
+  .fabCreateBtn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.5);
+    z-index: 1500;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .fabCreateBtn:active {
+    transform: scale(0.92);
+    box-shadow: 0 3px 10px rgba(34, 197, 94, 0.4);
   }
 }
 

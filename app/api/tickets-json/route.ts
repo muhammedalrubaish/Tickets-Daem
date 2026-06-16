@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
+import { getCorsHeaders } from '../../../lib/cors';
 
 // Disable default static caching to ensure the Chrome extension gets real-time data
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function OPTIONS(req: Request) {
+  const headers = getCorsHeaders(req.headers.get('origin'));
+  return new NextResponse(null, { status: 204, headers });
+}
+
+export async function GET(req: Request) {
+  const headers = getCorsHeaders(req.headers.get('origin'));
   try {
     // Query Supabase directly
     const { data: ticketsData, error } = await supabase
@@ -27,9 +34,9 @@ export async function GET() {
       date: ticket.reception_date || ''
     }));
 
-    return NextResponse.json(formattedTickets);
+    return NextResponse.json(formattedTickets, { headers });
   } catch (error: any) {
     console.error('Tickets JSON Fetch Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch tickets from database' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch tickets from database' }, { status: 500, headers });
   }
 }

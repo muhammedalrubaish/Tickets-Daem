@@ -10,6 +10,7 @@ type TicketFormProps = {
   onAddOptimistic?: (ticket: any) => void;
   suggestedReceiver?: string;
   onLoading?: (isLoading: boolean) => void;
+  initialTicketNumber?: string;
 };
 
 const EMPLOYEES = [
@@ -38,11 +39,11 @@ const CATEGORIES = [
   "امتثال المباني", "منصة رسم تقديم منتجات التبغ", "فاتورة سداد آلياً", "أخرى"
 ];
 
-export default function TicketForm({ mode, onClose, currentUser, onAddOptimistic, suggestedReceiver, onLoading }: TicketFormProps) {
+export default function TicketForm({ mode, onClose, currentUser, onAddOptimistic, suggestedReceiver, onLoading, initialTicketNumber }: TicketFormProps) {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    name: suggestedReceiver || currentUser || '', 
-    ticketNumber: '',
+    name: suggestedReceiver || currentUser || '',
+    ticketNumber: initialTicketNumber || '',
     serviceType: '',
     solution: 'بلاغ جديد',
   });
@@ -207,16 +208,22 @@ ________________________________________________________________________________
         <div className={styles.formGroup}>
           <label htmlFor="ticketNumber">
             <span>🔢</span> رقم البلاغ / التذكرة
+            {initialTicketNumber && (
+              <span style={{ fontSize: '0.75rem', color: '#22c55e', marginRight: '8px', fontWeight: 'normal' }}>
+                ✦ داعم بلس
+              </span>
+            )}
           </label>
-          <input 
-            type="text" 
-            id="ticketNumber" 
-            name="ticketNumber" 
+          <input
+            type="text"
+            id="ticketNumber"
+            name="ticketNumber"
             ref={ticketInputRef}
-            value={formData.ticketNumber} 
-            onChange={handleChange} 
-            placeholder="مثال: IM450XXXX" 
-            required 
+            value={formData.ticketNumber}
+            onChange={handleChange}
+            placeholder="مثال: IM450XXXX"
+            required
+            style={initialTicketNumber ? { borderColor: '#22c55e', background: 'rgba(34,197,94,0.05)' } : undefined}
           />
         </div>
 

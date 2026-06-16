@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
+import { getCorsHeaders } from '../../../lib/cors';
+
+export async function OPTIONS(req: Request) {
+  const headers = getCorsHeaders(req.headers.get('origin'));
+  return new NextResponse(null, { status: 204, headers });
+}
 
 export async function POST(req: Request) {
+  const headers = getCorsHeaders(req.headers.get('origin'));
   try {
     let { ticketId, solution, status, receiver, mainTicketId, number, category_type } = await req.json();
 
@@ -44,16 +51,16 @@ export async function POST(req: Request) {
         const { error } = await query.or(conditions.join(','));
         if (error) throw error;
       } else {
-        return NextResponse.json({ error: 'No ticket identifier provided' }, { status: 400 });
+        return NextResponse.json({ error: 'No ticket identifier provided' }, { status: 400, headers });
       }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers });
   } catch (error: any) {
     console.error('Update Error:', error);
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'حدث خطأ أثناء تحديث البيانات في قاعدة البيانات.',
-      details: error?.message 
-    }, { status: 500 });
+      details: error?.message
+    }, { status: 500, headers });
   }
 }
