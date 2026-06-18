@@ -35,7 +35,7 @@ export async function updateNotionTicket(ticketNumber: string, solution?: string
         filter: {
           property: "Name",
           title: {
-            equals: ticketNumber,
+            starts_with: ticketNumber,
           },
         },
       });
@@ -68,7 +68,7 @@ export async function updateNotionTicket(ticketNumber: string, solution?: string
         filter: {
           property: "Name",
           title: {
-            equals: ticketNumber,
+            starts_with: ticketNumber,
           },
         },
       });
@@ -109,19 +109,31 @@ export async function createNotionTicket(
   receiver: string,
   date: string,
   reportText: string,
-  phoneNumber: string
+  phoneNumber: string,
+  municipality?: string
 ) {
   if (!NOTION_STATUS_DATABASE_ID) return;
   console.log(`[Notion Sync] Creating ticket page in Notion: ${ticketNumber}`);
   try {
     const db = await notion.databases.retrieve({ database_id: NOTION_STATUS_DATABASE_ID });
 
+    let formattedPhone = phoneNumber || "";
+    if (formattedPhone.length === 9 && formattedPhone.startsWith('5')) {
+      formattedPhone = '0' + formattedPhone;
+    }
+
+    const titleParts = [ticketNumber];
+    if (municipality) titleParts.push(municipality);
+    if (reportText) titleParts.push(reportText);
+    if (formattedPhone) titleParts.push(formattedPhone);
+    const titleContent = titleParts.join(" - ");
+
     const properties: any = {
       "Name": {
         title: [
           {
             text: {
-              content: ticketNumber
+              content: titleContent
             }
           }
         ]
@@ -191,8 +203,10 @@ export async function syncRecentNotionChanges() {
       console.log(`[Notion Sync] Found ${response.results.length} recently edited pages in NOTION_DATABASE_ID`);
 
       for (const page of response.results as any[]) {
-        const ticketNumber = page.properties.Name?.title?.[0]?.plain_text;
-        if (!ticketNumber || !ticketNumber.startsWith("IM")) continue;
+        const fullTitle = page.properties.Name?.title?.[0]?.plain_text || "";
+        const match = fullTitle.match(/(IM\d+)/);
+        if (!match) continue;
+        const ticketNumber = match[1];
 
         const rawSolution = page.properties["الحل المقترح"]?.select?.name || "لم يتم الحل";
         const solution = mapNotionStatus(rawSolution);
@@ -243,8 +257,10 @@ export async function syncRecentNotionChanges() {
       console.log(`[Notion Sync] Found ${response.results.length} recently edited pages in NOTION_STATUS_DATABASE_ID`);
 
       for (const page of response.results as any[]) {
-        const ticketNumber = page.properties.Name?.title?.[0]?.plain_text;
-        if (!ticketNumber || !ticketNumber.startsWith("IM")) continue;
+        const fullTitle = page.properties.Name?.title?.[0]?.plain_text || "";
+        const match = fullTitle.match(/(IM\d+)/);
+        if (!match) continue;
+        const ticketNumber = match[1];
 
         const rawSolution = page.properties["الحالة"]?.select?.name;
         if (!rawSolution) continue;
