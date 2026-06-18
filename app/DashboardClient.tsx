@@ -966,6 +966,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   }, [searchTerm, activeFilter, selectedReceiver, selectedType, selectedSolution, startDate, endDate]);
   const [isSupOpen, setIsSupOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isVideoTutorialOpen, setIsVideoTutorialOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
   const [editingTicket, setEditingTicket] = useState<Complaint | null>(null);
@@ -2624,6 +2625,19 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               </svg>
             </button>
 
+            {/* فيديو شرح طريقة رفع بلاغ داعم */}
+            <button 
+              className={styles.navIconButton} 
+              onClick={() => setIsVideoTutorialOpen(true)} 
+              title="شرح طريقة رفع بلاغ داعم" 
+              style={{ backgroundColor: 'var(--primary)' }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+              </svg>
+            </button>
+
           </div>
 
         </div>
@@ -2851,6 +2865,31 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* نافذة فيديو الشرح */}
+      {isVideoTutorialOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsVideoTutorialOpen(false)}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{maxWidth:'800px', width:'95vw', background:'#0f172a', border:'2px solid #10b981', padding:'25px'}}>
+            <button className={styles.closeButton} onClick={() => setIsVideoTutorialOpen(false)}>&times;</button>
+            <h2 style={{marginTop:0, fontSize:'1.2rem', color:'#10b981', display:'flex', alignItems:'center', gap:'8px', borderBottom:'1px solid #334155', paddingBottom:'10px'}}>
+              🎥 شرح طريقة رفع بلاغ داعم
+            </h2>
+            
+            <div style={{position:'relative', width:'100%', paddingTop:'56.25%', borderRadius:'12px', overflow:'hidden', boxShadow:'0 10px 25px rgba(0,0,0,0.5)', background:'#000'}}>
+              <video 
+                src="/طريقة رفع بلاغ داعم.mp4" 
+                controls 
+                autoPlay
+                style={{position:'absolute', top:0, left:0, width:'100%', height:'100%', border:'none'}}
+              />
+            </div>
+            
+            <div style={{marginTop:'15px', color:'#94a3b8', fontSize:'0.9rem', direction:'rtl', textAlign:'right'}}>
+              يوضح هذا الفيديو الخطوات التفصيلية لكيفية استخدام إضافة <strong>داعم بلس</strong> لنسخ تفاصيل البلاغات وإسنادها للموظف المناسب وحفظها تلقائياً في قاعدة البيانات.
             </div>
           </div>
         </div>
