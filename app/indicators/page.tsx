@@ -1,5 +1,3 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import styles from './indicators.module.css';
 
@@ -55,43 +53,7 @@ async function getTicketsData() {
   }));
 }
 
-export default async function IndicatorsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  // 1. التحقق من الصلاحيات من خلال الخادم (Server-side Authentication)
-  const resolvedSearchParams = await searchParams;
-  const token = resolvedSearchParams.token;
-  let isAuthorized = false;
-
-  if (token === 'BaladyTV2026') {
-    isAuthorized = true;
-  } else {
-    // التحقق من كوكيز المتصفح في الخادم
-    const cookieStore = await cookies();
-    const authCookie = cookieStore.get('auth_token');
-    
-    if (authCookie) {
-      const value = authCookie.value;
-      if (
-        value === 'super_admin' ||
-        value === 'viewer' ||
-        value === 'admin' ||
-        value === 'true' ||
-        value.indexOf('محمد') !== -1 ||
-        decodeURIComponent(value).indexOf('محمد') !== -1
-      ) {
-        isAuthorized = true;
-      }
-    }
-  }
-
-  // إعادة التوجيه الفوري من الخادم في حال عدم الصلاحية (يمنع ظهور صفحة سوداء)
-  if (!isAuthorized) {
-    redirect('/login');
-  }
-
+export default async function IndicatorsPage() {
   // 2. جلب البيانات وحساب الإحصائيات بالكامل في الخادم
   const tickets = await getTicketsData();
 
