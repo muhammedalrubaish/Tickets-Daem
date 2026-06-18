@@ -279,27 +279,7 @@ export default async function IndicatorsPage() {
           </div>
         </div>
 
-        {/* المخطط 3: مقارنة تقفيل البلاغات العامة (مخطط ذو تباعد جيد لتجنب التداخل) */}
-        <div className={styles.chartCard}>
-          <h2 className={styles.chartTitle}><span className={styles.iconGreen}>📅</span> مقارنة تقفيل البلاغات ({prevMonthName} <span className={styles.iconWhite}>🆚</span> {currentMonthName})</h2>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', justifyContent: 'center', flexGrow: 1, minHeight: 0 }}>
-            {/* بطاقات الإجمالي */}
-            <div style={{ display: 'flex', justifyContent: 'space-around', background: 'rgba(76,154,42,0.04)', padding: '0.5rem', borderRadius: '10px', border: '1px solid rgba(76,154,42,0.1)' }}>
-              <div style={{ textAlign: 'center' }}>
-                <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}><span className={styles.iconWhite}>📉</span> إجمالي منجز {prevMonthName} (السابق)</span>
-                <p style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#b8860b', margin: '0.1rem 0 0' }}>{totalPrevMonthClosures} بلاغ</p>
-              </div>
-              <div style={{ width: '1px', backgroundColor: 'rgba(0,0,0,0.1)' }}></div>
-              <div style={{ textAlign: 'center' }}>
-                <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}><span className={styles.iconWhite}>📈</span> إجمالي منجز {currentMonthName} (الجاري)</span>
-                <p style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#16a34a', margin: '0.1rem 0 0' }}>{totalCurrentMonthClosures} بلاغ</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* المخطط 4: معدل الاستجابة اليومي */}
+        {/* المخطط 3: معدل الاستجابة اليومي */}
         <div className={styles.chartCard} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
           <h2 className={styles.chartTitle} style={{ width: '100%' }}><span className={styles.iconGreen}>🎯</span> معدل الاستجابة اليومي للوحدة</h2>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexGrow: 1, gap: '0.4rem', width: '100%' }}>
@@ -323,8 +303,8 @@ export default async function IndicatorsPage() {
           </div>
         </div>
 
-        {/* المخطط 5: فيديو شرح طريقة رفع البلاغ (دائم ومثبت) */}
-        <div className={styles.chartCard} style={{ gridRow: 'span 2', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        {/* المخطط 4: فيديو شرح طريقة رفع البلاغ (شغال تلقائياً ومستمر) */}
+        <div className={styles.chartCard} style={{ gridRow: '1 / 4', gridColumn: '2', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <h2 className={styles.chartTitle}><span className={styles.iconGreen}>🎥</span> شرح طريقة رفع بلاغ داعم</h2>
           
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.8rem', minHeight: 0 }}>
@@ -332,6 +312,10 @@ export default async function IndicatorsPage() {
               <video 
                 src="/طريقة رفع بلاغ داعم.mp4" 
                 controls 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }}
               />
             </div>
