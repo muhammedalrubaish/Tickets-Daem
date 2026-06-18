@@ -130,7 +130,7 @@ export async function createNotionTicket(
         select: category ? { name: category } : null
       },
       "الحالة": {
-        select: { name: "قيد الحل" }
+        select: { name: "بلاغ جديد" }
       },
       "Due Date": {
         date: date ? { start: date } : null

@@ -14,7 +14,7 @@ export async function POST(req: Request) {
         ticket_number: data.ticketNumber,
         category_type: data.type || data.serviceType || 'أخرى',
         status: (data.solution === 'تم الحل') ? 'إغلاق' : 'قيد المعالجة',
-        solution: data.solution || 'لم يتم الحل',
+        solution: data.solution || 'بلاغ جديد',
         reception_date: data.date,
         receiver: data.receiver || data.name || 'غير محدد'
       })

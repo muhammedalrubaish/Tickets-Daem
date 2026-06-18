@@ -124,7 +124,7 @@ export async function POST(req: Request) {
 
       if (ticket) {
         // تحديد الرد بناءً على حالة البلاغ
-        const status = ticket.solution || 'قيد الحل';
+        const status = ticket.solution || 'بلاغ جديد';
         let responseMsg = '';
 
         if (status === 'تم الحل') {
