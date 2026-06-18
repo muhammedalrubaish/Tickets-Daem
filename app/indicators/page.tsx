@@ -323,6 +323,25 @@ export default async function IndicatorsPage() {
           </div>
         </div>
 
+        {/* المخطط 5: فيديو شرح طريقة رفع البلاغ (دائم ومثبت) */}
+        <div className={styles.chartCard} style={{ gridRow: 'span 2', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <h2 className={styles.chartTitle}><span className={styles.iconGreen}>🎥</span> شرح طريقة رفع بلاغ داعم</h2>
+          
+          <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.8rem', minHeight: 0 }}>
+            <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#000', border: '1px solid rgba(76, 154, 42, 0.2)' }}>
+              <video 
+                src="/طريقة رفع بلاغ داعم.mp4" 
+                controls 
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </div>
+            
+            <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', lineHeight: '1.4', textAlign: 'justify', direction: 'rtl' }}>
+              شرح توضيحي دائم ومثبت يوضح كيفية استخدام إضافة <strong>داعم بلس</strong> لنسخ تفاصيل البلاغات وإسنادها للموظف المناسب وحفظها تلقائياً.
+            </p>
+          </div>
+        </div>
+
       </section>
     </div>
   );
