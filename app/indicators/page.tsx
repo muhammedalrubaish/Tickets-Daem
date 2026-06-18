@@ -207,7 +207,7 @@ export default async function IndicatorsPage({
             <span>تحديث تلقائي للمتصفح كل دقيقة</span>
           </div>
 
-          <a href="/" className={styles.btn} style={{ backgroundColor: 'rgba(200, 165, 127, 0.15)', borderColor: 'rgba(200, 165, 127, 0.3)', color: '#C8A57F' }}>
+          <a href="/" className={styles.btn} style={{ backgroundColor: 'rgba(76, 154, 42, 0.1)', borderColor: 'rgba(76, 154, 42, 0.3)', color: '#4C9A2A' }}>
             العودة للرئيسية &larr;
           </a>
         </div>
@@ -228,7 +228,7 @@ export default async function IndicatorsPage({
             <span className={styles.statLabel}>نسبة الإنجاز</span>
             <span className={styles.statIcon}>🎯</span>
           </div>
-          <span className={styles.statValue} style={{ color: '#16a34a', fontSize: '3rem', fontWeight: '900', textShadow: '0 0 10px rgba(22, 163, 74, 0.2)' }}>{successRate}%</span>
+          <span className={styles.statValue} style={{ color: '#16a34a', fontSize: '3rem', fontWeight: '900' }}>{successRate}%</span>
           <span className={styles.statDesc}>تم إنجاز {closed} بلاغ بنجاح</span>
         </div>
 
@@ -250,7 +250,7 @@ export default async function IndicatorsPage({
           <h2 className={styles.chartTitle}><span className={styles.iconGreen}>📊</span> الحالة التشغيلية للبلاغات</h2>
           <div className={styles.donutChartContainer}>
             <svg width="200" height="200" viewBox="0 0 42 42" className={styles.donutSvg}>
-              <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="4.2"></circle>
+              <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="rgba(0,0,0,0.08)" strokeWidth="4.2"></circle>
               {donutChartData.map((seg, idx) => (
                 <circle
                   key={idx}
@@ -266,10 +266,10 @@ export default async function IndicatorsPage({
                 ></circle>
               ))}
               <g>
-                <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fill="#ffffff" fontSize="4" fontWeight="bold" style={{ transform: 'rotate(90deg)', transformOrigin: '50% 50%' }}>
+                <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fill="#1e293b" fontSize="4" fontWeight="bold" style={{ transform: 'rotate(90deg)', transformOrigin: '50% 50%' }}>
                   {totalVal}
                 </text>
-                <text x="50%" y="62%" dominantBaseline="middle" textAnchor="middle" fill="#a0aec0" fontSize="2" style={{ transform: 'rotate(90deg)', transformOrigin: '50% 50%' }}>
+                <text x="50%" y="62%" dominantBaseline="middle" textAnchor="middle" fill="#64748b" fontSize="2" style={{ transform: 'rotate(90deg)', transformOrigin: '50% 50%' }}>
                   موزعة
                 </text>
               </g>
@@ -323,14 +323,14 @@ export default async function IndicatorsPage({
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', justifyContent: 'center', flexGrow: 1, minHeight: 0 }}>
             {/* بطاقات الإجمالي */}
-            <div style={{ display: 'flex', justifyContent: 'space-around', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-around', background: 'rgba(76,154,42,0.04)', padding: '0.5rem', borderRadius: '10px', border: '1px solid rgba(76,154,42,0.1)' }}>
               <div style={{ textAlign: 'center' }}>
-                <span style={{ fontSize: '0.75rem', color: '#cbd5e0', display: 'block' }}><span className={styles.iconWhite}>📉</span> إجمالي منجز {prevMonthName} (السابق)</span>
-                <p style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#C8A57F', margin: '0.1rem 0 0' }}>{totalPrevMonthClosures} بلاغ</p>
+                <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}><span className={styles.iconWhite}>📉</span> إجمالي منجز {prevMonthName} (السابق)</span>
+                <p style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#b8860b', margin: '0.1rem 0 0' }}>{totalPrevMonthClosures} بلاغ</p>
               </div>
-              <div style={{ width: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+              <div style={{ width: '1px', backgroundColor: 'rgba(0,0,0,0.1)' }}></div>
               <div style={{ textAlign: 'center' }}>
-                <span style={{ fontSize: '0.75rem', color: '#cbd5e0', display: 'block' }}><span className={styles.iconWhite}>📈</span> إجمالي منجز {currentMonthName} (الجاري)</span>
+                <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}><span className={styles.iconWhite}>📈</span> إجمالي منجز {currentMonthName} (الجاري)</span>
                 <p style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#16a34a', margin: '0.1rem 0 0' }}>{totalCurrentMonthClosures} بلاغ</p>
               </div>
             </div>
@@ -341,20 +341,20 @@ export default async function IndicatorsPage({
         <div className={styles.chartCard} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
           <h2 className={styles.chartTitle} style={{ width: '100%' }}><span className={styles.iconGreen}>🎯</span> معدل الاستجابة اليومي للوحدة</h2>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexGrow: 1, gap: '0.4rem', width: '100%' }}>
-            <span style={{ fontSize: '3.5rem', fontWeight: '900', color: '#16a34a', textShadow: '0 0 15px rgba(22, 163, 74, 0.3)', lineHeight: 1 }}>
+            <span style={{ fontSize: '3.5rem', fontWeight: '900', color: '#16a34a', lineHeight: 1 }}>
               {successRate}%
             </span>
-            <span style={{ fontSize: '0.8rem', color: '#cbd5e0', fontWeight: '600' }}>
+            <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>
               نسبة البلاغات المقفلة من الإجمالي
             </span>
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', background: 'rgba(255,255,255,0.02)', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', width: '80%', justifyContent: 'space-around' }}>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', background: 'rgba(76,154,42,0.04)', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid rgba(76,154,42,0.1)', width: '80%', justifyContent: 'space-around' }}>
               <div>
-                <span style={{ fontSize: '0.7rem', color: '#a0aec0', display: 'block' }}><span className={styles.iconWhite}>✅</span> المقفلة</span>
+                <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}><span className={styles.iconWhite}>✅</span> المقفلة</span>
                 <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#16a34a' }}>{closed}</span>
               </div>
-              <div style={{ width: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
+              <div style={{ width: '1px', backgroundColor: 'rgba(0,0,0,0.1)' }}></div>
               <div>
-                <span style={{ fontSize: '0.7rem', color: '#a0aec0', display: 'block' }}><span className={styles.iconWhite}>⏳</span> القائمة</span>
+                <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}><span className={styles.iconWhite}>⏳</span> القائمة</span>
                 <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#ef4444' }}>{activePending}</span>
               </div>
             </div>

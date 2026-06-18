@@ -1,8 +1,8 @@
 .container {
   height: 111.12vh;
   width: 111.12vw;
-  background: radial-gradient(circle at top left, #121c16, #090c0a);
-  color: #f8fafc;
+  background: linear-gradient(135deg, #f0f7ec, #f8fafc);
+  color: #1e293b;
   padding: 0.6rem;
   font-family: 'Cairo', sans-serif;
   direction: rtl;
@@ -14,7 +14,6 @@
   transform-origin: top right;
 }
 
-/* Chrome / Edge / Safari يدعمون zoom مما يلغي transform */
 @supports (zoom: 1) {
   .container {
     height: 100vh;
@@ -28,7 +27,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(76, 154, 42, 0.2);
+  border-bottom: 1px solid rgba(76, 154, 42, 0.25);
   padding-bottom: 0.4rem;
   margin-bottom: 0.5rem;
   flex-shrink: 0;
@@ -43,13 +42,13 @@
 .logo {
   height: 38px;
   width: auto;
-  filter: brightness(0) invert(1) drop-shadow(0 0 6px rgba(76, 154, 42, 0.6));
+  filter: drop-shadow(0 0 4px rgba(76, 154, 42, 0.3));
 }
 
 .title {
   font-size: 1.25rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #4C9A2A, #C8A57F);
+  background: linear-gradient(135deg, #4C9A2A, #b8860b);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -59,7 +58,7 @@
 
 .subtitle {
   font-size: 0.75rem;
-  color: #a0aec0;
+  color: #64748b;
   margin-top: 0.05rem;
 }
 
@@ -70,9 +69,9 @@
 }
 
 .btn {
-  background: rgba(76, 154, 42, 0.15);
+  background: rgba(76, 154, 42, 0.1);
   border: 1px solid rgba(76, 154, 42, 0.3);
-  color: #f8fafc;
+  color: #1e293b;
   padding: 0.3rem 0.6rem;
   border-radius: 5px;
   font-size: 0.75rem;
@@ -84,17 +83,17 @@
 }
 
 .btn:hover {
-  background: rgba(76, 154, 42, 0.3);
+  background: rgba(76, 154, 42, 0.2);
   border-color: #4C9A2A;
 }
 
 .refreshTimer {
   font-size: 0.7rem;
-  color: #C8A57F;
-  background: rgba(200, 165, 127, 0.1);
+  color: #4C9A2A;
+  background: rgba(76, 154, 42, 0.08);
   padding: 0.25rem 0.5rem;
   border-radius: 20px;
-  border: 1px solid rgba(200, 165, 127, 0.2);
+  border: 1px solid rgba(76, 154, 42, 0.2);
   display: flex;
   align-items: center;
   gap: 0.3rem;
@@ -103,7 +102,7 @@
 .timerDot {
   width: 5px;
   height: 5px;
-  background-color: #C8A57F;
+  background-color: #4C9A2A;
   border-radius: 50%;
   animation: pulse 1.5s infinite;
 }
@@ -123,10 +122,8 @@
 }
 
 .statCard {
-  background: rgba(35, 42, 38, 0.6);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #ffffff;
+  border: 1px solid rgba(76, 154, 42, 0.15);
   border-radius: 10px;
   padding: 0.6rem 0.8rem;
   display: flex;
@@ -134,7 +131,7 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .statCard::before {
@@ -156,19 +153,17 @@
 
 .statLabel {
   font-size: 0.75rem;
-  color: #a0aec0;
+  color: #64748b;
   font-weight: 600;
 }
 
 .statIcon {
-  font-size: 0.95rem;
-  opacity: 0.85;
-  filter: brightness(0) invert(1);
+  font-size: 1.1rem;
+  opacity: 0.9;
 }
 
 .iconWhite {
   display: inline-block;
-  filter: brightness(0) invert(1);
 }
 
 .iconGreen {
@@ -179,14 +174,14 @@
 .statValue {
   font-size: 1.6rem;
   font-weight: 800;
-  color: #ffffff;
+  color: #1e293b;
   line-height: 1.1;
   margin-bottom: 0.1rem;
 }
 
 .statDesc {
   font-size: 0.7rem;
-  color: #718096;
+  color: #64748b;
 }
 
 /* 2x2 Dashboard Grid */
@@ -200,13 +195,11 @@
 }
 
 .chartCard {
-  background: rgba(35, 42, 38, 0.6);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #ffffff;
+  border: 1px solid rgba(76, 154, 42, 0.15);
   border-radius: 10px;
   padding: 0.6rem 0.8rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -216,8 +209,8 @@
   font-size: 0.9rem;
   font-weight: 700;
   margin-bottom: 0.4rem;
-  color: #C8A57F;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #4C9A2A;
+  border-bottom: 1px solid rgba(76, 154, 42, 0.12);
   padding-bottom: 0.2rem;
   flex-shrink: 0;
 }
@@ -246,7 +239,7 @@
 }
 
 .employeeName {
-  color: #e2e8f0;
+  color: #1e293b;
 }
 
 .employeeCount {
@@ -254,14 +247,14 @@
 }
 
 .progressBarBg {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.08);
   height: 6px;
   border-radius: 3px;
   overflow: hidden;
 }
 
 .progressBarFill {
-  background: linear-gradient(90deg, #4C9A2A, #C8A57F);
+  background: linear-gradient(90deg, #4C9A2A, #86b86a);
   height: 100%;
   border-radius: 3px;
 }
@@ -309,11 +302,11 @@
 }
 
 .legendName {
-  color: #cbd5e0;
+  color: #4a5568;
 }
 
 .legendVal {
-  color: #ffffff;
+  color: #1e293b;
   font-weight: 700;
   margin-right: auto;
   padding-right: 0.4rem;
@@ -334,25 +327,25 @@
 
 .comparisonTable th {
   padding: 0.3rem 0.5rem;
-  color: #C8A57F;
-  border-bottom: 2px solid rgba(200, 165, 127, 0.2);
+  color: #4C9A2A;
+  border-bottom: 2px solid rgba(76, 154, 42, 0.2);
   font-weight: 700;
   font-size: 0.75rem;
   position: sticky;
   top: 0;
-  background: #111613;
+  background: #f8fafc;
   z-index: 10;
 }
 
 .comparisonTable td {
   padding: 0.3rem 0.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color: #e2e8f0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  color: #1e293b;
   font-size: 0.7rem;
 }
 
 .comparisonTable tr:hover td {
-  background: rgba(76, 154, 42, 0.05);
+  background: rgba(76, 154, 42, 0.04);
 }
 
 .trendIndicator {
@@ -367,20 +360,19 @@
 
 .trendUp {
   background: rgba(22, 163, 74, 0.1);
-  color: #22c55e;
+  color: #16a34a;
 }
 
 .trendDown {
   background: rgba(220, 38, 38, 0.1);
-  color: #ef4444;
+  color: #dc2626;
 }
 
 .trendNeutral {
-  background: rgba(148, 163, 184, 0.1);
-  color: #94a3b8;
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748b;
 }
 
-/* Duration stats styling */
 .durationContainer {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -389,8 +381,8 @@
 }
 
 .durationMiniCard {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(76, 154, 42, 0.05);
+  border: 1px solid rgba(76, 154, 42, 0.1);
   border-radius: 6px;
   padding: 0.3rem;
   text-align: center;
@@ -399,13 +391,13 @@
 .durationVal {
   font-size: 1.15rem;
   font-weight: 800;
-  color: #C8A57F;
+  color: #4C9A2A;
   margin: 0.05rem 0;
 }
 
 .durationLabel {
   font-size: 0.7rem;
-  color: #a0aec0;
+  color: #64748b;
 }
 
 .distributionList {
@@ -426,13 +418,13 @@
 .distLabel {
   width: 70px;
   font-size: 0.7rem;
-  color: #cbd5e0;
+  color: #4a5568;
   flex-shrink: 0;
 }
 
 .distProgressBg {
   flex-grow: 1;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.08);
   height: 5px;
   border-radius: 2px;
   overflow: hidden;
@@ -449,16 +441,17 @@
   font-weight: bold;
   text-align: left;
   flex-shrink: 0;
+  color: #1e293b;
 }
 
 .unauthorized {
   min-height: 100vh;
-  background: #090c0a;
+  background: #f8fafc;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: #ffffff;
+  color: #1e293b;
   gap: 1.5rem;
   text-align: center;
   padding: 2rem;
