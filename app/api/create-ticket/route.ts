@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
 import { sendPushNotification } from '../../../lib/push';
 import { createNotionTicket } from '../../../lib/notionSync';
+import { syncTicketsToGoogleSheets } from '../../../lib/googleSheetsSync';
 
 export async function POST(req: Request) {
   try {
@@ -60,9 +61,12 @@ export async function POST(req: Request) {
       console.error('Failed to trigger push notification for new ticket:', pushErr);
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      pageId: insertedTicket?.id || 'supabase-' + Date.now() 
+    // مزامنة تلقائية مع Google Sheets في Drive
+    syncTicketsToGoogleSheets();
+
+    return NextResponse.json({
+      success: true,
+      pageId: insertedTicket?.id || 'supabase-' + Date.now()
     });
   } catch (error: any) {
     console.error('Create Ticket Error:', error);

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
 import { sendPushNotification } from '../../../lib/push';
 import { updateNotionTicket } from '../../../lib/notionSync';
+import { syncTicketsToGoogleSheets } from '../../../lib/googleSheetsSync';
 
 export async function POST(req: Request) {
   try {
@@ -92,6 +93,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'No ticket identifier provided' }, { status: 400 });
       }
     }
+
+    // مزامنة تلقائية مع Google Sheets في Drive
+    syncTicketsToGoogleSheets();
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
