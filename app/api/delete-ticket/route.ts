@@ -61,10 +61,6 @@ export async function POST(req: Request) {
       console.error('Failed to send delete push notification:', pushErr);
     }
 
-    // مزامنة تلقائية مع Google Sheets في Drive
-    const { syncTicketsToGoogleSheets } = await import('../../../lib/googleSheetsSync');
-    syncTicketsToGoogleSheets();
-
     return NextResponse.json({ success: true });
 
   } catch (error) {
