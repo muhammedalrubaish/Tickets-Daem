@@ -36,6 +36,39 @@ const CATEGORIES = {
   other: { id: 'other', label: 'طلبات أخرى', color: '#7d8590', glow: 'rgba(125,133,144,0.3)', icon: '📋' }
 };
 
+// مكون مخصص لتحريك الأعداد والعد التصاعدي بشكل جمالي عند فتح الصفحة
+function AnimatedNumber({ value }: { value: number }) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = Math.floor(value);
+    if (start === end) {
+      setDisplayValue(end);
+      return;
+    }
+    
+    // Animate over 800ms
+    const duration = 800; 
+    const range = end - start;
+    let current = start;
+    const increment = end > start ? 1 : -1;
+    const stepTime = Math.max(Math.abs(Math.floor(duration / range)), 12);
+    
+    const timer = setInterval(() => {
+      current += increment;
+      setDisplayValue(current);
+      if (current === end) {
+        clearInterval(timer);
+      }
+    }, stepTime);
+    
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return <span>{displayValue}</span>;
+}
+
 export default function MunicipalitiesPage() {
   const [dataSourceType, setDataSourceType] = useState<'demo' | 'excel'>('demo');
   const [excelFileName, setExcelFileName] = useState<string>('');
@@ -436,40 +469,40 @@ export default function MunicipalitiesPage() {
 
       {/* KPI Cards Grid */}
       <div className={styles.kpiGrid}>
-        <div className={styles.kpiCard} style={{ '--kpi-color': 'var(--foreground)' } as React.CSSProperties}>
+        <div className={styles.kpiCard} style={{ '--kpi-color': 'var(--foreground)', '--kpi-glow': 'rgba(255,255,255,0.05)' } as React.CSSProperties}>
           <div className={styles.kpiCardHeader}>
             <span className={styles.kpiTitle}>إجمالي الطلبات</span>
             <span className={styles.kpiIcon}>📋</span>
           </div>
-          <div className={styles.kpiNumber}>{kpis.total}</div>
+          <div className={styles.kpiNumber}><AnimatedNumber value={kpis.total} /></div>
         </div>
-        <div className={styles.kpiCard} style={{ '--kpi-color': CATEGORIES.commercial.color } as React.CSSProperties}>
+        <div className={styles.kpiCard} style={{ '--kpi-color': CATEGORIES.commercial.color, '--kpi-glow': CATEGORIES.commercial.glow } as React.CSSProperties}>
           <div className={styles.kpiCardHeader}>
             <span className={styles.kpiTitle}>{CATEGORIES.commercial.label}</span>
             <span className={styles.kpiIcon}>{CATEGORIES.commercial.icon}</span>
           </div>
-          <div className={styles.kpiNumber}>{kpis.commercial}</div>
+          <div className={styles.kpiNumber}><AnimatedNumber value={kpis.commercial} /></div>
         </div>
-        <div className={styles.kpiCard} style={{ '--kpi-color': CATEGORIES.construction.color } as React.CSSProperties}>
+        <div className={styles.kpiCard} style={{ '--kpi-color': CATEGORIES.construction.color, '--kpi-glow': CATEGORIES.construction.glow } as React.CSSProperties}>
           <div className={styles.kpiCardHeader}>
             <span className={styles.kpiTitle}>{CATEGORIES.construction.label}</span>
             <span className={styles.kpiIcon}>{CATEGORIES.construction.icon}</span>
           </div>
-          <div className={styles.kpiNumber}>{kpis.construction}</div>
+          <div className={styles.kpiNumber}><AnimatedNumber value={kpis.construction} /></div>
         </div>
-        <div className={styles.kpiCard} style={{ '--kpi-color': CATEGORIES.housing.color } as React.CSSProperties}>
+        <div className={styles.kpiCard} style={{ '--kpi-color': CATEGORIES.housing.color, '--kpi-glow': CATEGORIES.housing.glow } as React.CSSProperties}>
           <div className={styles.kpiCardHeader}>
             <span className={styles.kpiTitle}>{CATEGORIES.housing.label}</span>
             <span className={styles.kpiIcon}>{CATEGORIES.housing.icon}</span>
           </div>
-          <div className={styles.kpiNumber}>{kpis.housing}</div>
+          <div className={styles.kpiNumber}><AnimatedNumber value={kpis.housing} /></div>
         </div>
-        <div className={styles.kpiCard} style={{ '--kpi-color': CATEGORIES.agency.color } as React.CSSProperties}>
+        <div className={styles.kpiCard} style={{ '--kpi-color': CATEGORIES.agency.color, '--kpi-glow': CATEGORIES.agency.glow } as React.CSSProperties}>
           <div className={styles.kpiCardHeader}>
             <span className={styles.kpiTitle}>{CATEGORIES.agency.label}</span>
             <span className={styles.kpiIcon}>{CATEGORIES.agency.icon}</span>
           </div>
-          <div className={styles.kpiNumber}>{kpis.agency}</div>
+          <div className={styles.kpiNumber}><AnimatedNumber value={kpis.agency} /></div>
         </div>
       </div>
 
@@ -501,6 +534,7 @@ export default function MunicipalitiesPage() {
                     strokeDasharray={strokeDasharray}
                     strokeDashoffset={strokeDashoffset}
                     transform="rotate(-90 100 100)"
+                    className={styles.donutSegment}
                     style={{
                       transition: 'all 0.3s ease',
                       cursor: 'pointer',
