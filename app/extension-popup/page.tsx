@@ -19,7 +19,7 @@ interface Counts {
   unassigned: number;
   notSolved: number;
 }
-const LATEST_VERSION = '1.4';
+const LATEST_VERSION = '2.0';
 
 export default function ExtensionPopupPage() {
   const [counts, setCounts] = useState<Counts>({ new: 0, recent: 0, old: 0, veryOld: 0, unassigned: 0, notSolved: 0 });
