@@ -19,7 +19,7 @@ interface Counts {
   unassigned: number;
   notSolved: number;
 }
-const LATEST_VERSION = '2.0';
+const LATEST_VERSION = '1.3';
 
 export default function ExtensionPopupPage() {
   const [counts, setCounts] = useState<Counts>({ new: 0, recent: 0, old: 0, veryOld: 0, unassigned: 0, notSolved: 0 });
@@ -386,50 +386,52 @@ export default function ExtensionPopupPage() {
         }
 
         .stats-grid {
-          display: flex !important;
-          flex-direction: column !important;
-          gap: 4px !important;
+          display: grid !important;
+          grid-template-columns: 1fr 1fr !important;
+          gap: 6px !important;
         }
 
         .stat-card {
           display: flex !important;
           align-items: center !important;
-          justify-content: space-between !important;
-          padding: 5px 10px !important;
-          background: rgba(255, 255, 255, 0.05) !important;
-          border-radius: 6px !important;
-          border: 1px solid rgba(255, 255, 255, 0.05) !important;
-          transition: all 0.2s ease !important;
+          gap: 8px !important;
+          padding: 7px 8px !important;
+          background: rgba(255, 255, 255, 0.04) !important;
+          border-radius: 10px !important;
+          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+          transition: all 0.25s ease !important;
+          direction: rtl !important;
+          cursor: default !important;
         }
 
         .stat-card:hover {
           background: rgba(255, 255, 255, 0.08) !important;
+          transform: translateY(-1px) !important;
         }
 
-        .label-group {
+        .stat-info {
           display: flex !important;
-          align-items: center !important;
-          gap: 10px !important;
+          flex-direction: column !important;
+          gap: 1px !important;
+          flex: 1 !important;
+          min-width: 0 !important;
+          text-align: right !important;
         }
 
-        .dot {
-          width: 8px !important;
-          height: 8px !important;
-          border-radius: 50% !important;
+        .stat-label {
+          font-size: 9.5px !important;
+          color: #94a3b8 !important;
+          white-space: nowrap !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+          font-weight: 600 !important;
         }
 
-        .count {
-          font-weight: 700 !important;
-          font-size: 14px !important;
-          color: #38bdf8 !important;
+        .stat-count {
+          font-size: 22px !important;
+          font-weight: 800 !important;
+          line-height: 1.1 !important;
         }
-
-        .dot-new { background: #3b82f6 !important; box-shadow: 0 0 8px #3b82f6 !important; }
-        .dot-recent { background: #ec4899 !important; box-shadow: 0 0 8px #ec4899 !important; }
-        .dot-very-old { background: #fbbf24 !important; box-shadow: 0 0 8px #fbbf24 !important; }
-        .dot-old { background: #06b6d4 !important; box-shadow: 0 0 8px #06b6d4 !important; }
-        .dot-not-solved { background: #ef4444 !important; box-shadow: 0 0 8px #ef4444 !important; }
-        .dot-unassigned { background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%) !important; box-shadow: 0 0 8px #ef4444 !important; }
 
         .update-banner {
           display: block !important;
@@ -908,53 +910,55 @@ export default function ExtensionPopupPage() {
             <div className="loading-pulse">جاري جلب العدادات الحية... ⚡</div>
           ) : (
             <div className="stats-grid">
-              <div className="stat-card">
-                <div className="label-group">
-                  <div className="dot dot-new"></div>
-                  <span>بلاغات جديدة (بالموقع)</span>
-                </div>
-                <div className="count">{counts.new}</div>
-              </div>
-
-              <div className="stat-card">
-                <div className="label-group">
-                  <div className="dot dot-recent"></div>
-                  <span>بانتظار المستفيد (بالموقع)</span>
-                </div>
-                <div className="count">{counts.recent}</div>
-              </div>
-
-              <div className="stat-card">
-                <div className="label-group">
-                  <div className="dot dot-very-old"></div>
-                  <span>لدى الوزارة (بالموقع)</span>
-                </div>
-                <div className="count">{counts.veryOld}</div>
-              </div>
-
-              <div className="stat-card">
-                <div className="label-group">
-                  <div className="dot dot-old"></div>
-                  <span>مشكلة عامة (بالموقع)</span>
-                </div>
-                <div className="count">{counts.old}</div>
-              </div>
-
-              <div className="stat-card">
-                <div className="label-group">
-                  <div className="dot dot-not-solved"></div>
-                  <span>لم يتم الحل (بالموقع)</span>
-                </div>
-                <div className="count">{counts.notSolved}</div>
-              </div>
-
-              <div className="stat-card">
-                <div className="label-group">
-                  <div className="dot dot-unassigned"></div>
-                  <span>متأخر أكثر من أسبوع</span>
-                </div>
-                <div className="count">{counts.unassigned}</div>
-              </div>
+              {[
+                { label: 'بلاغات جديدة', count: counts.new, color: '#3b82f6' },
+                { label: 'بانتظار المستفيد', count: counts.recent, color: '#ec4899' },
+                { label: 'لدى الوزارة', count: counts.veryOld, color: '#fbbf24' },
+                { label: 'مشكلة عامة', count: counts.old, color: '#06b6d4' },
+                { label: 'لم يتم الحل', count: counts.notSolved, color: '#ef4444' },
+                { label: 'متأخر >أسبوع', count: counts.unassigned, color: '#f43f5e' },
+              ].map(({ label, count, color }) => {
+                const r = 14;
+                const circ = 2 * Math.PI * r;
+                const percent = totalTickets > 0 ? Math.min((count / totalTickets) * 100, 100) : 0;
+                const dash = (percent / 100) * circ;
+                return (
+                  <div
+                    key={label}
+                    className="stat-card"
+                    style={{ borderColor: `${color}55`, boxShadow: `0 0 10px ${color}18` }}
+                  >
+                    <svg width="38" height="38" viewBox="0 0 36 36" style={{ flexShrink: 0, transform: 'rotate(-90deg)' }}>
+                      <circle cx="18" cy="18" r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="3.5" />
+                      <circle
+                        cx="18" cy="18" r={r}
+                        fill="none"
+                        stroke={color}
+                        strokeWidth="3.5"
+                        strokeDasharray={`${dash} ${circ}`}
+                        strokeLinecap="round"
+                        style={{ filter: `drop-shadow(0 0 4px ${color})`, transition: 'stroke-dasharray 1s ease' }}
+                      />
+                      <text
+                        x="18" y="18"
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fill="#f8fafc"
+                        fontSize="7"
+                        fontWeight="bold"
+                        fontFamily="Cairo, sans-serif"
+                        style={{ transform: 'rotate(90deg)', transformOrigin: '18px 18px' }}
+                      >
+                        {Math.round(percent)}%
+                      </text>
+                    </svg>
+                    <div className="stat-info">
+                      <span className="stat-label">{label}</span>
+                      <span className="stat-count" style={{ color }}>{count}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 
