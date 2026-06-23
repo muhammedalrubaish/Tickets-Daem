@@ -1,4 +1,16 @@
 .container {
+  --background: #0a120e;
+  --foreground: #ffffff;
+  --card-bg: #13241b;
+  --border: #1e3629;
+  --primary: #4ade80;
+  --primary-hover: #22c55e;
+  --secondary: #81ff3a;
+  --text-muted: #759982;
+  --warning: #f59e0b;
+  --success: #81ff3a;
+  --danger: #ef4444;
+
   min-height: 100vh;
   width: 100%;
   background: var(--background);
@@ -32,7 +44,7 @@
 .logo {
   height: 42px;
   width: auto;
-  filter: drop-shadow(0 0 4px rgba(76, 154, 42, 0.3));
+  filter: drop-shadow(0 0 6px rgba(74, 222, 128, 0.2));
 }
 
 .title {
@@ -60,8 +72,8 @@
 }
 
 .btn {
-  background: rgba(76, 154, 42, 0.1);
-  border: 1px solid rgba(76, 154, 42, 0.3);
+  background: rgba(74, 222, 128, 0.05);
+  border: 1px solid rgba(74, 222, 128, 0.20);
   color: var(--foreground);
   padding: 0.5rem 1rem;
   border-radius: 8px;
@@ -76,13 +88,13 @@
 
 .btn:hover {
   background: var(--primary);
-  color: white;
+  color: #0a120e;
   border-color: var(--primary-hover);
 }
 
 .btnPrimary {
   background: var(--primary);
-  color: white;
+  color: #0a120e;
   border: 1px solid var(--primary-hover);
   padding: 0.5rem 1rem;
   border-radius: 8px;
@@ -97,6 +109,7 @@
 
 .btnPrimary:hover {
   background: var(--primary-hover);
+  color: #0a120e;
 }
 
 /* Upload Dropzone Styling */
@@ -105,21 +118,21 @@
   flex-direction: column;
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 1.25rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   margin-bottom: 1.5rem;
   gap: 12px;
 }
 
 .dropzone {
   border: 2px dashed var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 1.5rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.25s ease;
-  background: rgba(0,0,0,0.02);
+  background: rgba(74, 222, 128, 0.01);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -128,7 +141,7 @@
 
 .dropzone:hover, .dropzoneActive {
   border-color: var(--primary);
-  background: rgba(76, 154, 42, 0.04);
+  background: rgba(74, 222, 128, 0.04);
 }
 
 .dropzoneIcon {
@@ -165,8 +178,8 @@
 
 .sourceBadgeExcel {
   font-size: 0.75rem;
-  background: rgba(34, 197, 94, 0.15);
-  color: var(--success);
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--primary);
   padding: 4px 10px;
   border-radius: 20px;
   font-weight: 700;
@@ -183,7 +196,7 @@
 .kpiCard {
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 1.25rem 1rem;
   display: flex;
   flex-direction: column;
@@ -191,22 +204,22 @@
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .kpiCard:hover {
   transform: translateY(-4px);
   border-color: var(--kpi-color);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 0 15px var(--kpi-glow);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 15px var(--kpi-glow);
 }
 
 .kpiCard::before {
   content: '';
   position: absolute;
   top: 0;
+  left: 0;
   right: 0;
-  width: 4px;
-  height: 100%;
+  height: 4px;
   background: var(--kpi-color, var(--primary));
 }
 
@@ -392,7 +405,7 @@
 }
 
 .styledTable th {
-  background: #1c2d47; /* Blue Accent for Header matching the user's template */
+  background: #182e22; /* Forest Green Accent for Header matching the image theme */
   color: #ffffff;
   font-weight: 700;
   padding: 12px 14px;
@@ -410,11 +423,11 @@
 }
 
 .styledTable tbody tr:hover td {
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(74, 222, 128, 0.04);
 }
 
 .styledTable tr.totalRow td {
-  background: #15253c; /* Blue accent matching total row */
+  background: #112219; /* Forest Green accent matching total row */
   color: #ffffff;
   font-weight: 700;
   border-top: 2px solid var(--border);
@@ -515,7 +528,7 @@
 }
 
 .table th {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(74, 222, 128, 0.04);
   text-align: right;
   padding: 10px 14px;
   font-weight: 700;
@@ -531,7 +544,7 @@
 }
 
 .table tbody tr:hover {
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(74, 222, 128, 0.03);
 }
 
 .statusBadge {

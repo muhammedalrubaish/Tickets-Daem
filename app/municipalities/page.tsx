@@ -29,11 +29,11 @@ const DEMO_DATA = [
 ];
 
 const CATEGORIES = {
-  commercial: { id: 'commercial', label: 'الالطلبات التجارية', color: '#22c55e', glow: 'rgba(34,197,94,0.3)', icon: '🏪' },
-  construction: { id: 'construction', label: 'الالطلبات الإنشائية', color: '#f97316', glow: 'rgba(249,115,22,0.3)', icon: '🏗️' },
-  housing: { id: 'housing', label: 'طلبات السكن الجماعي', color: '#a855f7', glow: 'rgba(168,85,247,0.3)', icon: '🏢' },
-  agency: { id: 'agency', label: 'طلبات عن الوكالة', color: '#06b6d4', glow: 'rgba(6,182,212,0.3)', icon: '💼' },
-  other: { id: 'other', label: 'طلبات أخرى', color: '#7d8590', glow: 'rgba(125,133,144,0.3)', icon: '📋' }
+  commercial: { id: 'commercial', label: 'الطلبات التجارية', color: '#81ff3a', glow: 'rgba(129,255,58,0.2)', icon: '🏪' },
+  construction: { id: 'construction', label: 'الطلبات الإنشائية', color: '#4ade80', glow: 'rgba(74,222,128,0.2)', icon: '🏗️' },
+  housing: { id: 'housing', label: 'طلبات السكن الجماعي', color: '#22c55e', glow: 'rgba(34,197,94,0.2)', icon: '🏢' },
+  agency: { id: 'agency', label: 'طلبات عن الوكالة', color: '#15803d', glow: 'rgba(21,128,61,0.2)', icon: '💼' },
+  other: { id: 'other', label: 'طلبات أخرى', color: '#759982', glow: 'rgba(117,153,130,0.2)', icon: '📋' }
 };
 
 // مكون مخصص لتحريك الأعداد والعد التصاعدي بشكل جمالي عند فتح الصفحة
@@ -365,7 +365,12 @@ export default function MunicipalitiesPage() {
     const list = municipalitySummaryTable.rows.map(row => ({
       name: row.municipality.replace("بلدية ", ""),
       fullName: row.municipality,
-      count: row.total
+      count: row.total,
+      commercial: row.commercial,
+      construction: row.construction,
+      housing: row.housing,
+      agency: row.agency,
+      other: row.other
     })).filter(item => item.count > 0);
     
     const maxCount = Math.max(...list.map(d => d.count), 5);
@@ -403,10 +408,10 @@ export default function MunicipalitiesPage() {
       {/* الشريط العلوي */}
       <header className={styles.header}>
         <div className={styles.titleSection}>
-          <img src="/%D8%B4%D8%B9%D8%A7%D8%B1%20%D8%A8%D9%84%D8%AF%D9%8A%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A.png" alt="شعار بلدي" className={styles.logo} />
+          <span style={{ fontSize: '1.8rem', marginRight: '6px' }}>📊</span>
           <div>
-            <h1 className={styles.title}>شاشة مؤشرات البلديات الفرعية</h1>
-            <p className={styles.subtitle}>تجميع الإحصائيات وتحليل المعاملات قيد الإجراء حسب ملف الأكسل</p>
+            <h1 className={styles.title}>Power UI - مؤشرات البلديات</h1>
+            <p className={styles.subtitle}>تجميع وتحليل المعاملات قيد الإجراء بالتنسيق الداكن الفاخر</p>
           </div>
         </div>
 
@@ -615,46 +620,72 @@ export default function MunicipalitiesPage() {
                   );
                 })}
                 
-                {/* Bars */}
+                {/* Bars (Stacked Columns matching the Power UI style) */}
                 {barChartData.list.map((d, index) => {
                   const barWidth = 28;
                   const spacing = (380 - barChartData.list.length * barWidth) / (barChartData.list.length + 1);
                   const x = 50 + index * (barWidth + spacing) + spacing;
-                  const height = (d.count / barChartData.maxCount) * 150;
-                  const y = 170 - height;
                   
                   return (
                     <g key={d.name}>
-                      <rect
-                        x={x}
-                        y={y}
-                        width={barWidth}
-                        height={height}
-                        fill={hoveredBar === d.fullName ? 'var(--primary)' : 'var(--border)'}
-                        stroke={hoveredBar === d.fullName ? 'var(--primary)' : 'var(--border)'}
-                        strokeWidth="1"
-                        rx="4"
-                        className={styles.barChartRect}
-                        onMouseEnter={(e) => {
-                          setHoveredBar(d.fullName);
-                          setTooltip({
-                            active: true,
-                            x: e.clientX,
-                            y: e.clientY,
-                            title: d.fullName,
-                            content: [
-                              { label: 'إجمالي الطلبات', val: `${d.count} معاملة` }
-                            ]
-                          });
-                        }}
-                        onMouseMove={(e) => {
-                          setTooltip(prev => ({ ...prev, x: e.clientX, y: e.clientY }));
-                        }}
-                        onMouseLeave={() => {
-                          setHoveredBar(null);
-                          setTooltip(prev => ({ ...prev, active: false }));
-                        }}
-                      />
+                      {/* Stacked segments loop */}
+                      {(() => {
+                        const categoriesOrder = [
+                          { key: 'agency', color: CATEGORIES.agency.color },
+                          { key: 'housing', color: CATEGORIES.housing.color },
+                          { key: 'construction', color: CATEGORIES.construction.color },
+                          { key: 'commercial', color: CATEGORIES.commercial.color },
+                          { key: 'other', color: CATEGORIES.other.color }
+                        ];
+                        
+                        let currentY = 170;
+                        return categoriesOrder.map((catInfo) => {
+                          const catValue = d[catInfo.key as keyof typeof d] as number || 0;
+                          if (catValue === 0) return null;
+                          const height = (catValue / barChartData.maxCount) * 150;
+                          currentY -= height;
+                          
+                          return (
+                            <rect
+                              key={catInfo.key}
+                              x={x}
+                              y={currentY}
+                              width={barWidth}
+                              height={height}
+                              fill={catInfo.color}
+                              opacity={hoveredBar === d.fullName ? 1 : 0.85}
+                              stroke="rgba(0, 0, 0, 0.15)"
+                              strokeWidth="1"
+                              className={styles.barChartRect}
+                              style={{ transition: 'all 0.2s' } as React.CSSProperties}
+                              onMouseEnter={(e) => {
+                                setHoveredBar(d.fullName);
+                                setTooltip({
+                                  active: true,
+                                  x: e.clientX,
+                                  y: e.clientY,
+                                  title: d.fullName,
+                                  content: [
+                                    { label: CATEGORIES.commercial.label, val: `${d.commercial} طلب` },
+                                    { label: CATEGORIES.construction.label, val: `${d.construction} طلب` },
+                                    { label: CATEGORIES.housing.label, val: `${d.housing} طلب` },
+                                    { label: CATEGORIES.agency.label, val: `${d.agency} طلب` },
+                                    { label: CATEGORIES.other.label, val: `${d.other} طلب` },
+                                    { label: 'الإجمالي', val: `${d.count} معاملة` }
+                                  ].filter(item => !item.val.startsWith('0'))
+                                });
+                              }}
+                              onMouseMove={(e) => {
+                                setTooltip(prev => ({ ...prev, x: e.clientX, y: e.clientY }));
+                              }}
+                              onMouseLeave={() => {
+                                setHoveredBar(null);
+                                setTooltip(prev => ({ ...prev, active: false }));
+                              }}
+                            />
+                          );
+                        });
+                      })()}
                       <text
                         x={x + barWidth / 2}
                         y="190"
