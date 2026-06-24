@@ -474,40 +474,209 @@ export default function MunicipalitiesPage() {
 
       {/* KPI Cards Grid */}
       <div className={styles.kpiGrid}>
-        <div className={styles.kpiCard} style={{ '--kpi-color': 'var(--foreground)', '--kpi-glow': 'rgba(255,255,255,0.05)' } as React.CSSProperties}>
-          <div className={styles.kpiCardHeader}>
-            <span className={styles.kpiTitle}>إجمالي الطلبات</span>
-            <span className={styles.kpiIcon}>📋</span>
+        {/* إجمالي الطلبات */}
+        <div className={styles.kpiCard} style={{ '--kpi-color': 'var(--primary)', '--kpi-glow': 'rgba(74,222,128,0.05)' } as React.CSSProperties}>
+          <div className={styles.kpiCardContent}>
+            <div className={styles.kpiCardText}>
+              <div className={styles.kpiCardHeader}>
+                <span className={styles.kpiTitle}>إجمالي الطلبات</span>
+                <span className={styles.kpiIcon}>📋</span>
+              </div>
+              <div className={styles.kpiNumber}><AnimatedNumber value={kpis.total} /></div>
+            </div>
+            
+            {/* Circular Gauge */}
+            <div className={styles.kpiCircularContainer}>
+              <svg width="52" height="52" viewBox="0 0 52 52" style={{ transform: 'rotate(-90deg)' }}>
+                <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="4.5" />
+                <circle
+                  cx="26"
+                  cy="26"
+                  r="22"
+                  fill="none"
+                  stroke="var(--primary)"
+                  strokeWidth="4.5"
+                  strokeDasharray={2 * Math.PI * 22}
+                  strokeDashoffset={0}
+                  strokeLinecap="round"
+                  style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                />
+              </svg>
+              <div className={styles.kpiCircularValue} style={{ color: 'var(--primary)' }}>100%</div>
+            </div>
           </div>
-          <div className={styles.kpiNumber}><AnimatedNumber value={kpis.total} /></div>
         </div>
+
+        {/* الطلبات التجارية */}
         <div className={styles.kpiCard} style={{ '--kpi-color': CATEGORIES.commercial.color, '--kpi-glow': CATEGORIES.commercial.glow } as React.CSSProperties}>
-          <div className={styles.kpiCardHeader}>
-            <span className={styles.kpiTitle}>{CATEGORIES.commercial.label}</span>
-            <span className={styles.kpiIcon}>{CATEGORIES.commercial.icon}</span>
+          <div className={styles.kpiCardContent}>
+            <div className={styles.kpiCardText}>
+              <div className={styles.kpiCardHeader}>
+                <span className={styles.kpiTitle}>{CATEGORIES.commercial.label}</span>
+                <span className={styles.kpiIcon}>{CATEGORIES.commercial.icon}</span>
+              </div>
+              <div className={styles.kpiNumber}><AnimatedNumber value={kpis.commercial} /></div>
+            </div>
+            
+            {/* Circular Gauge */}
+            {(() => {
+              const percentage = kpis.total > 0 ? (kpis.commercial / kpis.total) * 100 : 0;
+              const radius = 22;
+              const circumference = 2 * Math.PI * radius;
+              const strokeDashoffset = circumference - (percentage / 100) * circumference;
+              return (
+                <div className={styles.kpiCircularContainer}>
+                  <svg width="52" height="52" viewBox="0 0 52 52" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="26" cy="26" r={radius} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="4.5" />
+                    <circle
+                      cx="26"
+                      cy="26"
+                      r={radius}
+                      fill="none"
+                      stroke={CATEGORIES.commercial.color}
+                      strokeWidth="4.5"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                    />
+                  </svg>
+                  <div className={styles.kpiCircularValue} style={{ color: CATEGORIES.commercial.color }}>
+                    {percentage.toFixed(0)}%
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-          <div className={styles.kpiNumber}><AnimatedNumber value={kpis.commercial} /></div>
         </div>
+
+        {/* الطلبات الإنشائية */}
         <div className={styles.kpiCard} style={{ '--kpi-color': CATEGORIES.construction.color, '--kpi-glow': CATEGORIES.construction.glow } as React.CSSProperties}>
-          <div className={styles.kpiCardHeader}>
-            <span className={styles.kpiTitle}>{CATEGORIES.construction.label}</span>
-            <span className={styles.kpiIcon}>{CATEGORIES.construction.icon}</span>
+          <div className={styles.kpiCardContent}>
+            <div className={styles.kpiCardText}>
+              <div className={styles.kpiCardHeader}>
+                <span className={styles.kpiTitle}>{CATEGORIES.construction.label}</span>
+                <span className={styles.kpiIcon}>{CATEGORIES.construction.icon}</span>
+              </div>
+              <div className={styles.kpiNumber}><AnimatedNumber value={kpis.construction} /></div>
+            </div>
+            
+            {/* Circular Gauge */}
+            {(() => {
+              const percentage = kpis.total > 0 ? (kpis.construction / kpis.total) * 100 : 0;
+              const radius = 22;
+              const circumference = 2 * Math.PI * radius;
+              const strokeDashoffset = circumference - (percentage / 100) * circumference;
+              return (
+                <div className={styles.kpiCircularContainer}>
+                  <svg width="52" height="52" viewBox="0 0 52 52" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="26" cy="26" r={radius} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="4.5" />
+                    <circle
+                      cx="26"
+                      cy="26"
+                      r={radius}
+                      fill="none"
+                      stroke={CATEGORIES.construction.color}
+                      strokeWidth="4.5"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                    />
+                  </svg>
+                  <div className={styles.kpiCircularValue} style={{ color: CATEGORIES.construction.color }}>
+                    {percentage.toFixed(0)}%
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-          <div className={styles.kpiNumber}><AnimatedNumber value={kpis.construction} /></div>
         </div>
+
+        {/* طلبات السكن الجماعي */}
         <div className={styles.kpiCard} style={{ '--kpi-color': CATEGORIES.housing.color, '--kpi-glow': CATEGORIES.housing.glow } as React.CSSProperties}>
-          <div className={styles.kpiCardHeader}>
-            <span className={styles.kpiTitle}>{CATEGORIES.housing.label}</span>
-            <span className={styles.kpiIcon}>{CATEGORIES.housing.icon}</span>
+          <div className={styles.kpiCardContent}>
+            <div className={styles.kpiCardText}>
+              <div className={styles.kpiCardHeader}>
+                <span className={styles.kpiTitle}>{CATEGORIES.housing.label}</span>
+                <span className={styles.kpiIcon}>{CATEGORIES.housing.icon}</span>
+              </div>
+              <div className={styles.kpiNumber}><AnimatedNumber value={kpis.housing} /></div>
+            </div>
+            
+            {/* Circular Gauge */}
+            {(() => {
+              const percentage = kpis.total > 0 ? (kpis.housing / kpis.total) * 100 : 0;
+              const radius = 22;
+              const circumference = 2 * Math.PI * radius;
+              const strokeDashoffset = circumference - (percentage / 100) * circumference;
+              return (
+                <div className={styles.kpiCircularContainer}>
+                  <svg width="52" height="52" viewBox="0 0 52 52" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="26" cy="26" r={radius} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="4.5" />
+                    <circle
+                      cx="26"
+                      cy="26"
+                      r={radius}
+                      fill="none"
+                      stroke={CATEGORIES.housing.color}
+                      strokeWidth="4.5"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                    />
+                  </svg>
+                  <div className={styles.kpiCircularValue} style={{ color: CATEGORIES.housing.color }}>
+                    {percentage.toFixed(0)}%
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-          <div className={styles.kpiNumber}><AnimatedNumber value={kpis.housing} /></div>
         </div>
+
+        {/* طلبات عن الوكالة */}
         <div className={styles.kpiCard} style={{ '--kpi-color': CATEGORIES.agency.color, '--kpi-glow': CATEGORIES.agency.glow } as React.CSSProperties}>
-          <div className={styles.kpiCardHeader}>
-            <span className={styles.kpiTitle}>{CATEGORIES.agency.label}</span>
-            <span className={styles.kpiIcon}>{CATEGORIES.agency.icon}</span>
+          <div className={styles.kpiCardContent}>
+            <div className={styles.kpiCardText}>
+              <div className={styles.kpiCardHeader}>
+                <span className={styles.kpiTitle}>{CATEGORIES.agency.label}</span>
+                <span className={styles.kpiIcon}>{CATEGORIES.agency.icon}</span>
+              </div>
+              <div className={styles.kpiNumber}><AnimatedNumber value={kpis.agency} /></div>
+            </div>
+            
+            {/* Circular Gauge */}
+            {(() => {
+              const percentage = kpis.total > 0 ? (kpis.agency / kpis.total) * 100 : 0;
+              const radius = 22;
+              const circumference = 2 * Math.PI * radius;
+              const strokeDashoffset = circumference - (percentage / 100) * circumference;
+              return (
+                <div className={styles.kpiCircularContainer}>
+                  <svg width="52" height="52" viewBox="0 0 52 52" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="26" cy="26" r={radius} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="4.5" />
+                    <circle
+                      cx="26"
+                      cy="26"
+                      r={radius}
+                      fill="none"
+                      stroke={CATEGORIES.agency.color}
+                      strokeWidth="4.5"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                    />
+                  </svg>
+                  <div className={styles.kpiCircularValue} style={{ color: CATEGORIES.agency.color }}>
+                    {percentage.toFixed(0)}%
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-          <div className={styles.kpiNumber}><AnimatedNumber value={kpis.agency} /></div>
         </div>
       </div>
 
