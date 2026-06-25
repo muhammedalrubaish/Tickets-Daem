@@ -136,7 +136,7 @@ export default function ExtensionPopupPage() {
             return isAssignedToMe || isNew;
           });
 
-          setTotalTickets(userBaseTickets.length);
+          setTotalTickets(baseTickets.length);
 
           baseTickets.forEach(t => {
             // تنظيف المسافات مثل DashboardClient تماماً
@@ -900,11 +900,7 @@ export default function ExtensionPopupPage() {
             <h3 className="title">🚀 داعم بلس Premium</h3>
           </div>
 
-          {clientVersion && clientVersion !== LATEST_VERSION && (
-            <a href="/Daem-Plus.zip" download className="update-banner">
-              ⚠️ يتوفر تحديث جديد للإضافة ({LATEST_VERSION})! اضغط للتحميل ⚡
-            </a>
-          )}
+          {/* تم إخفاء تنبيه التحديث */}
 
           {loading ? (
             <div className="loading-pulse">جاري جلب العدادات الحية... ⚡</div>
