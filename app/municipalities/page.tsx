@@ -110,38 +110,48 @@ export default function MunicipalitiesPage() {
     }
   }, []);
 
-  // Parse Excel file helper
-  const parseExcelFile = (file: File) => {
+  // Parse Excel files helper (Multiple)
+  const parseMultipleExcels = async (files: File[]) => {
     setError(null);
-    const reader = new FileReader();
-    reader.onload = (e) => {
+    let allData: any[] = [];
+    let processedNames: string[] = [];
+
+    for (const file of files) {
+      if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) continue;
+      
       try {
-        const data = e.target?.result;
-        if (!data) throw new Error("الملف فارغ أو غير مقروء");
+        const data = await file.arrayBuffer();
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
         
-        if (json.length === 0) {
-          throw new Error("لا توجد بيانات مقروءة في الصفحة الأولى من ملف الأكسل.");
+        if (json.length > 0) {
+          allData = [...allData, ...json];
+          processedNames.push(file.name);
         }
+      } catch (err: any) {
+        console.error(`Error processing ${file.name}:`, err);
+      }
+    }
+
+    if (allData.length > 0) {
+      setExcelData(prev => {
+        const combined = dataSourceType === 'excel' ? [...prev, ...allData] : allData;
+        const currentNames = dataSourceType === 'excel' ? excelFileName : '';
+        const newNames = currentNames ? `${currentNames}, ${processedNames.join(', ')}` : processedNames.join(', ');
         
-        setExcelData(json);
-        setExcelFileName(file.name);
+        setExcelFileName(newNames);
         setDataSourceType('excel');
         
-        // Cache to LocalStorage
-        localStorage.setItem('cached_municipalities_records', JSON.stringify(json));
-        localStorage.setItem('cached_municipalities_filename', file.name);
-      } catch (err: any) {
-        setError(err.message || "حدث خطأ أثناء معالجة ملف الأكسل.");
-      }
-    };
-    reader.onerror = () => {
-      setError("خطأ في قراءة ملف الأكسل.");
-    };
-    reader.readAsArrayBuffer(file);
+        localStorage.setItem('cached_municipalities_records', JSON.stringify(combined));
+        localStorage.setItem('cached_municipalities_filename', newNames);
+        
+        return combined;
+      });
+    } else {
+      setError("لم يتم العثور على بيانات مقروءة في الملفات المحددة.");
+    }
   };
 
   // Drag and Drop Handlers
@@ -160,19 +170,16 @@ export default function MunicipalitiesPage() {
     e.stopPropagation();
     setIsDragActive(false);
     
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-        parseExcelFile(file);
-      } else {
-        setError("يرجى سحب وإفلات ملف أكسل فقط (.xlsx أو .xls)");
-      }
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = Array.from(e.dataTransfer.files);
+      parseMultipleExcels(files);
     }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      parseExcelFile(e.target.files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files);
+      parseMultipleExcels(files);
     }
   };
 
@@ -443,11 +450,12 @@ export default function MunicipalitiesPage() {
             ref={fileInputRef} 
             style={{ display: 'none' }} 
             accept=".xlsx, .xls"
+            multiple
             onChange={handleFileInputChange}
           />
           <span className={styles.dropzoneIcon}>📥</span>
-          <span className={styles.dropzoneText}>اسحب وأفلت ملف الأكسل هنا أو اضغط للاختيار</span>
-          <span className={styles.dropzoneSubtext}>الملف المطلوب: "الطلبات التجارية تحت الاجراء عند البلدية.xlsx"</span>
+          <span className={styles.dropzoneText}>اسحب وأفلت ملفات الأكسل هنا أو اضغط للاختيار</span>
+          <span className={styles.dropzoneSubtext}>يمكنك تحديد ورفع أكثر من ملف معاً</span>
         </div>
 
         <div className={styles.loaderInfo}>
