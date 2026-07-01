@@ -2189,7 +2189,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     return {
       total: userFilteredComplaints.length,
       today: userFilteredComplaints.filter(c => c.date === new Date().toISOString().split('T')[0]).length,
-      open: userFilteredComplaints.filter((c) => (c.solution || '').trim() !== 'تم الحل').length,
+      open: userFilteredComplaints.filter((c) => ['لم يتم الحل', 'غير محدد', ''].includes((c.solution || '').trim())).length,
       closed: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'تم الحل').length,
       ministry: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'لدى الوزارة').length,
       waitingStatus: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'بانتظار المستفيد').length,
@@ -2334,7 +2334,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     let result = baseComplaints;
     
     if (activeFilter !== 'all') {
-      if (activeFilter === 'open') result = result.filter(c => (c.solution || '').trim() !== 'تم الحل');
+      if (activeFilter === 'open') result = result.filter(c => ['لم يتم الحل', 'غير محدد', ''].includes((c.solution || '').trim()));
       else if (activeFilter === 'closed') result = result.filter(c => c.solution === 'تم الحل');
       else if (activeFilter === 'ministry') result = result.filter(c => c.solution === 'لدى الوزارة');
       else if (activeFilter === 'general') result = result.filter(c => c.solution === 'مشكلة عامة');
