@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabase';
 
@@ -20,6 +20,48 @@ type Complaint = {
   date: string;
   receiver: string;
   createdAt?: string;
+};
+
+// سجل نشاط الموظفين (Audit Log) - يوثّق كل تعديل يقوم به الموظف على البلاغات
+type AuditEntry = {
+  id: string;
+  ts: number;
+  time: string;
+  user: string;
+  action: string;
+  ticket: string;
+  from: string;
+  to: string;
+};
+
+// مطابقة مرنة بين اسم "المستقبل" في البلاغ واسم الموظف (تعتمد على الاسم الأول لتجاوز اختلافات الكتابة)
+const matchReceiverToName = (receiver: string, employeeName: string): boolean => {
+  const r = (receiver || '').trim();
+  const n = (employeeName || '').trim();
+  if (!r || !n) return false;
+  const rFirst = r.split(' ')[0];
+  const nFirst = n.split(' ')[0];
+  return r.includes(nFirst) || n.includes(rFirst);
+};
+
+// حساب عمر البلاغ بالأيام منذ تاريخ استقباله
+const getTicketAgeInDays = (dateStr: string): number => {
+  if (!dateStr || dateStr === 'غير محدد') return -1;
+  try {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    return Math.floor(diff / 86400000);
+  } catch {
+    return -1;
+  }
+};
+
+// هل البلاغ متأخر ويحتاج تصعيداً؟ (غير محلول ومضى عليه أكثر من 7 أيام)
+const isTicketOverdue = (c: { solution: string; date: string }): boolean => {
+  const sol = (c.solution || '').trim();
+  const resolved = sol === 'تم الحل' || sol === 'مجاز' || sol === 'مشكلة عامة';
+  if (resolved) return false;
+  const age = getTicketAgeInDays(c.date);
+  return age >= 7;
 };
 
 type Props = {
@@ -1173,6 +1215,79 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [reportEmail, setReportEmail] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
 
+  // 1) لوحة الأداء | 2) نظام التصعيد والتذكير | 3) سجل النشاط
+  const [isPerformanceOpen, setIsPerformanceOpen] = useState(false);
+  const [isEscalationOpen, setIsEscalationOpen] = useState(false);
+  const [isAuditOpen, setIsAuditOpen] = useState(false);
+  const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
+  const escalationNotifiedRef = useRef(false);
+
+  // تحميل سجل النشاط عند بدء التشغيل (محلياً ثم محاولة المزامنة مع Supabase)
+  useEffect(() => {
+    const cached = localStorage.getItem('balady_audit_log_v1');
+    if (cached) {
+      try { setAuditLog(JSON.parse(cached)); } catch (e) { console.warn('تعذّر قراءة سجل النشاط المحلي'); }
+    }
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('audit_log')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(500);
+        if (!error && data && data.length > 0) {
+          const mapped: AuditEntry[] = data.map((row: any) => ({
+            id: row.id?.toString() || `${row.created_at}`,
+            ts: new Date(row.created_at).getTime(),
+            time: new Date(row.created_at).toLocaleString('ar-SA'),
+            user: row.user_name || 'غير معروف',
+            action: row.action || 'تعديل',
+            ticket: row.ticket_number || 'غير محدد',
+            from: row.change_from || '',
+            to: row.change_to || '',
+          }));
+          setAuditLog(mapped);
+          localStorage.setItem('balady_audit_log_v1', JSON.stringify(mapped));
+        }
+      } catch (e) {
+        console.warn('مزامنة سجل النشاط مع Supabase غير متاحة، الاعتماد على النسخة المحلية.');
+      }
+    })();
+  }, []);
+
+  // تسجيل حركة جديدة في سجل النشاط (محلياً + محاولة الحفظ في Supabase لتظهر للجميع)
+  const logAudit = (action: string, ticket: string, from: string, to: string, actor: string) => {
+    const entry: AuditEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      ts: Date.now(),
+      time: new Date().toLocaleString('ar-SA'),
+      user: actor || 'مستخدم',
+      action,
+      ticket: ticket || 'غير محدد',
+      from: from || '',
+      to: to || '',
+    };
+    setAuditLog(prev => {
+      const updated = [entry, ...prev].slice(0, 500);
+      localStorage.setItem('balady_audit_log_v1', JSON.stringify(updated));
+      return updated;
+    });
+    (async () => {
+      try {
+        await supabase.from('audit_log').insert([{
+          user_name: entry.user,
+          action: entry.action,
+          ticket_number: entry.ticket,
+          change_from: entry.from,
+          change_to: entry.to,
+          created_at: new Date().toISOString(),
+        }]);
+      } catch (e) {
+        console.warn('حفظ سجل النشاط في Supabase غير متاح، تم الحفظ محلياً.');
+      }
+    })();
+  };
+
   // تحميل قائمة الموظفين عند بدء التشغيل
   useEffect(() => {
     const cached = localStorage.getItem('balady_employees_v1');
@@ -1993,7 +2108,22 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
   const handleUpdate = async (ticketId: string, newSolution: string, newReceiver?: string, newCategory?: string, newDate?: string) => {
     const backup = [...complaints];
-    setComplaints(prev => prev.map(c => 
+    // توثيق التغييرات في سجل النشاط قبل التعديل (لأغراض المساءلة والمتابعة)
+    const target = editingTicket || complaints.find(c => c.id === ticketId);
+    if (target) {
+      const actor = loggedInUser || (userRole === 'super_admin' ? 'المشرف العام' : userRole === 'viewer' ? 'المشرف' : 'مستخدم');
+      const tnum = target.number || 'غير محدد';
+      if (newSolution !== undefined && newSolution !== target.solution) {
+        logAudit('تغيير حالة الحل', tnum, target.solution || 'غير محدد', newSolution, actor);
+      }
+      if (newReceiver !== undefined && newReceiver && newReceiver !== target.receiver) {
+        logAudit('إعادة إسناد', tnum, target.receiver || 'غير محدد', newReceiver, actor);
+      }
+      if (newDate !== undefined && newDate && newDate !== target.date) {
+        logAudit('تعديل التاريخ', tnum, target.date || 'غير محدد', newDate, actor);
+      }
+    }
+    setComplaints(prev => prev.map(c =>
       c.id === (editingTicket?.id || ticketId) 
         ? { ...c, solution: newSolution, receiver: newReceiver || c.receiver, type: newCategory || c.type, date: newDate || c.date } 
         : c
@@ -2143,6 +2273,62 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       })()
     };
   }, [baseComplaints, selectedReceiver]);
+
+  // ========= 1) لوحة الأداء: مؤشرات كل موظف (المنجَز، المفتوح، المتأخر، نسبة الإنجاز) =========
+  const employeePerformance = useMemo(() => {
+    const empList = employeesList.length > 0 ? employeesList : DEFAULT_EMPLOYEES_WITH_PERMS;
+    const rows = empList.map(emp => {
+      const mine = baseComplaints.filter(c => matchReceiverToName(c.receiver, emp.name));
+      const total = mine.length;
+      const closed = mine.filter(c => (c.solution || '').trim() === 'تم الحل').length;
+      const open = mine.filter(c => {
+        const sol = (c.solution || '').trim();
+        return sol === 'لم يتم الحل' || sol === 'بلاغ جديد' || sol === 'غير محدد' || sol === '';
+      }).length;
+      const overdue = mine.filter(c => isTicketOverdue(c)).length;
+      const rate = total > 0 ? Math.round((closed / total) * 100) : 0;
+      return { name: emp.name, total, closed, open, overdue, rate };
+    });
+    // الترتيب: الأكثر إنجازاً أولاً ثم الأعلى نسبة إنجاز
+    return rows.sort((a, b) => b.closed - a.closed || b.rate - a.rate);
+  }, [baseComplaints, employeesList]);
+
+  // ========= 2) نظام التصعيد: البلاغات المتأخرة مرتبة حسب الأقدم (تحذير 7-14 يوم، حرج +14 يوم) =========
+  const escalationTickets = useMemo(() => {
+    return baseComplaints
+      .filter(c => isTicketOverdue(c))
+      .map(c => {
+        const days = getTicketAgeInDays(c.date);
+        return { ...c, days, level: days >= 14 ? 'critical' : 'warning' };
+      })
+      .sort((a, b) => b.days - a.days);
+  }, [baseComplaints]);
+
+  // البلاغات المتأخرة التي تخص المستخدم الحالي (للموظف: بلاغاته فقط، للمشرف: الكل)
+  const myEscalationTickets = useMemo(() => {
+    if (userRole === 'super_admin' || userRole === 'viewer') return escalationTickets;
+    if (!loggedInUser) return [];
+    return escalationTickets.filter(c => matchReceiverToName(c.receiver, loggedInUser));
+  }, [escalationTickets, loggedInUser, userRole]);
+
+  // تذكير استباقي: عند الدخول، إن وُجدت بلاغات متأخرة تخص المستخدم يُضاف تنبيه في جرس الإشعارات (مرة واحدة)
+  useEffect(() => {
+    if (escalationNotifiedRef.current) return;
+    if (myEscalationTickets.length === 0) return;
+    const critical = myEscalationTickets.filter(c => c.level === 'critical').length;
+    const scope = (userRole === 'super_admin' || userRole === 'viewer') ? 'لدى الفريق' : 'لديك';
+    const msg = `🚨 تصعيد: ${myEscalationTickets.length} بلاغ متأخر ${scope} يحتاج للمتابعة${critical > 0 ? ` (منها ${critical} حرجة تجاوزت 14 يوماً)` : ''}.`;
+    setNotifications(prev => {
+      if (prev.some(n => n.msg === msg)) return prev;
+      return [{
+        id: `escalation-${Date.now()}`,
+        msg,
+        time: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
+        read: false,
+      }, ...prev];
+    });
+    escalationNotifiedRef.current = true;
+  }, [myEscalationTickets, userRole]);
 
   const filteredComplaints = useMemo(() => {
     let result = baseComplaints;
@@ -2551,11 +2737,64 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               </button>
             )}
 
+            {/* لوحة أداء الموظفين (متاحة لكل مستخدم مسجّل: الموظف يرى أداءه والمشرف يرى الجميع) */}
+            {(loggedInUser || userRole === 'super_admin' || userRole === 'viewer') && (
+              <button
+                className={styles.navIconButton}
+                onClick={() => setIsPerformanceOpen(true)}
+                title="لوحة أداء الموظفين"
+                style={{ backgroundColor: '#6366f1', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s ease' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
+                  <path d="M22 12A10 10 0 0 0 12 2v10z" />
+                </svg>
+              </button>
+            )}
+
+            {/* نظام التصعيد: البلاغات المتأخرة مع عدّاد أحمر (للموظف بلاغاته وللمشرف الكل) */}
+            {(loggedInUser || userRole === 'super_admin' || userRole === 'viewer') && (
+              <button
+                className={styles.navIconButton}
+                onClick={() => setIsEscalationOpen(true)}
+                title="البلاغات المتأخرة والتصعيد"
+                style={{ backgroundColor: '#f43f5e', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', transition: 'all 0.3s ease' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                {myEscalationTickets.length > 0 && (
+                  <span style={{ position: 'absolute', top: '-6px', left: '-6px', background: '#fff', color: '#f43f5e', fontSize: '0.7rem', fontWeight: 'bold', minWidth: '18px', height: '18px', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', boxShadow: '0 2px 6px rgba(0,0,0,0.3)' }}>
+                    {myEscalationTickets.length}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {/* سجل النشاط (Audit Log) - للمشرف فقط لأغراض المساءلة */}
+            {(userRole === 'super_admin' || userRole === 'viewer' || loggedInUser?.includes('محمد الربيش')) && (
+              <button
+                className={styles.navIconButton}
+                onClick={() => setIsAuditOpen(true)}
+                title="سجل نشاط الموظفين"
+                style={{ backgroundColor: '#0ea5e9', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s ease' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="12" y1="18" x2="12" y2="12" />
+                  <line x1="9" y1="15" x2="15" y2="15" />
+                </svg>
+              </button>
+            )}
+
             {/* زر صفحة المؤشرات للمشرفين */}
             {(userRole === 'super_admin' || userRole === 'viewer' || loggedInUser?.includes('محمد الربيش')) && (
-              <button 
-                className={styles.navIconButton} 
-                onClick={() => router.push('/indicators')} 
+              <button
+                className={styles.navIconButton}
+                onClick={() => router.push('/indicators')}
                 title="صفحة المؤشرات والإحصائيات للعرض التلفزيوني" 
                 style={{ backgroundColor: 'var(--secondary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s ease' }}
               >
@@ -3652,6 +3891,172 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         </div>
       )}
       {/* ========================================== */}
+      {/* ========================================== */}
+      {/* 1) لوحة أداء الموظفين */}
+      {/* ========================================== */}
+      {isPerformanceOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsPerformanceOpen(false)}>
+          <div className={styles.modalContent} style={{ maxWidth: '900px', width: '92%', maxHeight: '90vh', overflowY: 'auto', background: 'rgba(23, 28, 41, 0.97)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)', direction: 'rtl', fontFamily: 'Cairo' }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, color: '#818cf8', fontSize: '1.35rem' }}>
+                📊 لوحة أداء الموظفين
+              </h2>
+              <button onClick={() => setIsPerformanceOpen(false)} title="إغلاق" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: 'white', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
+            </div>
+
+            <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '1rem 0' }}>
+              {(userRole === 'super_admin' || userRole === 'viewer')
+                ? 'مقارنة أداء جميع الموظفين مرتبة حسب الأكثر إنجازاً. النسبة = المنجَز ÷ الإجمالي.'
+                : 'مؤشرات أدائك الشخصية مقارنة ببقية الفريق.'}
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '0.5rem' }}>
+              {employeePerformance
+                .filter(row => (userRole === 'super_admin' || userRole === 'viewer') ? true : (loggedInUser && matchReceiverToName(row.name, loggedInUser)))
+                .map((row, idx) => {
+                  const isMe = loggedInUser && matchReceiverToName(row.name, loggedInUser);
+                  const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
+                  const showRank = (userRole === 'super_admin' || userRole === 'viewer');
+                  return (
+                    <div key={row.name} style={{ background: isMe ? 'rgba(99, 102, 241, 0.1)' : 'rgba(255,255,255,0.03)', border: `1px solid ${isMe ? 'rgba(99,102,241,0.35)' : 'rgba(255,255,255,0.06)'}`, borderRadius: '14px', padding: '1rem 1.2rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
+                        <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {showRank && <span style={{ fontSize: '1.1rem' }}>{medal}</span>}
+                          {row.name}
+                          {isMe && <span style={{ fontSize: '0.7rem', color: '#818cf8', background: 'rgba(99,102,241,0.15)', padding: '2px 8px', borderRadius: '10px' }}>أنت</span>}
+                        </span>
+                        <span style={{ fontSize: '0.85rem', color: row.rate >= 70 ? '#10b981' : row.rate >= 40 ? '#facc15' : '#f43f5e', fontWeight: 'bold' }}>
+                          نسبة الإنجاز: {row.rate}%
+                        </span>
+                      </div>
+                      {/* شريط تقدّم نسبة الإنجاز */}
+                      <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.07)', borderRadius: '4px', overflow: 'hidden', marginBottom: '12px' }}>
+                        <div style={{ width: `${row.rate}%`, height: '100%', background: row.rate >= 70 ? 'linear-gradient(90deg,#10b981,#059669)' : row.rate >= 40 ? 'linear-gradient(90deg,#facc15,#eab308)' : 'linear-gradient(90deg,#f43f5e,#e11d48)', borderRadius: '4px', transition: 'width 0.5s' }} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px' }}>
+                        {[
+                          { label: 'الإجمالي', value: row.total, color: '#e2e8f0' },
+                          { label: 'المنجَز', value: row.closed, color: '#10b981' },
+                          { label: 'المفتوح', value: row.open, color: '#facc15' },
+                          { label: 'متأخر', value: row.overdue, color: '#f43f5e' },
+                        ].map(stat => (
+                          <div key={stat.label} style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '8px', padding: '8px', textAlign: 'center' }}>
+                            <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: stat.color }}>{stat.value}</div>
+                            <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{stat.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* 2) نظام التصعيد والبلاغات المتأخرة */}
+      {/* ========================================== */}
+      {isEscalationOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsEscalationOpen(false)}>
+          <div className={styles.modalContent} style={{ maxWidth: '780px', width: '92%', maxHeight: '90vh', overflowY: 'auto', background: 'rgba(23, 28, 41, 0.97)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)', direction: 'rtl', fontFamily: 'Cairo' }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, color: '#f43f5e', fontSize: '1.35rem' }}>
+                🚨 البلاغات المتأخرة والتصعيد
+              </h2>
+              <button onClick={() => setIsEscalationOpen(false)} title="إغلاق" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: 'white', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', margin: '1rem 0', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: '140px', background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)', borderRadius: '12px', padding: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#f43f5e' }}>{myEscalationTickets.filter(c => c.level === 'critical').length}</div>
+                <div style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>🔴 حرجة (+14 يوم)</div>
+              </div>
+              <div style={{ flex: 1, minWidth: '140px', background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.2)', borderRadius: '12px', padding: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#facc15' }}>{myEscalationTickets.filter(c => c.level === 'warning').length}</div>
+                <div style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>🟡 تحذير (7-14 يوم)</div>
+              </div>
+            </div>
+
+            <p style={{ color: '#94a3b8', fontSize: '0.82rem', marginBottom: '1rem' }}>
+              {(userRole === 'super_admin' || userRole === 'viewer')
+                ? 'كل البلاغات غير المحلولة التي تجاوزت 7 أيام، مرتبة من الأقدم. يُنصح بالمتابعة أو إعادة الإسناد.'
+                : 'بلاغاتك غير المحلولة التي تجاوزت 7 أيام وتحتاج إنجازاً عاجلاً.'}
+            </p>
+
+            {myEscalationTickets.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#10b981' }}>
+                ✅ لا توجد بلاغات متأخرة حالياً. عمل ممتاز!
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {myEscalationTickets.map(c => (
+                  <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', background: 'rgba(255,255,255,0.03)', borderRight: `4px solid ${c.level === 'critical' ? '#f43f5e' : '#facc15'}`, borderRadius: '10px', padding: '10px 14px' }}>
+                    <div>
+                      <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.9rem' }}>#{c.number}</span>
+                      <span style={{ color: '#94a3b8', fontSize: '0.8rem', marginRight: '10px' }}>{c.type || 'غير مصنّف'}</span>
+                      <span style={{ color: '#cbd5e1', fontSize: '0.8rem', marginRight: '10px' }}>👤 {c.receiver || 'غير محدد'}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{c.solution || 'غير محدد'}</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: c.level === 'critical' ? '#f43f5e' : '#facc15', background: c.level === 'critical' ? 'rgba(244,63,94,0.12)' : 'rgba(250,204,21,0.12)', padding: '3px 10px', borderRadius: '12px', whiteSpace: 'nowrap' }}>
+                        {c.days} يوم
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* 3) سجل نشاط الموظفين (Audit Log) */}
+      {/* ========================================== */}
+      {isAuditOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsAuditOpen(false)}>
+          <div className={styles.modalContent} style={{ maxWidth: '820px', width: '92%', maxHeight: '90vh', overflowY: 'auto', background: 'rgba(23, 28, 41, 0.97)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)', direction: 'rtl', fontFamily: 'Cairo' }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, color: '#38bdf8', fontSize: '1.35rem' }}>
+                📝 سجل نشاط الموظفين
+              </h2>
+              <button onClick={() => setIsAuditOpen(false)} title="إغلاق" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: 'white', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
+            </div>
+
+            <p style={{ color: '#94a3b8', fontSize: '0.82rem', margin: '1rem 0' }}>
+              توثيق كل تعديل يُجرى على البلاغات (من قام به، وماذا غيّر، ومتى) لأغراض المتابعة والمساءلة.
+            </p>
+
+            {auditLog.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                لا توجد حركات مسجّلة بعد. ستظهر التعديلات هنا فور حدوثها.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {auditLog.map(entry => (
+                  <div key={entry.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '10px 14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginBottom: '4px' }}>
+                      <span style={{ fontWeight: 'bold', color: '#38bdf8', fontSize: '0.88rem' }}>👤 {entry.user}</span>
+                      <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{entry.time}</span>
+                    </div>
+                    <div style={{ fontSize: '0.84rem', color: '#e2e8f0' }}>
+                      <span style={{ background: 'rgba(56,189,248,0.12)', color: '#38bdf8', padding: '2px 8px', borderRadius: '8px', fontSize: '0.75rem', marginLeft: '8px' }}>{entry.action}</span>
+                      البلاغ <strong style={{ color: '#fff' }}>#{entry.ticket}</strong>
+                      {(entry.from || entry.to) && (
+                        <span style={{ color: '#94a3b8' }}>
+                          {' — '}من «<span style={{ color: '#f87171' }}>{entry.from || 'غير محدد'}</span>» إلى «<span style={{ color: '#4ade80' }}>{entry.to || 'غير محدد'}</span>»
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* مركز التحكم بالصلاحيات والتقارير الذكية */}
       {/* ========================================== */}
       {isPermissionsOpen && (
