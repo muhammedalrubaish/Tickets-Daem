@@ -44,7 +44,7 @@ export async function GET() {
     const todayCount = baseTickets.filter(t => t.reception_date === todayStr).length;
 
     const closed = baseTickets.filter(t => (t.solution || '').trim() === 'تم الحل').length;
-    const open = baseTickets.filter(t => (t.solution || '').trim() === 'لم يتم الحل').length;
+    const open = baseTickets.filter(t => (t.solution || '').trim() !== 'تم الحل').length;
     const ministry = baseTickets.filter(t => (t.solution || '').trim() === 'لدى الوزارة').length;
     const waiting = baseTickets.filter(t => (t.solution || '').trim() === 'بانتظار المستفيد').length;
     const newTickets = baseTickets.filter(t => (t.solution || '').trim() === 'بلاغ جديد').length;

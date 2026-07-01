@@ -45,18 +45,14 @@ export async function GET() {
       const status = ticket.status || 'غير محدد';
       const solution = ticket.solution || 'لم يتم الحل';
 
-      if (status === 'بلاغ جديد') {
-        newCount++;
-      } else if (status === 'بانتظار المستفيد') {
-        waitingCount++;
-      } else if (status === 'لدى الوزارة') {
-        ministryCount++;
-      } else if (status === 'لم يتم الحل' || solution === 'لم يتم الحل') {
-        unsolvedCount++;
-      } else if (status === 'تم الحل' || solution === 'تم الحل') {
+      if (status === 'تم الحل' || solution === 'تم الحل') {
         solvedCount++;
       } else {
-        otherCount++;
+        unsolvedCount++;
+        if (status === 'بلاغ جديد') newCount++;
+        else if (status === 'بانتظار المستفيد') waitingCount++;
+        else if (status === 'لدى الوزارة') ministryCount++;
+        else if (status !== 'لم يتم الحل' && solution !== 'لم يتم الحل') otherCount++;
       }
     });
 

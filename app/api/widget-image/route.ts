@@ -74,9 +74,12 @@ export async function GET(request: NextRequest) {
       let n = 0, u2 = 0, s2 = 0;
       for (const t of tickets) {
         const st = t.status ?? ''; const sol = t.solution ?? '';
-        if (st === 'بلاغ جديد') n++;
-        else if (st === 'لم يتم الحل' || sol === 'لم يتم الحل') u2++;
-        else if (st === 'تم الحل'     || sol === 'تم الحل')     s2++;
+        if (st === 'تم الحل' || sol === 'تم الحل') {
+          s2++;
+        } else {
+          u2++;
+          if (st === 'بلاغ جديد') n++;
+        }
       }
       stats = { total: tickets.length, new: n, unsolved: u2, solved: s2 };
       hasNew = n > 0;

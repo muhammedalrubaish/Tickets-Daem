@@ -500,11 +500,13 @@ export default function MunicipalitiesPage() {
               />
             </svg>
             <div className={styles.kpiCircularValue}>
-              <span className={styles.kpiIconMicro}>📋</span>
               <div className={styles.kpiCircularNumber}><AnimatedNumber value={kpis.total} /></div>
-              <div className={styles.kpiCircularLabel}>إجمالي الطلبات</div>
               <div className={styles.kpiCircularPercent} style={{ color: 'var(--primary)' }}>100%</div>
             </div>
+          </div>
+          <div className={styles.kpiCardHeaderCentered}>
+            <span className={styles.kpiIcon}>📋</span>
+            <span className={styles.kpiTitleCentered}>إجمالي الطلبات</span>
           </div>
         </div>
 
@@ -517,31 +519,35 @@ export default function MunicipalitiesPage() {
             const circumference = 2 * Math.PI * radius;
             const strokeDashoffset = circumference - (percentage / 100) * circumference;
             return (
-              <div className={styles.kpiCircularContainer}>
-                <svg width="96" height="96" viewBox="0 0 96 96" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="48" cy="48" r={radius} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="6.5" />
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r={radius}
-                    fill="none"
-                    stroke={CATEGORIES.commercial.color}
-                    strokeWidth="6.5"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                    style={{ transition: 'stroke-dashoffset 0.8s ease' }}
-                  />
-                </svg>
-                <div className={styles.kpiCircularValue}>
-                  <span className={styles.kpiIconMicro}>{CATEGORIES.commercial.icon}</span>
-                  <div className={styles.kpiCircularNumber} style={{ color: CATEGORIES.commercial.color }}><AnimatedNumber value={kpis.commercial} /></div>
-                  <div className={styles.kpiCircularLabel}>{CATEGORIES.commercial.label}</div>
-                  <div className={styles.kpiCircularPercent} style={{ color: CATEGORIES.commercial.color }}>
-                    {percentage.toFixed(0)}%
+              <>
+                <div className={styles.kpiCircularContainer}>
+                  <svg width="96" height="96" viewBox="0 0 96 96" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="48" cy="48" r={radius} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="6.5" />
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r={radius}
+                      fill="none"
+                      stroke={CATEGORIES.commercial.color}
+                      strokeWidth="6.5"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                    />
+                  </svg>
+                  <div className={styles.kpiCircularValue}>
+                    <div className={styles.kpiCircularNumber} style={{ color: CATEGORIES.commercial.color }}><AnimatedNumber value={kpis.commercial} /></div>
+                    <div className={styles.kpiCircularPercent} style={{ color: CATEGORIES.commercial.color }}>
+                      {percentage.toFixed(0)}%
+                    </div>
                   </div>
                 </div>
-              </div>
+                <div className={styles.kpiCardHeaderCentered}>
+                  <span className={styles.kpiIcon}>{CATEGORIES.commercial.icon}</span>
+                  <span className={styles.kpiTitleCentered}>{CATEGORIES.commercial.label}</span>
+                </div>
+              </>
             );
           })()}
         </div>
@@ -555,31 +561,35 @@ export default function MunicipalitiesPage() {
             const circumference = 2 * Math.PI * radius;
             const strokeDashoffset = circumference - (percentage / 100) * circumference;
             return (
-              <div className={styles.kpiCircularContainer}>
-                <svg width="96" height="96" viewBox="0 0 96 96" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="48" cy="48" r={radius} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="6.5" />
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r={radius}
-                    fill="none"
-                    stroke={CATEGORIES.construction.color}
-                    strokeWidth="6.5"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                    style={{ transition: 'stroke-dashoffset 0.8s ease' }}
-                  />
-                </svg>
-                <div className={styles.kpiCircularValue}>
-                  <span className={styles.kpiIconMicro}>{CATEGORIES.construction.icon}</span>
-                  <div className={styles.kpiCircularNumber} style={{ color: CATEGORIES.construction.color }}><AnimatedNumber value={kpis.construction} /></div>
-                  <div className={styles.kpiCircularLabel}>{CATEGORIES.construction.label}</div>
-                  <div className={styles.kpiCircularPercent} style={{ color: CATEGORIES.construction.color }}>
-                    {percentage.toFixed(0)}%
+              <>
+                <div className={styles.kpiCircularContainer}>
+                  <svg width="96" height="96" viewBox="0 0 96 96" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="48" cy="48" r={radius} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="6.5" />
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r={radius}
+                      fill="none"
+                      stroke={CATEGORIES.construction.color}
+                      strokeWidth="6.5"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                    />
+                  </svg>
+                  <div className={styles.kpiCircularValue}>
+                    <div className={styles.kpiCircularNumber} style={{ color: CATEGORIES.construction.color }}><AnimatedNumber value={kpis.construction} /></div>
+                    <div className={styles.kpiCircularPercent} style={{ color: CATEGORIES.construction.color }}>
+                      {percentage.toFixed(0)}%
+                    </div>
                   </div>
                 </div>
-              </div>
+                <div className={styles.kpiCardHeaderCentered}>
+                  <span className={styles.kpiIcon}>{CATEGORIES.construction.icon}</span>
+                  <span className={styles.kpiTitleCentered}>{CATEGORIES.construction.label}</span>
+                </div>
+              </>
             );
           })()}
         </div>
@@ -593,31 +603,35 @@ export default function MunicipalitiesPage() {
             const circumference = 2 * Math.PI * radius;
             const strokeDashoffset = circumference - (percentage / 100) * circumference;
             return (
-              <div className={styles.kpiCircularContainer}>
-                <svg width="96" height="96" viewBox="0 0 96 96" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="48" cy="48" r={radius} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="6.5" />
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r={radius}
-                    fill="none"
-                    stroke={CATEGORIES.housing.color}
-                    strokeWidth="6.5"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                    style={{ transition: 'stroke-dashoffset 0.8s ease' }}
-                  />
-                </svg>
-                <div className={styles.kpiCircularValue}>
-                  <span className={styles.kpiIconMicro}>{CATEGORIES.housing.icon}</span>
-                  <div className={styles.kpiCircularNumber} style={{ color: CATEGORIES.housing.color }}><AnimatedNumber value={kpis.housing} /></div>
-                  <div className={styles.kpiCircularLabel}>{CATEGORIES.housing.label}</div>
-                  <div className={styles.kpiCircularPercent} style={{ color: CATEGORIES.housing.color }}>
-                    {percentage.toFixed(0)}%
+              <>
+                <div className={styles.kpiCircularContainer}>
+                  <svg width="96" height="96" viewBox="0 0 96 96" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="48" cy="48" r={radius} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="6.5" />
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r={radius}
+                      fill="none"
+                      stroke={CATEGORIES.housing.color}
+                      strokeWidth="6.5"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                    />
+                  </svg>
+                  <div className={styles.kpiCircularValue}>
+                    <div className={styles.kpiCircularNumber} style={{ color: CATEGORIES.housing.color }}><AnimatedNumber value={kpis.housing} /></div>
+                    <div className={styles.kpiCircularPercent} style={{ color: CATEGORIES.housing.color }}>
+                      {percentage.toFixed(0)}%
+                    </div>
                   </div>
                 </div>
-              </div>
+                <div className={styles.kpiCardHeaderCentered}>
+                  <span className={styles.kpiIcon}>{CATEGORIES.housing.icon}</span>
+                  <span className={styles.kpiTitleCentered}>{CATEGORIES.housing.label}</span>
+                </div>
+              </>
             );
           })()}
         </div>
@@ -631,31 +645,35 @@ export default function MunicipalitiesPage() {
             const circumference = 2 * Math.PI * radius;
             const strokeDashoffset = circumference - (percentage / 100) * circumference;
             return (
-              <div className={styles.kpiCircularContainer}>
-                <svg width="96" height="96" viewBox="0 0 96 96" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="48" cy="48" r={radius} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="6.5" />
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r={radius}
-                    fill="none"
-                    stroke={CATEGORIES.agency.color}
-                    strokeWidth="6.5"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                    style={{ transition: 'stroke-dashoffset 0.8s ease' }}
-                  />
-                </svg>
-                <div className={styles.kpiCircularValue}>
-                  <span className={styles.kpiIconMicro}>{CATEGORIES.agency.icon}</span>
-                  <div className={styles.kpiCircularNumber} style={{ color: CATEGORIES.agency.color }}><AnimatedNumber value={kpis.agency} /></div>
-                  <div className={styles.kpiCircularLabel}>{CATEGORIES.agency.label}</div>
-                  <div className={styles.kpiCircularPercent} style={{ color: CATEGORIES.agency.color }}>
-                    {percentage.toFixed(0)}%
+              <>
+                <div className={styles.kpiCircularContainer}>
+                  <svg width="96" height="96" viewBox="0 0 96 96" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="48" cy="48" r={radius} fill="none" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="6.5" />
+                    <circle
+                      cx="48"
+                      cy="48"
+                      r={radius}
+                      fill="none"
+                      stroke={CATEGORIES.agency.color}
+                      strokeWidth="6.5"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={strokeDashoffset}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                    />
+                  </svg>
+                  <div className={styles.kpiCircularValue}>
+                    <div className={styles.kpiCircularNumber} style={{ color: CATEGORIES.agency.color }}><AnimatedNumber value={kpis.agency} /></div>
+                    <div className={styles.kpiCircularPercent} style={{ color: CATEGORIES.agency.color }}>
+                      {percentage.toFixed(0)}%
+                    </div>
                   </div>
                 </div>
-              </div>
+                <div className={styles.kpiCardHeaderCentered}>
+                  <span className={styles.kpiIcon}>{CATEGORIES.agency.icon}</span>
+                  <span className={styles.kpiTitleCentered}>{CATEGORIES.agency.label}</span>
+                </div>
+              </>
             );
           })()}
         </div>

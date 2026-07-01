@@ -92,12 +92,15 @@ export async function POST(request: NextRequest) {
     for (const t of tickets) {
       const status   = t.status   ?? '';
       const solution = t.solution ?? '';
-      if      (status === 'بلاغ جديد')          newCount++;
-      else if (status === 'بانتظار المستفيد')   waitingCount++;
-      else if (status === 'لدى الوزارة')        ministryCount++;
-      else if (status === 'لم يتم الحل' || solution === 'لم يتم الحل') unsolvedCount++;
-      else if (status === 'تم الحل'     || solution === 'تم الحل')     solvedCount++;
-      else otherCount++;
+      if (status === 'تم الحل' || solution === 'تم الحل') {
+        solvedCount++;
+      } else {
+        unsolvedCount++;
+        if (status === 'بلاغ جديد') newCount++;
+        else if (status === 'بانتظار المستفيد') waitingCount++;
+        else if (status === 'لدى الوزارة') ministryCount++;
+        else if (status !== 'لم يتم الحل' && solution !== 'لم يتم الحل') otherCount++;
+      }
     }
 
     const latest = tickets.slice(0, 5).map((t) => ({
