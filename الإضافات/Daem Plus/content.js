@@ -758,7 +758,19 @@ function highlightTickets() {
 
 function filterTableRows(filterType) {
   currentFilter = filterType;
-  const allRows = document.querySelectorAll('tr');
+  applyRowFilterInDocument(document, filterType);
+
+  // تطبيق الفلترة أيضاً على صفوف الجدول داخل أي إطارات (iframes) لأن الجدول الفعلي قد يكون بداخلها
+  document.querySelectorAll('iframe, frame').forEach(frame => {
+    try {
+      const fd = frame.contentDocument || frame.contentWindow?.document;
+      if (fd) applyRowFilterInDocument(fd, filterType);
+    } catch (e) { }
+  });
+}
+
+function applyRowFilterInDocument(doc, filterType) {
+  const allRows = doc.querySelectorAll('tr');
   allRows.forEach(row => {
     const cells = row.querySelectorAll('td');
     if (cells.length < 3) return;
