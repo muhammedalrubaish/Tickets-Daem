@@ -3872,7 +3872,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 style={{
                   marginTop: '1rem',
                   padding: '0.8rem',
-                  background: '#2563eb',
+                  background: '#1d6f42',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -3883,7 +3883,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  boxShadow: '0 4px 15px rgba(37, 99, 235, 0.3)',
+                  boxShadow: '0 4px 15px rgba(29, 111, 66, 0.3)',
                   transition: 'background 0.2s'
                 }}
               >
@@ -4924,8 +4924,8 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                 className={styles.quickBtn}
                 style={{
                   padding:'0 15px',
-                  background:'#2563eb', color:'white', 
-                  fontSize:'0.85rem', fontWeight:'bold', boxShadow: '0 4px 10px rgba(37, 99, 235, 0.3)',
+                  background:'#1d6f42', color:'white', 
+                  fontSize:'0.85rem', fontWeight:'bold', boxShadow: '0 4px 10px rgba(29, 111, 66, 0.3)',
                   display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: 'none', borderRadius: '4px'
                 }}
               >
