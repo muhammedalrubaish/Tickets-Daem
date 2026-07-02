@@ -417,6 +417,82 @@ function cleanColumnHeaders() {
   });
 }
 
+// ===== اختصار عمود العنوان بالذكاء الاصطناعي =====
+let daemTitleSummaryCache = null; // يحمل من التخزين عند أول استخدام
+let daemTitlePending = new Set();
+
+function summarizeTitleColumn(rows, titleColIdx) {
+  if (titleColIdx === -1) return;
+
+  // تحميل ذاكرة الملخصات المخزنة مرة واحدة
+  if (daemTitleSummaryCache === null) {
+    daemTitleSummaryCache = {};
+    safeGetStorage(['daemTitleSummaries'], (res) => {
+      if (res && res.daemTitleSummaries && typeof res.daemTitleSummaries === 'object') {
+        daemTitleSummaryCache = Object.assign({}, res.daemTitleSummaries, daemTitleSummaryCache);
+      }
+    });
+    return; // ننتظر الدورة القادمة (كل ثانيتين) بعد اكتمال التحميل
+  }
+
+  const toSummarize = [];
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length < 3 || titleColIdx >= cells.length) return;
+    const cell = cells[titleColIdx];
+
+    let original = cell.getAttribute('data-original-title');
+    if (!original) {
+      original = (cell.innerText || '').trim();
+      if (!original || original.length < 2) return;
+      cell.setAttribute('data-original-title', original);
+    }
+
+    // العناوين القصيرة تبقى كما هي
+    if (original.length < 30) return;
+
+    const cached = daemTitleSummaryCache[original];
+    if (cached) {
+      if (cell.getAttribute('data-summarized') !== '1') {
+        setCellText(cell, `💡 ${cached}`, true);
+        cell.setAttribute('data-summarized', '1');
+        cell.removeAttribute('title');
+        cell.setAttribute('data-tooltip', `العنوان الأصلي: ${original}`);
+      }
+      return;
+    }
+
+    if (!daemTitlePending.has(original) && toSummarize.length < 20) {
+      daemTitlePending.add(original);
+      toSummarize.push(original);
+    }
+  });
+
+  if (toSummarize.length === 0) return;
+
+  safeSendMessage({ action: "SUMMARIZE_TITLES", data: { titles: toSummarize } }, (response) => {
+    toSummarize.forEach(t => daemTitlePending.delete(t));
+    if (response && response.success && Array.isArray(response.summaries)) {
+      let added = false;
+      toSummarize.forEach((t, i) => {
+        const s = (response.summaries[i] || '').trim();
+        if (s) {
+          daemTitleSummaryCache[t] = s;
+          added = true;
+        }
+      });
+      if (added) {
+        // تقليم الذاكرة إن تضخمت لتفادي امتلاء التخزين
+        const keys = Object.keys(daemTitleSummaryCache);
+        if (keys.length > 400) {
+          keys.slice(0, keys.length - 300).forEach(k => delete daemTitleSummaryCache[k]);
+        }
+        safeSetStorage({ daemTitleSummaries: daemTitleSummaryCache });
+      }
+    }
+  });
+}
+
 function highlightTickets() {
   try {
     if (!chrome.runtime || !chrome.runtime.id) return;
@@ -437,6 +513,7 @@ function highlightTickets() {
   let baladiahColIdx = -1;
   let areaServiceColIdx = -1;
   let mobileColIdx = -1;
+  let titleColIdx = -1;
   try {
     for (const hRow of allRows) {
       const headers = hRow.querySelectorAll('th, td');
@@ -458,10 +535,17 @@ function highlightTickets() {
           areaServiceColIdx = i;
         } else if (txt.includes('الجوال') || txt.toLowerCase().includes('mobile') || txt.toLowerCase().includes('phone') || txt.toLowerCase().includes('extension')) {
           mobileColIdx = i;
+        } else if (txt === 'العنوان' || txt.includes('العنوان')) {
+          titleColIdx = i;
         }
       }
       if (foundHeader) break;
     }
+  } catch (e) { }
+
+  // اختصار عمود العنوان بالذكاء الاصطناعي (يعمل بذاكرة مخزنة + طلبات مجمعة)
+  try {
+    summarizeTitleColumn(allRows, titleColIdx);
   } catch (e) { }
 
   let currentCounts = { new: 0, recent: 0, old: 0, veryOld: 0, unassigned: 0, notSolved: 0 };

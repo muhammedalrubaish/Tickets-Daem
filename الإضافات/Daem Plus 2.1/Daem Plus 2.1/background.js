@@ -102,11 +102,34 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         correctSpelling(request.data.text).then(res => sendResponse(res));
         return true;
     }
+    if (request.action === "SUMMARIZE_TITLES") {
+        summarizeTitles(request.data.titles).then(res => sendResponse(res));
+        return true;
+    }
     if (request.action === "UPDATE_SOLUTION") {
         updateSolution(request.data.number, request.data.solution).then(res => sendResponse(res));
         return true;
     }
 });
+
+// اختصار عناوين البلاغات الطويلة عبر الذكاء الاصطناعي بالموقع
+async function summarizeTitles(titles) {
+    try {
+        const response = await fetch("https://tickets-daem.vercel.app/api/summarize-title", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ titles })
+        });
+        if (response.ok) {
+            const data = await response.json();
+            return { success: true, summaries: data.summaries || [] };
+        }
+        const errText = await response.text();
+        return { success: false, error: errText };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
 
 async function updateSolution(ticketNumber, solution) {
     try {
