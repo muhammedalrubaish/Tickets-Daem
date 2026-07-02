@@ -6,12 +6,7 @@ const TARGET_GID = '1355865368';
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
 function getAuthClient() {
-  let { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
-  if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REFRESH_TOKEN) {
-    const oauth2 = new google.auth.OAuth2(GOOGLE_CLIENT_ID.trim(), GOOGLE_CLIENT_SECRET.trim());
-    oauth2.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN.trim() });
-    return oauth2;
-  }
+  // 1. Try Service Account first (recommended and already shared with the sheet)
   if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
     try {
       const key = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString('utf8'));
@@ -22,6 +17,14 @@ function getAuthClient() {
     } catch (e) {
       console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY:', e);
     }
+  }
+
+  // 2. Fallback to OAuth2
+  let { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
+  if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REFRESH_TOKEN) {
+    const oauth2 = new google.auth.OAuth2(GOOGLE_CLIENT_ID.trim(), GOOGLE_CLIENT_SECRET.trim());
+    oauth2.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN.trim() });
+    return oauth2;
   }
   throw new Error('Google credentials not configured or invalid');
 }

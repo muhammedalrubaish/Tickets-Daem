@@ -3738,7 +3738,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         <div className={styles.modalOverlay} onClick={() => setIsRegisterVisitorOpen(false)}>
           <div className={styles.modalContent} style={{ maxWidth: '500px', width: '90%', direction: 'rtl', background: 'rgba(23, 28, 41, 0.95)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)' }} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '1rem' }}>
-              <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, color: '#2563eb', fontFamily: 'Cairo', fontSize: '1.4rem' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, color: 'var(--primary)', fontFamily: 'Cairo', fontSize: '1.4rem' }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                   <circle cx="8.5" cy="7" r="4"></circle>
