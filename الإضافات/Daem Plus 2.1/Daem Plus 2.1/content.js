@@ -1137,6 +1137,13 @@ function injectDashboardPanel() {
       
       const body = document.getElementById('daem-dbpanel-body');
       const toggle = document.getElementById('daem-dbpanel-toggle');
+
+      // قياس الموضع قبل التبديل لتحديد اتجاه الفتح (للأعلى إن كانت بالنصف السفلي والعكس)
+      const rectBefore = panel.getBoundingClientRect();
+      const oldHeight = rectBefore.height;
+      const viewportHeight = window.innerHeight;
+      const isInBottomHalf = (rectBefore.top + rectBefore.height / 2) > (viewportHeight / 2);
+
       if (isCollapsed) {
         body.style.display = 'flex';
         toggle.innerText = '−';
@@ -1145,6 +1152,27 @@ function injectDashboardPanel() {
         body.style.display = 'none';
         toggle.innerText = '+';
         isCollapsed = true;
+      }
+
+      // تعديل الموضع بعد التبديل بحيث تنمو اللوحة بعيداً عن حافة الشاشة القريبة
+      const rectAfter = panel.getBoundingClientRect();
+      const newHeight = rectAfter.height;
+      const heightDiff = newHeight - oldHeight;
+
+      if (isInBottomHalf) {
+        // بالنصف السفلي: تثبيت الحافة السفلية فتفتح للأعلى وتنغلق للأسفل
+        const currentTop = parseFloat(panel.style.top) || rectBefore.top;
+        let targetTop = currentTop - heightDiff;
+        targetTop = Math.max(10, Math.min(targetTop, viewportHeight - newHeight - 10));
+        panel.style.bottom = 'auto';
+        panel.style.top = targetTop + 'px';
+      } else {
+        // بالنصف العلوي: تفتح للأسفل مع ضمان عدم تجاوز حافة الشاشة السفلية
+        const currentTop = parseFloat(panel.style.top) || rectBefore.top;
+        if (currentTop + newHeight > viewportHeight - 10) {
+          panel.style.bottom = 'auto';
+          panel.style.top = Math.max(10, viewportHeight - newHeight - 10) + 'px';
+        }
       }
     });
 
