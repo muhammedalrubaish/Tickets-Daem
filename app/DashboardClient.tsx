@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabase';
 
@@ -22,60 +22,18 @@ type Complaint = {
   createdAt?: string;
 };
 
-// سجل نشاط الموظفين (Audit Log) - يوثّق كل تعديل يقوم به الموظف على البلاغات
-type AuditEntry = {
-  id: string;
-  ts: number;
-  time: string;
-  user: string;
-  action: string;
-  ticket: string;
-  from: string;
-  to: string;
-};
-
-// مطابقة مرنة بين اسم "المستقبل" في البلاغ واسم الموظف (تعتمد على الاسم الأول لتجاوز اختلافات الكتابة)
-const matchReceiverToName = (receiver: string, employeeName: string): boolean => {
-  const r = (receiver || '').trim();
-  const n = (employeeName || '').trim();
-  if (!r || !n) return false;
-  const rFirst = r.split(' ')[0];
-  const nFirst = n.split(' ')[0];
-  return r.includes(nFirst) || n.includes(rFirst);
-};
-
-// حساب عمر البلاغ بالأيام منذ تاريخ استقباله
-const getTicketAgeInDays = (dateStr: string): number => {
-  if (!dateStr || dateStr === 'غير محدد') return -1;
-  try {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    return Math.floor(diff / 86400000);
-  } catch {
-    return -1;
-  }
-};
-
-// هل البلاغ متأخر ويحتاج تصعيداً؟ (غير محلول ومضى عليه أكثر من 7 أيام)
-const isTicketOverdue = (c: { solution: string; date: string }): boolean => {
-  const sol = (c.solution || '').trim();
-  const resolved = sol === 'تم الحل' || sol === 'مجاز' || sol === 'مشكلة عامة';
-  if (resolved) return false;
-  const age = getTicketAgeInDays(c.date);
-  return age >= 7;
-};
-
 type Props = {
   complaints: Complaint[];
 };
 
 const SYSTEM_UPDATES = [
   {
-    version: 'v8.3.0',
-    title: '🟢 ربط تصنيفات الواتساب بالموقع تلقائياً',
+    version: 'v8.2.2',
+    title: '📝 إطلاق نظام تسجيل المراجعين الإلكتروني وربطه بـ Google Sheets',
     points: [
-      'إطلاق لوحة التصنيفات العائمة داخل واتساب ويب لمزامنة حالة البلاغ لحظياً.',
-      'ربط الخيارات الخمسة بالتصنيفات الرسمية للموقع (بانتظار المستفيد، تم الحل، لدى الوزارة، بانتظار المكتب الهندسي، بلاغ جديد).',
-      'دعم الاستخراج التلقائي الذكي لرقم البلاغ من المحادثة النشطة في واتساب أو حفظه من صفحة داعم.'
+      'توفير نموذج منبثق (Modal) ذكي لتسجيل بيانات المراجعين الجدد مباشرة من لوحة التحكم',
+      'الربط المباشر مع ملف إكسل بيان المراجعين السحابي (Google Sheet) وتحديث السجلات لحظياً',
+      'تعبئة تلقائية لاسم الموظف الحالي وتاريخ اليوم مع دعم كامل لواجهات الاتجاه من اليمين إلى اليسار (RTL)'
     ],
     date: '02-07-2026'
   },
@@ -1013,6 +971,18 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [formMode, setFormMode] = useState<'whatsapp' | 'notion'>('notion');
   const [isDriveOpen, setIsDriveOpen] = useState(false);
 
+  // States for registering visitors (بيان المراجعين)
+  const [isRegisterVisitorOpen, setIsRegisterVisitorOpen] = useState(false);
+  const [visitorForm, setVisitorForm] = useState({
+    employeeName: '',
+    beneficiaryName: '',
+    nationalId: '',
+    phoneNumber: '',
+    serviceType: 'استعلام',
+    date: ''
+  });
+  const [isSubmittingVisitor, setIsSubmittingVisitor] = useState(false);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, activeFilter, selectedReceiver, selectedType, selectedSolution, startDate, endDate]);
@@ -1224,79 +1194,6 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [reportMethod, setReportMethod] = useState<'email' | 'local'>('local');
   const [reportEmail, setReportEmail] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
-
-  // 1) لوحة الأداء | 2) نظام التصعيد والتذكير | 3) سجل النشاط
-  const [isPerformanceOpen, setIsPerformanceOpen] = useState(false);
-  const [isEscalationOpen, setIsEscalationOpen] = useState(false);
-  const [isAuditOpen, setIsAuditOpen] = useState(false);
-  const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
-  const escalationNotifiedRef = useRef(false);
-
-  // تحميل سجل النشاط عند بدء التشغيل (محلياً ثم محاولة المزامنة مع Supabase)
-  useEffect(() => {
-    const cached = localStorage.getItem('balady_audit_log_v1');
-    if (cached) {
-      try { setAuditLog(JSON.parse(cached)); } catch (e) { console.warn('تعذّر قراءة سجل النشاط المحلي'); }
-    }
-    (async () => {
-      try {
-        const { data, error } = await supabase
-          .from('audit_log')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(500);
-        if (!error && data && data.length > 0) {
-          const mapped: AuditEntry[] = data.map((row: any) => ({
-            id: row.id?.toString() || `${row.created_at}`,
-            ts: new Date(row.created_at).getTime(),
-            time: new Date(row.created_at).toLocaleString('ar-SA'),
-            user: row.user_name || 'غير معروف',
-            action: row.action || 'تعديل',
-            ticket: row.ticket_number || 'غير محدد',
-            from: row.change_from || '',
-            to: row.change_to || '',
-          }));
-          setAuditLog(mapped);
-          localStorage.setItem('balady_audit_log_v1', JSON.stringify(mapped));
-        }
-      } catch (e) {
-        console.warn('مزامنة سجل النشاط مع Supabase غير متاحة، الاعتماد على النسخة المحلية.');
-      }
-    })();
-  }, []);
-
-  // تسجيل حركة جديدة في سجل النشاط (محلياً + محاولة الحفظ في Supabase لتظهر للجميع)
-  const logAudit = (action: string, ticket: string, from: string, to: string, actor: string) => {
-    const entry: AuditEntry = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      ts: Date.now(),
-      time: new Date().toLocaleString('ar-SA'),
-      user: actor || 'مستخدم',
-      action,
-      ticket: ticket || 'غير محدد',
-      from: from || '',
-      to: to || '',
-    };
-    setAuditLog(prev => {
-      const updated = [entry, ...prev].slice(0, 500);
-      localStorage.setItem('balady_audit_log_v1', JSON.stringify(updated));
-      return updated;
-    });
-    (async () => {
-      try {
-        await supabase.from('audit_log').insert([{
-          user_name: entry.user,
-          action: entry.action,
-          ticket_number: entry.ticket,
-          change_from: entry.from,
-          change_to: entry.to,
-          created_at: new Date().toISOString(),
-        }]);
-      } catch (e) {
-        console.warn('حفظ سجل النشاط في Supabase غير متاح، تم الحفظ محلياً.');
-      }
-    })();
-  };
 
   // تحميل قائمة الموظفين عند بدء التشغيل
   useEffect(() => {
@@ -1816,6 +1713,64 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
   const [userRole, setUserRole] = useState<'viewer' | 'editor' | 'super_admin' | null>(null);
   const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
 
+  // Handlers for registering visitors
+  const getTodayDateString = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}/${month}/${day}`;
+  };
+
+  const openRegisterVisitorModal = () => {
+    setVisitorForm({
+      employeeName: loggedInUser || '',
+      beneficiaryName: '',
+      nationalId: '',
+      phoneNumber: '',
+      serviceType: 'استعلام',
+      date: getTodayDateString()
+    });
+    setIsRegisterVisitorOpen(true);
+  };
+
+  const handleVisitorInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setVisitorForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleRegisterVisitorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!visitorForm.employeeName || !visitorForm.beneficiaryName || !visitorForm.serviceType) {
+      alert('الرجاء تعبئة الحقول الأساسية: اسم الموظف، اسم المستفيد، ونوع الخدمة.');
+      return;
+    }
+    setIsSubmittingVisitor(true);
+    try {
+      const formattedDate = visitorForm.date.replace(/-/g, '/');
+      const res = await fetch('/api/register-visitor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...visitorForm,
+          date: formattedDate
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewTicketToast('✨ تم تسجيل المراجع وإضافته لبيان المراجعين بنجاح!');
+        setIsRegisterVisitorOpen(false);
+      } else {
+        alert('حدث خطأ أثناء التسجيل: ' + (data.error || 'خطأ غير معروف'));
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert('فشل الاتصال بالخادم لتسجيل المراجع.');
+    } finally {
+      setIsSubmittingVisitor(false);
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
       // Register service worker
@@ -2118,22 +2073,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
 
   const handleUpdate = async (ticketId: string, newSolution: string, newReceiver?: string, newCategory?: string, newDate?: string) => {
     const backup = [...complaints];
-    // توثيق التغييرات في سجل النشاط قبل التعديل (لأغراض المساءلة والمتابعة)
-    const target = editingTicket || complaints.find(c => c.id === ticketId);
-    if (target) {
-      const actor = loggedInUser || (userRole === 'super_admin' ? 'المشرف العام' : userRole === 'viewer' ? 'المشرف' : 'مستخدم');
-      const tnum = target.number || 'غير محدد';
-      if (newSolution !== undefined && newSolution !== target.solution) {
-        logAudit('تغيير حالة الحل', tnum, target.solution || 'غير محدد', newSolution, actor);
-      }
-      if (newReceiver !== undefined && newReceiver && newReceiver !== target.receiver) {
-        logAudit('إعادة إسناد', tnum, target.receiver || 'غير محدد', newReceiver, actor);
-      }
-      if (newDate !== undefined && newDate && newDate !== target.date) {
-        logAudit('تعديل التاريخ', tnum, target.date || 'غير محدد', newDate, actor);
-      }
-    }
-    setComplaints(prev => prev.map(c =>
+    setComplaints(prev => prev.map(c => 
       c.id === (editingTicket?.id || ticketId) 
         ? { ...c, solution: newSolution, receiver: newReceiver || c.receiver, type: newCategory || c.type, date: newDate || c.date } 
         : c
@@ -2199,7 +2139,7 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     return {
       total: userFilteredComplaints.length,
       today: userFilteredComplaints.filter(c => c.date === new Date().toISOString().split('T')[0]).length,
-      open: userFilteredComplaints.filter((c) => ['لم يتم الحل', 'غير محدد', ''].includes((c.solution || '').trim())).length,
+      open: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'لم يتم الحل').length,
       closed: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'تم الحل').length,
       ministry: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'لدى الوزارة').length,
       waitingStatus: userFilteredComplaints.filter((c) => (c.solution || '').trim() === 'بانتظار المستفيد').length,
@@ -2284,67 +2224,11 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
     };
   }, [baseComplaints, selectedReceiver]);
 
-  // ========= 1) لوحة الأداء: مؤشرات كل موظف (المنجَز، المفتوح، المتأخر، نسبة الإنجاز) =========
-  const employeePerformance = useMemo(() => {
-    const empList = employeesList.length > 0 ? employeesList : DEFAULT_EMPLOYEES_WITH_PERMS;
-    const rows = empList.map(emp => {
-      const mine = baseComplaints.filter(c => matchReceiverToName(c.receiver, emp.name));
-      const total = mine.length;
-      const closed = mine.filter(c => (c.solution || '').trim() === 'تم الحل').length;
-      const open = mine.filter(c => {
-        const sol = (c.solution || '').trim();
-        return sol === 'لم يتم الحل' || sol === 'بلاغ جديد' || sol === 'غير محدد' || sol === '';
-      }).length;
-      const overdue = mine.filter(c => isTicketOverdue(c)).length;
-      const rate = total > 0 ? Math.round((closed / total) * 100) : 0;
-      return { name: emp.name, total, closed, open, overdue, rate };
-    });
-    // الترتيب: الأكثر إنجازاً أولاً ثم الأعلى نسبة إنجاز
-    return rows.sort((a, b) => b.closed - a.closed || b.rate - a.rate);
-  }, [baseComplaints, employeesList]);
-
-  // ========= 2) نظام التصعيد: البلاغات المتأخرة مرتبة حسب الأقدم (تحذير 7-14 يوم، حرج +14 يوم) =========
-  const escalationTickets = useMemo(() => {
-    return baseComplaints
-      .filter(c => isTicketOverdue(c))
-      .map(c => {
-        const days = getTicketAgeInDays(c.date);
-        return { ...c, days, level: days >= 14 ? 'critical' : 'warning' };
-      })
-      .sort((a, b) => b.days - a.days);
-  }, [baseComplaints]);
-
-  // البلاغات المتأخرة التي تخص المستخدم الحالي (للموظف: بلاغاته فقط، للمشرف: الكل)
-  const myEscalationTickets = useMemo(() => {
-    if (userRole === 'super_admin' || userRole === 'viewer') return escalationTickets;
-    if (!loggedInUser) return [];
-    return escalationTickets.filter(c => matchReceiverToName(c.receiver, loggedInUser));
-  }, [escalationTickets, loggedInUser, userRole]);
-
-  // تذكير استباقي: عند الدخول، إن وُجدت بلاغات متأخرة تخص المستخدم يُضاف تنبيه في جرس الإشعارات (مرة واحدة)
-  useEffect(() => {
-    if (escalationNotifiedRef.current) return;
-    if (myEscalationTickets.length === 0) return;
-    const critical = myEscalationTickets.filter(c => c.level === 'critical').length;
-    const scope = (userRole === 'super_admin' || userRole === 'viewer') ? 'لدى الفريق' : 'لديك';
-    const msg = `🚨 تصعيد: ${myEscalationTickets.length} بلاغ متأخر ${scope} يحتاج للمتابعة${critical > 0 ? ` (منها ${critical} حرجة تجاوزت 14 يوماً)` : ''}.`;
-    setNotifications(prev => {
-      if (prev.some(n => n.msg === msg)) return prev;
-      return [{
-        id: `escalation-${Date.now()}`,
-        msg,
-        time: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
-        read: false,
-      }, ...prev];
-    });
-    escalationNotifiedRef.current = true;
-  }, [myEscalationTickets, userRole]);
-
   const filteredComplaints = useMemo(() => {
     let result = baseComplaints;
     
     if (activeFilter !== 'all') {
-      if (activeFilter === 'open') result = result.filter(c => ['لم يتم الحل', 'غير محدد', ''].includes((c.solution || '').trim()));
+      if (activeFilter === 'open') result = result.filter(c => c.solution === 'لم يتم الحل');
       else if (activeFilter === 'closed') result = result.filter(c => c.solution === 'تم الحل');
       else if (activeFilter === 'ministry') result = result.filter(c => c.solution === 'لدى الوزارة');
       else if (activeFilter === 'general') result = result.filter(c => c.solution === 'مشكلة عامة');
@@ -2747,64 +2631,11 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
               </button>
             )}
 
-            {/* لوحة أداء الموظفين (متاحة لكل مستخدم مسجّل: الموظف يرى أداءه والمشرف يرى الجميع) */}
-            {(loggedInUser || userRole === 'super_admin' || userRole === 'viewer') && (
-              <button
-                className={styles.navIconButton}
-                onClick={() => setIsPerformanceOpen(true)}
-                title="لوحة أداء الموظفين"
-                style={{ backgroundColor: '#6366f1', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s ease' }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
-                  <path d="M22 12A10 10 0 0 0 12 2v10z" />
-                </svg>
-              </button>
-            )}
-
-            {/* نظام التصعيد: البلاغات المتأخرة مع عدّاد أحمر (للموظف بلاغاته وللمشرف الكل) */}
-            {(loggedInUser || userRole === 'super_admin' || userRole === 'viewer') && (
-              <button
-                className={styles.navIconButton}
-                onClick={() => setIsEscalationOpen(true)}
-                title="البلاغات المتأخرة والتصعيد"
-                style={{ backgroundColor: '#f43f5e', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', transition: 'all 0.3s ease' }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                  <line x1="12" y1="9" x2="12" y2="13" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-                {myEscalationTickets.length > 0 && (
-                  <span style={{ position: 'absolute', top: '-6px', left: '-6px', background: '#fff', color: '#f43f5e', fontSize: '0.7rem', fontWeight: 'bold', minWidth: '18px', height: '18px', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', boxShadow: '0 2px 6px rgba(0,0,0,0.3)' }}>
-                    {myEscalationTickets.length}
-                  </span>
-                )}
-              </button>
-            )}
-
-            {/* سجل النشاط (Audit Log) - للمشرف فقط لأغراض المساءلة */}
-            {(userRole === 'super_admin' || userRole === 'viewer' || loggedInUser?.includes('محمد الربيش')) && (
-              <button
-                className={styles.navIconButton}
-                onClick={() => setIsAuditOpen(true)}
-                title="سجل نشاط الموظفين"
-                style={{ backgroundColor: '#0ea5e9', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s ease' }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="12" y1="18" x2="12" y2="12" />
-                  <line x1="9" y1="15" x2="15" y2="15" />
-                </svg>
-              </button>
-            )}
-
             {/* زر صفحة المؤشرات للمشرفين */}
             {(userRole === 'super_admin' || userRole === 'viewer' || loggedInUser?.includes('محمد الربيش')) && (
-              <button
-                className={styles.navIconButton}
-                onClick={() => router.push('/indicators')}
+              <button 
+                className={styles.navIconButton} 
+                onClick={() => router.push('/indicators')} 
                 title="صفحة المؤشرات والإحصائيات للعرض التلفزيوني" 
                 style={{ backgroundColor: 'var(--secondary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s ease' }}
               >
@@ -3901,172 +3732,175 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
         </div>
       )}
       {/* ========================================== */}
+      {/* نافذة تسجيل مراجع جديد (بيان المراجعين) */}
       {/* ========================================== */}
-      {/* 1) لوحة أداء الموظفين */}
-      {/* ========================================== */}
-      {isPerformanceOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsPerformanceOpen(false)}>
-          <div className={styles.modalContent} style={{ maxWidth: '900px', width: '92%', maxHeight: '90vh', overflowY: 'auto', background: 'rgba(23, 28, 41, 0.97)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)', direction: 'rtl', fontFamily: 'Cairo' }} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, color: '#818cf8', fontSize: '1.35rem' }}>
-                📊 لوحة أداء الموظفين
+      {isRegisterVisitorOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsRegisterVisitorOpen(false)}>
+          <div className={styles.modalContent} style={{ maxWidth: '500px', width: '90%', direction: 'rtl', background: 'rgba(23, 28, 41, 0.95)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)' }} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '1rem' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, color: '#2563eb', fontFamily: 'Cairo', fontSize: '1.4rem' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <line x1="20" y1="8" x2="20" y2="14"></line>
+                  <line x1="23" y1="11" x2="17" y2="11"></line>
+                </svg>
+                تسجيل مراجع جديد
               </h2>
-              <button onClick={() => setIsPerformanceOpen(false)} title="إغلاق" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: 'white', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
+              <button 
+                className={styles.modalCloseIcon} 
+                onClick={() => setIsRegisterVisitorOpen(false)} 
+                title="إغلاق"
+                style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
             </div>
+            
+            <form onSubmit={handleRegisterVisitorSubmit} style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              <div className={styles.formGroup}>
+                <label htmlFor="vis_employeeName" style={{ display: 'block', marginBottom: '0.5rem', color: '#94a3b8', fontSize: '0.9rem', textAlign: 'right' }}>
+                  👤 اسم الموظف
+                </label>
+                <select
+                  id="vis_employeeName"
+                  name="employeeName"
+                  value={visitorForm.employeeName}
+                  onChange={handleVisitorInputChange}
+                  required
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', fontSize: '0.95rem', direction: 'rtl', textAlign: 'right' }}
+                >
+                  <option value="">-- اختر الموظف --</option>
+                  {(employeesList.length > 0 ? employeesList : DEFAULT_EMPLOYEES_WITH_PERMS).map(emp => (
+                    <option key={emp.user} value={emp.name}>{emp.name}</option>
+                  ))}
+                </select>
+              </div>
 
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '1rem 0' }}>
-              {(userRole === 'super_admin' || userRole === 'viewer')
-                ? 'مقارنة أداء جميع الموظفين مرتبة حسب الأكثر إنجازاً. النسبة = المنجَز ÷ الإجمالي.'
-                : 'مؤشرات أدائك الشخصية مقارنة ببقية الفريق.'}
-            </p>
+              <div className={styles.formGroup}>
+                <label htmlFor="vis_beneficiaryName" style={{ display: 'block', marginBottom: '0.5rem', color: '#94a3b8', fontSize: '0.9rem', textAlign: 'right' }}>
+                  👤 اسم المستفيد
+                </label>
+                <input
+                  type="text"
+                  id="vis_beneficiaryName"
+                  name="beneficiaryName"
+                  placeholder="مثال: محمد أحمد العتيبي"
+                  value={visitorForm.beneficiaryName}
+                  onChange={handleVisitorInputChange}
+                  required
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', fontSize: '0.95rem', direction: 'rtl', textAlign: 'right' }}
+                />
+              </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '0.5rem' }}>
-              {employeePerformance
-                .filter(row => (userRole === 'super_admin' || userRole === 'viewer') ? true : (loggedInUser && matchReceiverToName(row.name, loggedInUser)))
-                .map((row, idx) => {
-                  const isMe = loggedInUser && matchReceiverToName(row.name, loggedInUser);
-                  const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
-                  const showRank = (userRole === 'super_admin' || userRole === 'viewer');
-                  return (
-                    <div key={row.name} style={{ background: isMe ? 'rgba(99, 102, 241, 0.1)' : 'rgba(255,255,255,0.03)', border: `1px solid ${isMe ? 'rgba(99,102,241,0.35)' : 'rgba(255,255,255,0.06)'}`, borderRadius: '14px', padding: '1rem 1.2rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
-                        <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {showRank && <span style={{ fontSize: '1.1rem' }}>{medal}</span>}
-                          {row.name}
-                          {isMe && <span style={{ fontSize: '0.7rem', color: '#818cf8', background: 'rgba(99,102,241,0.15)', padding: '2px 8px', borderRadius: '10px' }}>أنت</span>}
-                        </span>
-                        <span style={{ fontSize: '0.85rem', color: row.rate >= 70 ? '#10b981' : row.rate >= 40 ? '#facc15' : '#f43f5e', fontWeight: 'bold' }}>
-                          نسبة الإنجاز: {row.rate}%
-                        </span>
-                      </div>
-                      {/* شريط تقدّم نسبة الإنجاز */}
-                      <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.07)', borderRadius: '4px', overflow: 'hidden', marginBottom: '12px' }}>
-                        <div style={{ width: `${row.rate}%`, height: '100%', background: row.rate >= 70 ? 'linear-gradient(90deg,#10b981,#059669)' : row.rate >= 40 ? 'linear-gradient(90deg,#facc15,#eab308)' : 'linear-gradient(90deg,#f43f5e,#e11d48)', borderRadius: '4px', transition: 'width 0.5s' }} />
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px' }}>
-                        {[
-                          { label: 'الإجمالي', value: row.total, color: '#e2e8f0' },
-                          { label: 'المنجَز', value: row.closed, color: '#10b981' },
-                          { label: 'المفتوح', value: row.open, color: '#facc15' },
-                          { label: 'متأخر', value: row.overdue, color: '#f43f5e' },
-                        ].map(stat => (
-                          <div key={stat.label} style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '8px', padding: '8px', textAlign: 'center' }}>
-                            <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: stat.color }}>{stat.value}</div>
-                            <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{stat.label}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="vis_nationalId" style={{ display: 'block', marginBottom: '0.5rem', color: '#94a3b8', fontSize: '0.9rem', textAlign: 'right' }}>
+                  🪪 رقم الهوية الوطنية
+                </label>
+                <input
+                  type="text"
+                  id="vis_nationalId"
+                  name="nationalId"
+                  placeholder="مثال: 10XXXXXXXX"
+                  value={visitorForm.nationalId}
+                  onChange={handleVisitorInputChange}
+                  pattern="[0-9]{10}"
+                  title="يجب أن يتكون رقم الهوية من 10 أرقام"
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', fontSize: '0.95rem', fontFamily: 'monospace', letterSpacing: '1px', direction: 'rtl', textAlign: 'right' }}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="vis_phoneNumber" style={{ display: 'block', marginBottom: '0.5rem', color: '#94a3b8', fontSize: '0.9rem', textAlign: 'right' }}>
+                  📞 رقم الجوال
+                </label>
+                <input
+                  type="text"
+                  id="vis_phoneNumber"
+                  name="phoneNumber"
+                  placeholder="مثال: 05XXXXXXXX أو 5XXXXXXXX"
+                  value={visitorForm.phoneNumber}
+                  onChange={handleVisitorInputChange}
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', fontSize: '0.95rem', fontFamily: 'monospace', letterSpacing: '1px', direction: 'rtl', textAlign: 'right' }}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="vis_serviceType" style={{ display: 'block', marginBottom: '0.5rem', color: '#94a3b8', fontSize: '0.9rem', textAlign: 'right' }}>
+                  🛠️ نوع الخدمة
+                </label>
+                <select
+                  id="vis_serviceType"
+                  name="serviceType"
+                  value={visitorForm.serviceType}
+                  onChange={handleVisitorInputChange}
+                  required
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', fontSize: '0.95rem', direction: 'rtl', textAlign: 'right' }}
+                >
+                  <option value="استعلام">استعلام</option>
+                  <option value="استفسار">استفسار</option>
+                  <option value="متابعة">متابعة</option>
+                  <option value="دعم فني">دعم فني</option>
+                  <option value="أخرى">أخرى</option>
+                </select>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="vis_date" style={{ display: 'block', marginBottom: '0.5rem', color: '#94a3b8', fontSize: '0.9rem', textAlign: 'right' }}>
+                  📅 التاريخ
+                </label>
+                <input
+                  type="date"
+                  id="vis_date"
+                  name="date"
+                  value={visitorForm.date ? visitorForm.date.replace(/\//g, '-') : ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setVisitorForm(prev => ({ ...prev, date: val ? val.replace(/-/g, '/') : '' }));
+                  }}
+                  required
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', background: 'rgba(30, 41, 59, 0.5)', border: '1px solid rgba(255,255,255,0.15)', color: 'white', fontSize: '0.95rem', direction: 'rtl', textAlign: 'right' }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmittingVisitor}
+                style={{
+                  marginTop: '1rem',
+                  padding: '0.8rem',
+                  background: '#2563eb',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  cursor: isSubmittingVisitor ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 15px rgba(37, 99, 235, 0.3)',
+                  transition: 'background 0.2s'
+                }}
+              >
+                {isSubmittingVisitor ? (
+                  <>
+                    <span className={styles.spinner} style={{ width: '16px', height: '16px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }}></span>
+                    جاري تسجيل المراجع...
+                  </>
+                ) : (
+                  <>تسجيل وإضافة لبيان المراجعين 💾</>
+                )}
+              </button>
+            </form>
           </div>
         </div>
       )}
-
       {/* ========================================== */}
-      {/* 2) نظام التصعيد والبلاغات المتأخرة */}
-      {/* ========================================== */}
-      {isEscalationOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsEscalationOpen(false)}>
-          <div className={styles.modalContent} style={{ maxWidth: '780px', width: '92%', maxHeight: '90vh', overflowY: 'auto', background: 'rgba(23, 28, 41, 0.97)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)', direction: 'rtl', fontFamily: 'Cairo' }} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, color: '#f43f5e', fontSize: '1.35rem' }}>
-                🚨 البلاغات المتأخرة والتصعيد
-              </h2>
-              <button onClick={() => setIsEscalationOpen(false)} title="إغلاق" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: 'white', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', margin: '1rem 0', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: '140px', background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)', borderRadius: '12px', padding: '12px', textAlign: 'center' }}>
-                <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#f43f5e' }}>{myEscalationTickets.filter(c => c.level === 'critical').length}</div>
-                <div style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>🔴 حرجة (+14 يوم)</div>
-              </div>
-              <div style={{ flex: 1, minWidth: '140px', background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.2)', borderRadius: '12px', padding: '12px', textAlign: 'center' }}>
-                <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#facc15' }}>{myEscalationTickets.filter(c => c.level === 'warning').length}</div>
-                <div style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>🟡 تحذير (7-14 يوم)</div>
-              </div>
-            </div>
-
-            <p style={{ color: '#94a3b8', fontSize: '0.82rem', marginBottom: '1rem' }}>
-              {(userRole === 'super_admin' || userRole === 'viewer')
-                ? 'كل البلاغات غير المحلولة التي تجاوزت 7 أيام، مرتبة من الأقدم. يُنصح بالمتابعة أو إعادة الإسناد.'
-                : 'بلاغاتك غير المحلولة التي تجاوزت 7 أيام وتحتاج إنجازاً عاجلاً.'}
-            </p>
-
-            {myEscalationTickets.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#10b981' }}>
-                ✅ لا توجد بلاغات متأخرة حالياً. عمل ممتاز!
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {myEscalationTickets.map(c => (
-                  <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', background: 'rgba(255,255,255,0.03)', borderRight: `4px solid ${c.level === 'critical' ? '#f43f5e' : '#facc15'}`, borderRadius: '10px', padding: '10px 14px' }}>
-                    <div>
-                      <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.9rem' }}>#{c.number}</span>
-                      <span style={{ color: '#94a3b8', fontSize: '0.8rem', marginRight: '10px' }}>{c.type || 'غير مصنّف'}</span>
-                      <span style={{ color: '#cbd5e1', fontSize: '0.8rem', marginRight: '10px' }}>👤 {c.receiver || 'غير محدد'}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{c.solution || 'غير محدد'}</span>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: c.level === 'critical' ? '#f43f5e' : '#facc15', background: c.level === 'critical' ? 'rgba(244,63,94,0.12)' : 'rgba(250,204,21,0.12)', padding: '3px 10px', borderRadius: '12px', whiteSpace: 'nowrap' }}>
-                        {c.days} يوم
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ========================================== */}
-      {/* 3) سجل نشاط الموظفين (Audit Log) */}
-      {/* ========================================== */}
-      {isAuditOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsAuditOpen(false)}>
-          <div className={styles.modalContent} style={{ maxWidth: '820px', width: '92%', maxHeight: '90vh', overflowY: 'auto', background: 'rgba(23, 28, 41, 0.97)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)', direction: 'rtl', fontFamily: 'Cairo' }} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, color: '#38bdf8', fontSize: '1.35rem' }}>
-                📝 سجل نشاط الموظفين
-              </h2>
-              <button onClick={() => setIsAuditOpen(false)} title="إغلاق" style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: 'white', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
-            </div>
-
-            <p style={{ color: '#94a3b8', fontSize: '0.82rem', margin: '1rem 0' }}>
-              توثيق كل تعديل يُجرى على البلاغات (من قام به، وماذا غيّر، ومتى) لأغراض المتابعة والمساءلة.
-            </p>
-
-            {auditLog.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                لا توجد حركات مسجّلة بعد. ستظهر التعديلات هنا فور حدوثها.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {auditLog.map(entry => (
-                  <div key={entry.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '10px 14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginBottom: '4px' }}>
-                      <span style={{ fontWeight: 'bold', color: '#38bdf8', fontSize: '0.88rem' }}>👤 {entry.user}</span>
-                      <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{entry.time}</span>
-                    </div>
-                    <div style={{ fontSize: '0.84rem', color: '#e2e8f0' }}>
-                      <span style={{ background: 'rgba(56,189,248,0.12)', color: '#38bdf8', padding: '2px 8px', borderRadius: '8px', fontSize: '0.75rem', marginLeft: '8px' }}>{entry.action}</span>
-                      البلاغ <strong style={{ color: '#fff' }}>#{entry.ticket}</strong>
-                      {(entry.from || entry.to) && (
-                        <span style={{ color: '#94a3b8' }}>
-                          {' — '}من «<span style={{ color: '#f87171' }}>{entry.from || 'غير محدد'}</span>» إلى «<span style={{ color: '#4ade80' }}>{entry.to || 'غير محدد'}</span>»
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* مركز التحكم بالصلاحيات والتقارير الذكية */}
       {/* ========================================== */}
       {isPermissionsOpen && (
@@ -5081,6 +4915,27 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .004 5.412.001 12.04c0 2.123.542 4.19 1.594 6.02l-1.595 5.821 5.956-1.562a11.754 11.754 0 005.441 1.341h.005c6.635 0 12.044-5.414 12.048-12.044 0-3.212-1.251-6.232-3.524-8.504"/>
                 </svg>
                 تحدث مع موظف
+              </button>
+
+              {/* زر تسجيل مراجع جديد */}
+              <button 
+                onClick={openRegisterVisitorModal}
+                title="تسجيل مراجع جديد"
+                className={styles.quickBtn}
+                style={{
+                  padding:'0 15px',
+                  background:'#2563eb', color:'white', 
+                  fontSize:'0.85rem', fontWeight:'bold', boxShadow: '0 4px 10px rgba(37, 99, 235, 0.3)',
+                  display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: 'none', borderRadius: '4px'
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <line x1="20" y1="8" x2="20" y2="14"></line>
+                  <line x1="23" y1="11" x2="17" y2="11"></line>
+                </svg>
+                تسجيل مراجع
               </button>
 
               {/* زر بيان المراجعين */}
