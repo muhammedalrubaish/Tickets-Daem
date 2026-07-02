@@ -2652,6 +2652,8 @@ function injectFloatingPanel() {
         phoneNumber: phoneNumber,
         reportText: reportText,
         municipality: municipality,
+        journalUpdates: extractJournalUpdatesText(),
+        companyName: extractCompanyName(),
         role: role
       };
 
@@ -3041,16 +3043,37 @@ function extractPhone() {
 }
 
 function extractReportText() {
+  // الأولوية لحقل "الوصف" المعنون بالصفحة (سبب البلاغ في نوشن)
+  const fromLabel = extractValue(["الوصف", "نص البلاغ", "تفاصيل البلاغ"]);
+  if (fromLabel && fromLabel.length > 10 && !fromLabel.includes('Asia/Riyadh')) return fromLabel;
+
   const textareas = queryAllInPage('textarea');
+  // استبعاد دفتر اليومية (يحتوي طوابع Asia/Riyadh) من كل المحاولات لمنع خلط البيانات
   for (let ta of textareas) {
     if (ta.readOnly || ta.disabled) {
-      if (ta.value.length > 20) return ta.value;
+      if (ta.value.length > 20 && !ta.value.includes('Asia/Riyadh')) return ta.value;
     }
   }
   for (let ta of textareas) {
     if (ta.value.length > 20 && !ta.value.includes('Asia/Riyadh')) return ta.value;
   }
-  return extractValue(["نص البلاغ", "تفاصيل البلاغ", "الوصف"]);
+  return fromLabel || "";
+}
+
+// استخراج نص تحديثات دفتر اليومية كاملاً (لإضافته كتعليقات في نوشن)
+function extractJournalUpdatesText() {
+  try {
+    const el = findJournalUpdatesElement();
+    if (!el) return "";
+    return el.tagName === 'TEXTAREA' ? (el.value || '') : (el.innerText || '');
+  } catch (e) {
+    return "";
+  }
+}
+
+// استخراج اسم الشركة/المؤسسة لتمييز بلاغات المكاتب الهندسية
+function extractCompanyName() {
+  return extractValue(["الاسم / اسم الشركة او المؤسسة", "اسم الشركة او المؤسسة", "اسم الشركة"]) || "";
 }
 
 function extractMunicipality() {
@@ -4480,6 +4503,8 @@ async function handleKeyboardShortcutAssign() {
       phoneNumber: phoneNumber,
       reportText: reportText,
       municipality: municipality,
+      journalUpdates: extractJournalUpdatesText(),
+      companyName: extractCompanyName(),
       role: role
     };
 

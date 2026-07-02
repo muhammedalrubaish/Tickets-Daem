@@ -110,56 +110,92 @@ export async function createNotionTicket(
   date: string,
   reportText: string,
   phoneNumber: string,
-  municipality?: string
+  municipality?: string,
+  journalUpdates?: string,
+  companyName?: string
 ) {
   if (!NOTION_STATUS_DATABASE_ID) return;
   console.log(`[Notion Sync] Creating ticket page in Notion: ${ticketNumber}`);
   try {
-    const db = await notion.databases.retrieve({ database_id: NOTION_STATUS_DATABASE_ID });
+    const db: any = await notion.databases.retrieve({ database_id: NOTION_STATUS_DATABASE_ID });
 
     let formattedPhone = phoneNumber || "";
     if (formattedPhone.length === 9 && formattedPhone.startsWith('5')) {
       formattedPhone = '0' + formattedPhone;
     }
 
-    const titleParts = [ticketNumber];
-    if (municipality) titleParts.push(municipality);
-    if (reportText) titleParts.push(reportText);
-    if (formattedPhone) titleParts.push(formattedPhone);
-    const titleContent = titleParts.join(" - ");
+    // اختيار خيار موجود مسبقاً في قائمة select فقط - لا يتم إنشاء خيارات جديدة أبداً
+    const matchSelectOption = (propName: string, value: string): string | null => {
+      if (!value) return null;
+      const options: any[] = db.properties?.[propName]?.select?.options || [];
+      const exact = options.find(o => o.name === value);
+      if (exact) return exact.name;
+      const partial = options.find(o => o.name.includes(value) || value.includes(o.name));
+      return partial ? partial.name : null;
+    };
+
+    // نوع التصنيف: مطابقة مع الخيارات الموجودة فقط، وإلا "أخرى" إن وجدت
+    const categoryOption = matchSelectOption("نوع التصنيف", category) || matchSelectOption("نوع التصنيف", "أخرى");
 
     const properties: any = {
+      // العنوان = رقم التذكرة فقط
       "Name": {
         title: [
           {
             text: {
-              content: titleContent
+              content: ticketNumber
             }
           }
         ]
       },
       "نوع التصنيف": {
-        select: category ? { name: category } : null
+        select: categoryOption ? { name: categoryOption } : null
       },
+      // الحالة دائماً "بلاغ جديد" عند الإنشاء
       "الحالة": {
         select: { name: "بلاغ جديد" }
       },
       "Due Date": {
         date: date ? { start: date } : null
       },
+      // سبب البلاغ في نوشن = حقل الوصف في داعم
       "سبب البلاغ": {
         rich_text: [
           {
             text: {
-              content: reportText || ""
+              content: (reportText || "").slice(0, 1900)
             }
           }
         ]
-      },
-      "رقم الجوال": {
-        phone_number: phoneNumber || null
       }
     };
+
+    // تعبئة قيمة بحسب نوع الخاصية الفعلي في قاعدة نوشن
+    const setByPropType = (propName: string, value: string) => {
+      const propType = db.properties?.[propName]?.type;
+      if (!propType || !value) return;
+      if (propType === 'phone_number') {
+        properties[propName] = { phone_number: value };
+      } else if (propType === 'rich_text') {
+        properties[propName] = { rich_text: [{ text: { content: value.slice(0, 1900) } }] };
+      } else if (propType === 'select') {
+        const opt = matchSelectOption(propName, value);
+        if (opt) properties[propName] = { select: { name: opt } };
+      }
+    };
+
+    // رقم الجوال: إن كان المبلغ مكتباً هندسياً يوضع الرقم في خانة "المكتب الهندسي"، وإلا في "رقم الجوال"
+    const isEngineeringOffice = !!(companyName && (companyName.includes('مكتب') || companyName.includes('هندس')));
+    if (isEngineeringOffice && db.properties?.["المكتب الهندسي"]) {
+      setByPropType("المكتب الهندسي", formattedPhone);
+    } else if (formattedPhone) {
+      properties["رقم الجوال"] = { phone_number: formattedPhone };
+    }
+
+    // البلدية: نفس قيمة داعم (من الخيارات الموجودة فقط إن كانت قائمة select)
+    if (municipality && db.properties?.["البلدية"]) {
+      setByPropType("البلدية", municipality);
+    }
 
     if (db.properties["المستقبل"]) {
       properties["المستقبل"] = {
@@ -172,6 +208,27 @@ export async function createNotionTicket(
       properties: properties
     });
     console.log(`[Notion Sync] Created Notion page: ${response.id}`);
+
+    // تحديثات دفتر اليومية في داعم -> تعليقات على صفحة البلاغ في نوشن
+    if (journalUpdates && journalUpdates.trim()) {
+      const entries = journalUpdates
+        .split(/-{4,}/)
+        .map(e => e.trim())
+        .filter(e => e.length > 0)
+        .slice(-10); // آخر 10 تحديثات كحد أقصى
+
+      for (const entry of entries) {
+        try {
+          await notion.comments.create({
+            parent: { page_id: response.id },
+            rich_text: [{ text: { content: entry.slice(0, 1900) } }]
+          });
+        } catch (commentErr: any) {
+          console.error(`[Notion Sync Error] Failed to add journal comment:`, commentErr.message);
+        }
+      }
+    }
+
     return response.id;
   } catch (err: any) {
     console.error(`[Notion Sync Error] Failed to create Notion page:`, err.message);

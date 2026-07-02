@@ -35,7 +35,9 @@ export async function POST(req: Request) {
           data.date,
           data.reportText || '',
           data.phoneNumber || '',
-          data.municipality || ''
+          data.municipality || '',
+          data.journalUpdates || '',
+          data.companyName || ''
         );
       } catch (notionErr) {
         console.error('Failed to create ticket in Notion:', notionErr);
