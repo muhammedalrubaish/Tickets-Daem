@@ -256,6 +256,7 @@ async function syncFromWebsite() {
       const resData = response.tickets;
       websiteTickets = Array.isArray(resData) ? resData : (resData.tickets || []);
       window.daemTicketsFetched = true;
+      window.daemLastFetchTime = Date.now();
 
       // تحديث نص زر التوزيع ديناميكياً بعد انتهاء جلب البيانات
       const nextEmployee = getLeastReceiver();
@@ -275,6 +276,7 @@ function fetchTicketsPromise() {
         const resData = response.tickets;
         const tickets = Array.isArray(resData) ? resData : (resData.tickets || []);
         window.daemTicketsFetched = true;
+        window.daemLastFetchTime = Date.now();
         resolve(tickets);
       } else {
         resolve([]);
@@ -2833,7 +2835,7 @@ function fillTicketDataToForm(data) {
 
 // تشغيل الحقن والمراقبة
 syncFromWebsite();
-setInterval(syncFromWebsite, 60000);
+setInterval(syncFromWebsite, 30000);
 setInterval(highlightTickets, 2000);
 
 
@@ -4036,10 +4038,13 @@ async function autoAssignIfNewTicket() {
       // وضع علامة لمنع التكرار قبل البدء لتجنب السباق في الاستدعاء المتزامن
       window.daemAutoAssignedTickets[ticketId] = true;
 
-      // جلب أحدث بيانات التوزيع والترتيب اللحظي
-      const tickets = await fetchTicketsPromise();
-      if (tickets && tickets.length > 0) {
-        websiteTickets = tickets;
+      // تسريع الإسناد: إذا كانت البيانات حديثة (أقل من 35 ثانية) نستخدمها فوراً دون انتظار جلب جديد
+      const dataIsFresh = window.daemLastFetchTime && (Date.now() - window.daemLastFetchTime < 35000);
+      if (!dataIsFresh) {
+        const tickets = await fetchTicketsPromise();
+        if (tickets && tickets.length > 0) {
+          websiteTickets = tickets;
+        }
       }
 
       const nextEmployee = getLeastReceiver();
@@ -4050,6 +4055,13 @@ async function autoAssignIfNewTicket() {
         updateSubmitButtonText(nextEmployee);
 
         showFloatingNotification(`✨ تم إسناد البلاغ الجديد تلقائياً للموظف: ${nextEmployee.name} (الدور عليه)`);
+
+        // تحديث البيانات في الخلفية بعد الإسناد الفوري لضمان دقة الدور التالي
+        if (dataIsFresh) {
+          fetchTicketsPromise().then(tickets => {
+            if (tickets && tickets.length > 0) websiteTickets = tickets;
+          });
+        }
       }
     }
   } catch (e) {

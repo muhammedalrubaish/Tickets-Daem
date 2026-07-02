@@ -27,7 +27,8 @@ export default function ExtensionPopupPage() {
   const [clientVersion, setClientVersion] = useState<string>('');
   
   const [role, setRole] = useState<'admin' | 'support' | null>(null);
-  const [password, setPassword] = useState<string>('Balady.20');
+  // لا نعبئ كلمة المرور مسبقاً إطلاقاً حفاظاً على السرية عند مشاركة الإضافة
+  const [password, setPassword] = useState<string>('');
   const [showPasswordField, setShowPasswordField] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [nextEmployee, setNextEmployee] = useState<string>('غير محدد');
@@ -43,7 +44,6 @@ export default function ExtensionPopupPage() {
       setClientVersion(params.get('v') || '');
       
       const paramRole = params.get('role');
-      const paramPass = params.get('p') || '';
       const paramSpelling = params.get('spelling');
       
       if (paramSpelling === 'false') {
@@ -53,17 +53,15 @@ export default function ExtensionPopupPage() {
       }
       
       const savedRole = localStorage.getItem('daemRole') as 'admin' | 'support' | null;
-      const savedPass = localStorage.getItem('daemPassword') || '';
       const savedUsername = localStorage.getItem('daemUsername') || '';
       const savedUserKey = localStorage.getItem('daemUserKey') || '';
       const savedUserArabic = localStorage.getItem('daemUserArabic') || '';
-      
-      const activeRole = savedRole || (paramRole && paramRole !== 'null' ? (paramRole as 'admin' | 'support') : null);
-      const activePass = savedPass || paramPass || '';
 
-      if (activePass) {
-        setPassword(activePass);
-      }
+      // إزالة أي كلمة مرور مخزنة سابقاً (أمان: لا تُحفظ كلمة المرور بعد الآن)
+      localStorage.removeItem('daemPassword');
+
+      const activeRole = savedRole || (paramRole && paramRole !== 'null' ? (paramRole as 'admin' | 'support') : null);
+
       if (savedUsername) {
         setSelectedUser(savedUsername);
       }
@@ -74,13 +72,10 @@ export default function ExtensionPopupPage() {
       if (activeRole) {
         setRole(activeRole);
         localStorage.setItem('daemRole', activeRole);
-        if (activePass) {
-          localStorage.setItem('daemPassword', activePass);
-        }
-        window.parent.postMessage({ 
-          action: 'SET_ROLE', 
-          role: activeRole, 
-          password: activePass,
+        window.parent.postMessage({
+          action: 'SET_ROLE',
+          role: activeRole,
+          password: '',
           username: savedUsername,
           userKey: savedUserKey,
           userArabic: savedUserArabic
@@ -219,17 +214,18 @@ export default function ExtensionPopupPage() {
       const userRole = matchedEmp.user === 'mialrubaish' ? 'admin' : 'support';
       setRole(userRole);
       localStorage.setItem('daemRole', userRole);
-      localStorage.setItem('daemPassword', password);
       localStorage.setItem('daemUsername', matchedEmp.user);
       localStorage.setItem('daemUserKey', matchedEmp.key || '');
       localStorage.setItem('daemUserArabic', matchedEmp.name);
-      
+
       setUserArabic(matchedEmp.name);
-      
-      window.parent.postMessage({ 
-        action: 'SET_ROLE', 
-        role: userRole, 
-        password: password,
+      // أمان: لا نحفظ ولا نمرر كلمة المرور بعد نجاح الدخول
+      setPassword('');
+
+      window.parent.postMessage({
+        action: 'SET_ROLE',
+        role: userRole,
+        password: '',
         username: matchedEmp.user,
         userKey: matchedEmp.key || '',
         userArabic: matchedEmp.name
