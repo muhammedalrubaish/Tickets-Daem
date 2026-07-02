@@ -889,7 +889,7 @@ function injectDashboardPanel() {
             <span style="color: #94a3b8;">المستقبل القادم (الدور عليه):</span>
             <span id="daem-dbpanel-next-employee" style="color: #10b981; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
               <span class="daem-pulse-green" style="display: inline-block; width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981;"></span>
-              ${nextEmployee ? nextEmployee.name : 'جاري الحساب...'}
+              ${nextEmployee ? nextEmployee.name : '—'}
             </span>
           </div>
         </div>
@@ -1925,6 +1925,11 @@ function normalizeCategory(rawCategory) {
 
 // حساب الموظف الذي عليه الدور حسب نفس خوارزمية التوزيع باللوحة الرئيسية
 function getLeastReceiver() {
+  // لا نعرض اسماً افتراضياً قبل اكتمال جلب البيانات؛ نعيد null لعرض شرطة بدلاً من اسم خاطئ
+  if (!window.daemTicketsFetched || !Array.isArray(websiteTickets) || websiteTickets.length === 0) {
+    return null;
+  }
+
   const priorityOrder = [
     { name: 'البراء النصيان', user: 'a.alnesayan' },
     { name: 'عبدالرحمن العمري', user: 'af.alamri' },
@@ -1985,7 +1990,7 @@ function updateSubmitButtonText(nextEmployee) {
 
   const labelNextEmp = document.getElementById('daem-panel-next-employee-value');
   if (labelNextEmp) {
-    labelNextEmp.innerText = nextEmployee ? `${nextEmployee.name}` : 'جاري الحساب...';
+    labelNextEmp.innerText = nextEmployee ? `${nextEmployee.name}` : '—';
   }
 
   const labelAssigneeId = document.getElementById('daem-panel-assignee-id-value');
@@ -2230,7 +2235,7 @@ function injectFloatingPanel() {
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(16,185,129,0.15); padding-top: 6px;">
           <span style="color: #6b7280; font-size: 10px;">المستقبل القادم (الدور عليه):</span>
-          <span id="daem-panel-next-employee-value" style="color: #ffffff; font-weight: bold; font-size: 11px; background: #10b981; padding: 2px 9px; border-radius: 20px; border: 1px solid #059669;">${nextEmployee ? `${nextEmployee.name}` : 'جاري الحساب...'}</span>
+          <span id="daem-panel-next-employee-value" style="color: #ffffff; font-weight: bold; font-size: 11px; background: #10b981; padding: 2px 9px; border-radius: 20px; border: 1px solid #059669;">${nextEmployee ? `${nextEmployee.name}` : '—'}</span>
         </div>
       </div>
 
