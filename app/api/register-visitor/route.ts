@@ -10,10 +10,12 @@ function getAuthClient() {
   if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
     try {
       const key = JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString('utf8'));
-      return new google.auth.GoogleAuth({
-        credentials: key,
-        scopes: SCOPES,
-      });
+      return new google.auth.JWT(
+        key.client_email,
+        null,
+        key.private_key,
+        SCOPES
+      );
     } catch (e) {
       console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY:', e);
     }
