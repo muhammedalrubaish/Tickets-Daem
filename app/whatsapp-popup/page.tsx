@@ -36,7 +36,10 @@ export default function WhatsappPopupPage() {
     const handleMessage = (event: MessageEvent) => {
       if (event.data && event.data.action === 'EXTRACTED_DATA') {
         const { ticketNumber, reportText, phoneNumber } = event.data.data || {};
-        if (ticketNumber) setTicketNumber(ticketNumber);
+        if (ticketNumber) {
+          setTicketNumber(ticketNumber);
+          window.parent.postMessage({ action: 'SAVE_TICKET', ticketNumber }, '*');
+        }
         if (reportText) setReportText(reportText);
         if (phoneNumber) setPhoneNumber(formatPhone(phoneNumber));
         
@@ -91,6 +94,10 @@ export default function WhatsappPopupPage() {
     if (!phoneNumber) {
       showToast('يرجى إدخال رقم الجوال! ⚠️');
       return;
+    }
+
+    if (ticketNumber) {
+      window.parent.postMessage({ action: 'SAVE_TICKET', ticketNumber }, '*');
     }
 
     const greeting = getGreeting();
