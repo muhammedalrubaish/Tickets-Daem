@@ -119,7 +119,10 @@ export async function createNotionTicket(
   try {
     const db: any = await notion.databases.retrieve({ database_id: NOTION_STATUS_DATABASE_ID });
 
-    let formattedPhone = phoneNumber || "";
+    // حماية إضافية: قبول رقم جوال سعودي صحيح فقط ورفض أي نص آخر
+    const phoneDigits = (phoneNumber || "").replace(/\D/g, "");
+    const phoneMatch = phoneDigits.match(/0?5\d{8}/);
+    let formattedPhone = phoneMatch ? phoneMatch[0] : "";
     if (formattedPhone.length === 9 && formattedPhone.startsWith('5')) {
       formattedPhone = '0' + formattedPhone;
     }

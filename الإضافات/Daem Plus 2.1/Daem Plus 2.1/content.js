@@ -3029,9 +3029,42 @@ function extractValue(labels) {
   return "";
 }
 
+// مستخرج دقيق: يطابق نص التسمية نفسه (وليس أي حاوية تحتويه) ثم يقرأ حقل الإدخال المجاور
+function extractFieldValueByLabel(labels) {
+  const candidates = queryAllInPage('label, td, th, span, div, b, p');
+  for (const el of candidates) {
+    // نص العنصر نفسه فقط - نتجاهل الحاويات الكبيرة
+    const ownText = (el.innerText || '').trim().replace(/[:：*]\s*$/, '').trim();
+    if (!ownText || ownText.length > 45) continue;
+
+    const matchedLabel = labels.find(l => ownText === l || (ownText.startsWith(l) && ownText.length <= l.length + 15));
+    if (!matchedLabel) continue;
+
+    // 1) الخلية المجاورة (التالية ثم السابقة لدعم RTL)
+    const cell = el.closest ? (el.closest('td, th') || el) : el;
+    const neighbors = [cell.nextElementSibling, cell.previousElementSibling];
+    for (const n of neighbors) {
+      if (!n || !n.querySelector) continue;
+      const input = n.querySelector('input, textarea, select') || (['INPUT', 'TEXTAREA', 'SELECT'].includes(n.tagName) ? n : null);
+      if (input && input.value && input.value.trim().length > 0) return input.value.trim();
+    }
+
+    // 2) أي حقل إدخال داخل نفس الصف
+    const row = el.closest ? el.closest('tr') : null;
+    if (row) {
+      const input = row.querySelector('input, textarea, select');
+      if (input && input.value && input.value.trim().length > 0) return input.value.trim();
+    }
+  }
+  return "";
+}
+
 function extractPhone() {
-  const fromLabel = extractValue(["جوال المواطن", "رقم الجوال", "الهاتف"]);
-  if (fromLabel && fromLabel.length >= 9) return fromLabel;
+  // التحقق الصارم: رقم جوال سعودي فقط (9 أرقام تبدأ بـ5 أو 10 تبدأ بـ05)
+  const raw = extractFieldValueByLabel(["جوال المواطن", "رقم الجوال", "الهاتف"]);
+  const digits = (raw || '').replace(/\D/g, '');
+  const m = digits.match(/0?5\d{8}/);
+  if (m) return m[0];
 
   const bodyText = document.body.innerText;
   const phoneRegex = /(05\d{8}|(?<!\d)5\d{8}(?!\d))/g;
@@ -3044,20 +3077,19 @@ function extractPhone() {
 
 function extractReportText() {
   // الأولوية لحقل "الوصف" المعنون بالصفحة (سبب البلاغ في نوشن)
-  const fromLabel = extractValue(["الوصف", "نص البلاغ", "تفاصيل البلاغ"]);
+  const fromLabel = extractFieldValueByLabel(["الوصف", "نص البلاغ", "تفاصيل البلاغ"]);
   if (fromLabel && fromLabel.length > 10 && !fromLabel.includes('Asia/Riyadh')) return fromLabel;
 
+  // بديل: أطول textarea بالصفحة مع استبعاد دفتر اليومية (يحتوي طوابع Asia/Riyadh)
   const textareas = queryAllInPage('textarea');
-  // استبعاد دفتر اليومية (يحتوي طوابع Asia/Riyadh) من كل المحاولات لمنع خلط البيانات
+  let best = "";
   for (let ta of textareas) {
-    if (ta.readOnly || ta.disabled) {
-      if (ta.value.length > 20 && !ta.value.includes('Asia/Riyadh')) return ta.value;
+    const v = (ta.value || '').trim();
+    if (v.length > 20 && v.length > best.length && !v.includes('Asia/Riyadh')) {
+      best = v;
     }
   }
-  for (let ta of textareas) {
-    if (ta.value.length > 20 && !ta.value.includes('Asia/Riyadh')) return ta.value;
-  }
-  return fromLabel || "";
+  return best || fromLabel || "";
 }
 
 // استخراج نص تحديثات دفتر اليومية كاملاً (لإضافته كتعليقات في نوشن)
@@ -3073,15 +3105,16 @@ function extractJournalUpdatesText() {
 
 // استخراج اسم الشركة/المؤسسة لتمييز بلاغات المكاتب الهندسية
 function extractCompanyName() {
-  return extractValue(["الاسم / اسم الشركة او المؤسسة", "اسم الشركة او المؤسسة", "اسم الشركة"]) || "";
+  return extractFieldValueByLabel(["الاسم / اسم الشركة او المؤسسة", "اسم الشركة او المؤسسة", "اسم الشركة"]) || "";
 }
 
 function extractMunicipality() {
-  const fromLabel = extractValue(["البلدية"]);
-  if (fromLabel) {
-    return fromLabel.split('-')[0].trim();
-  }
-  return "";
+  const raw = extractFieldValueByLabel(["البلدية"]) || extractValue(["البلدية"]);
+  if (!raw) return "";
+  // القيمة في داعم مثل "بلدية شرق بريدة - East Buraidah": نأخذ المقطع العربي فقط
+  const parts = raw.split('-').map(s => s.trim()).filter(Boolean);
+  const arabic = parts.find(p => /[؀-ۿ]/.test(p));
+  return arabic || parts[0] || "";
 }
 
 function detectMinistryUpdateToday() {
