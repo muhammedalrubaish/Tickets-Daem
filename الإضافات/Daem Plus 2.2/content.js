@@ -426,54 +426,76 @@ function cleanColumnHeaders() {
 let daemCardsViewActive = false;
 let daemHideColsActive = false;
 
+// لون الشريط الجانبي للبطاقة بحسب تصنيف التذكرة (نفس ألوان التمييز الأصلية بدرجة أغمق قليلاً)
+const DAEM_CARD_ACCENT_MAP = {
+  'daem-cell-new': '#3b82f6',
+  'daem-cell-recent': '#ec4899',
+  'daem-cell-very-old': '#fbbf24',
+  'daem-cell-old': '#06b6d4',
+  'daem-cell-not-solved': '#ef4444',
+  'daem-cell-unassigned': '#991b1b',
+  'daem-cell-mismatch': '#f59e0b',
+  'daem-cell-solved': '#10b981'
+};
+
+function daemGetCardAccent(row) {
+  for (const cls in DAEM_CARD_ACCENT_MAP) {
+    if (row.querySelector('td.' + cls)) return DAEM_CARD_ACCENT_MAP[cls];
+  }
+  return 'transparent';
+}
+
 function applyCardsViewStyle(doc, active) {
   // نطبق الأنماط على الصفوف المسجلة مباشرةً بالجافاسكريبت
   const rows = doc.querySelectorAll('tr[data-daem-registered]');
   rows.forEach(row => {
     const cells = row.querySelectorAll('td');
     if (cells.length < 2) return;
+    const accent = active ? daemGetCardAccent(row) : null;
+
     cells.forEach((td, i) => {
       if (active) {
-        td.style.setProperty('padding-top', '10px', 'important');
-        td.style.setProperty('padding-bottom', '10px', 'important');
+        td.style.setProperty('padding-top', '12px', 'important');
+        td.style.setProperty('padding-bottom', '12px', 'important');
+        td.style.setProperty('background-color', '#ffffff', 'important');
+        td.style.setProperty('box-shadow', '0 1px 6px rgba(0,0,0,0.1)', 'important');
         if (i === 0) {
-          td.style.setProperty('border-radius', '0 10px 10px 0', 'important');
+          td.style.setProperty('border-radius', '0 12px 12px 0', 'important');
           td.style.setProperty('border-left', 'none', 'important');
         } else if (i === cells.length - 1) {
-          td.style.setProperty('border-radius', '10px 0 0 10px', 'important');
-          td.style.setProperty('border-right', 'none', 'important');
+          td.style.setProperty('border-radius', '12px 0 0 12px', 'important');
+          td.style.setProperty('border-right', `5px solid ${accent}`, 'important');
         } else {
           td.style.borderRadius = '';
         }
       } else {
         td.style.removeProperty('padding-top');
         td.style.removeProperty('padding-bottom');
+        td.style.removeProperty('background-color');
+        td.style.removeProperty('box-shadow');
         td.style.removeProperty('border-radius');
         td.style.removeProperty('border-left');
         td.style.removeProperty('border-right');
       }
     });
 
-    // إضافة فراغ بين الصفوف عبر تأثير border-bottom على آخر خلية
     if (active) {
-      cells.forEach(td => {
-        td.style.setProperty('border-bottom', '3px solid rgba(0,0,0,0)', 'important');
-        td.style.setProperty('border-top', '1px solid rgba(255,255,255,0.15)', 'important');
-      });
+      row.style.setProperty('transition', 'transform 0.15s ease', 'important');
+      row.onmouseenter = () => cells.forEach(td => td.style.setProperty('box-shadow', '0 4px 12px rgba(0,0,0,0.18)', 'important'));
+      row.onmouseleave = () => cells.forEach(td => td.style.setProperty('box-shadow', '0 1px 6px rgba(0,0,0,0.1)', 'important'));
     } else {
-      cells.forEach(td => {
-        td.style.removeProperty('border-bottom');
-        td.style.removeProperty('border-top');
-      });
+      row.style.removeProperty('transition');
+      row.onmouseenter = null;
+      row.onmouseleave = null;
     }
   });
 
-  // تعديل خاصية border-collapse للجدول الأصل لإضافة مسافات بين الصفوف
+  // تعديل خاصية border-collapse للجدول الأصل لإضافة مسافات واضحة بين البطاقات
   const tables = doc.querySelectorAll('table');
   tables.forEach(table => {
     if (active) {
       table.style.setProperty('border-collapse', 'separate', 'important');
-      table.style.setProperty('border-spacing', '0 5px', 'important');
+      table.style.setProperty('border-spacing', '0 12px', 'important');
     } else {
       table.style.removeProperty('border-collapse');
       table.style.removeProperty('border-spacing');
@@ -1019,6 +1041,8 @@ function highlightTickets() {
 
   // إعادة تطبيق تثبيت عمود رقم التذكرة لضمان تحديث لون الخلفية مع تغيّر تصنيف التذكرة
   if (daemStickyColActive) applyStickyColStyle(document, true);
+  // إعادة تطبيق مظهر البطاقات لضمان تحديث لون الشريط الجانبي مع تغيّر تصنيف التذكرة
+  if (daemCardsViewActive) applyCardsViewStyle(document, true);
 
   // لا نحدث العداد إلا إذا وجدنا بلاغات ملونة فعلاً في هذا الإطار
   if (foundAny) {
