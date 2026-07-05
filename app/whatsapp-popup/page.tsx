@@ -23,13 +23,22 @@ export default function WhatsappPopupPage() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>('');
 
-  // تحميل الإعدادات من التخزين المحلي
+  // تحميل الإعدادات من التخزين المحلي والتحقق من الإصدار
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedName = localStorage.getItem('balady_whatsapp_empName');
       const savedTemplate = localStorage.getItem('balady_whatsapp_template');
       if (savedName) setEmpName(savedName);
       if (savedTemplate) setMsgTemplate(savedTemplate);
+
+      // التحقق من إصدار الإضافة ومقارنته بالإصدار الأخير
+      const urlParams = new URLSearchParams(window.location.search);
+      const extVersion = urlParams.get('v');
+      const latestVersion = "1.4"; // رقم أحدث إصدار متاح للإضافة حالياً
+
+      if (extVersion && parseFloat(extVersion) < parseFloat(latestVersion)) {
+        window.parent.postMessage({ action: 'UPDATE_AVAILABLE' }, '*');
+      }
     }
 
     // الاستماع للبيانات المستخرجة من نافذة الإضافة الأصلية (Parent Window)
