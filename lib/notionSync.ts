@@ -112,7 +112,8 @@ export async function createNotionTicket(
   phoneNumber: string,
   municipality?: string,
   journalUpdates?: string,
-  companyName?: string
+  companyName?: string,
+  nationalId?: string
 ) {
   if (!NOTION_STATUS_DATABASE_ID) return;
   console.log(`[Notion Sync] Creating ticket page in Notion: ${ticketNumber}`);
@@ -187,8 +188,17 @@ export async function createNotionTicket(
       }
     };
 
-    // رقم الجوال: إن كان المبلغ مكتباً هندسياً يوضع الرقم في خانة "المكتب الهندسي"، وإلا في "رقم الجوال"
-    const isEngineeringOffice = !!(companyName && (companyName.includes('مكتب') || companyName.includes('هندس')));
+    // رقم الجوال: إن كان رقم الهوية يبدأ بـ 2 (وليس تصنيف حفريات) يوضع الرقم في خانة "المكتب الهندسي"، وإلا في "رقم الجوال"
+    let isEngineeringOffice = false;
+    if (nationalId) {
+      const startsWith2 = nationalId.trim().startsWith('2');
+      const isExcavation = categoryOption && (categoryOption.includes('حفريات') || categoryOption.includes('الحفريات'));
+      isEngineeringOffice = !!(startsWith2 && !isExcavation);
+    } else {
+      // Fallback to name-based classification if nationalId is missing
+      isEngineeringOffice = !!(companyName && (companyName.includes('مكتب') || companyName.includes('هندس')));
+    }
+
     if (isEngineeringOffice && db.properties?.["المكتب الهندسي"]) {
       setByPropType("المكتب الهندسي", formattedPhone);
     } else if (formattedPhone) {

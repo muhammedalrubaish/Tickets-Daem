@@ -106,10 +106,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         updateSolution(request.data.number, request.data.solution).then(res => sendResponse(res));
         return true;
     }
-    if (request.action === "SUMMARIZE_TITLES") {
-        summarizeTitles(request.data.titles).then(res => sendResponse(res));
-        return true;
-    }
 });
 
 async function updateSolution(ticketNumber, solution) {
@@ -123,28 +119,6 @@ async function updateSolution(ticketNumber, solution) {
         const errText = await response.text();
         return { success: false, error: errText };
     } catch (error) {
-        return { success: false, error: error.message };
-    }
-}
-
-async function summarizeTitles(titles) {
-    try {
-        const response = await fetch("https://tickets-daem.vercel.app/api/summarize-title", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ titles })
-        });
-        if (response.ok) {
-            const data = await response.json();
-            return { success: true, summaries: data.summaries };
-        } else {
-            const errText = await response.text();
-            return { success: false, error: errText };
-        }
-    } catch (error) {
-        console.error("Error summarizing titles in background:", error);
         return { success: false, error: error.message };
     }
 }

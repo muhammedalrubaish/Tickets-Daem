@@ -78,18 +78,11 @@ function safeRemoveStorage(keys, callback) {
   } catch (e) { }
 }
 
-
-
-let titleSummariesCache = {};
-let pendingTitlesToSummarize = new Set();
-let summarizeTimeoutId = null;
-
 try {
-  safeGetStorage(['daemUserKey', 'daemUserArabic', 'daemSpellingEnabled', 'daemTitleSummaries'], (result) => {
+  safeGetStorage(['daemUserKey', 'daemUserArabic', 'daemSpellingEnabled'], (result) => {
     if (result.daemUserKey) currentLoggedUserKey = result.daemUserKey;
     if (result.daemUserArabic) currentLoggedUserArabic = result.daemUserArabic;
     currentSpellingEnabled = result.daemSpellingEnabled !== false;
-    if (result.daemTitleSummaries) titleSummariesCache = result.daemTitleSummaries;
   });
 } catch (e) { }
 
@@ -268,6 +261,9 @@ async function syncFromWebsite() {
       const nextEmployee = getLeastReceiver();
       updateSubmitButtonText(nextEmployee);
 
+      // تحديث ظهور زر الإسناد التلقائي فوراً
+      refreshAutoAssignButtonVisibility();
+
       // تشغيل الإسناد التلقائي فوراً بمجرد جاهزية البيانات لتقليل زمن الانتظار
       autoAssignIfNewTicket();
     }
@@ -422,235 +418,6 @@ function cleanColumnHeaders() {
   });
 }
 
-// ======= حالة وضع العرض (Cards / Hide Cols) =======
-let daemCardsViewActive = false;
-let daemHideColsActive = false;
-
-// لون الشريط الجانبي للبطاقة بحسب تصنيف التذكرة (نفس ألوان التمييز الأصلية بدرجة أغمق قليلاً)
-const DAEM_CARD_ACCENT_MAP = {
-  'daem-cell-new': '#3b82f6',
-  'daem-cell-recent': '#ec4899',
-  'daem-cell-very-old': '#fbbf24',
-  'daem-cell-old': '#06b6d4',
-  'daem-cell-not-solved': '#ef4444',
-  'daem-cell-unassigned': '#991b1b',
-  'daem-cell-mismatch': '#f59e0b',
-  'daem-cell-solved': '#10b981'
-};
-
-function daemGetCardAccent(row) {
-  for (const cls in DAEM_CARD_ACCENT_MAP) {
-    if (row.querySelector('td.' + cls)) return DAEM_CARD_ACCENT_MAP[cls];
-  }
-  return 'transparent';
-}
-
-function applyCardsViewStyle(doc, active) {
-  // نطبق الأنماط على الصفوف المسجلة مباشرةً بالجافاسكريبت
-  const rows = doc.querySelectorAll('tr[data-daem-registered]');
-  rows.forEach(row => {
-    const cells = row.querySelectorAll('td');
-    if (cells.length < 2) return;
-    const accent = active ? daemGetCardAccent(row) : null;
-
-    cells.forEach((td, i) => {
-      if (active) {
-        td.style.setProperty('padding-top', '12px', 'important');
-        td.style.setProperty('padding-bottom', '12px', 'important');
-        td.style.setProperty('background-color', '#ffffff', 'important');
-        td.style.setProperty('box-shadow', '0 1px 6px rgba(0,0,0,0.1)', 'important');
-        if (i === 0) {
-          td.style.setProperty('border-radius', '0 12px 12px 0', 'important');
-          td.style.setProperty('border-left', 'none', 'important');
-        } else if (i === cells.length - 1) {
-          td.style.setProperty('border-radius', '12px 0 0 12px', 'important');
-          td.style.setProperty('border-right', `5px solid ${accent}`, 'important');
-        } else {
-          td.style.borderRadius = '';
-        }
-      } else {
-        td.style.removeProperty('padding-top');
-        td.style.removeProperty('padding-bottom');
-        td.style.removeProperty('background-color');
-        td.style.removeProperty('box-shadow');
-        td.style.removeProperty('border-radius');
-        td.style.removeProperty('border-left');
-        td.style.removeProperty('border-right');
-      }
-    });
-
-    if (active) {
-      row.style.setProperty('transition', 'transform 0.15s ease', 'important');
-      row.onmouseenter = () => cells.forEach(td => td.style.setProperty('box-shadow', '0 4px 12px rgba(0,0,0,0.18)', 'important'));
-      row.onmouseleave = () => cells.forEach(td => td.style.setProperty('box-shadow', '0 1px 6px rgba(0,0,0,0.1)', 'important'));
-    } else {
-      row.style.removeProperty('transition');
-      row.onmouseenter = null;
-      row.onmouseleave = null;
-    }
-  });
-
-  // تعديل خاصية border-collapse للجدول الأصل لإضافة مسافات واضحة بين البطاقات
-  const tables = doc.querySelectorAll('table');
-  tables.forEach(table => {
-    if (active) {
-      table.style.setProperty('border-collapse', 'separate', 'important');
-      table.style.setProperty('border-spacing', '0 12px', 'important');
-    } else {
-      table.style.removeProperty('border-collapse');
-      table.style.removeProperty('border-spacing');
-    }
-  });
-}
-
-function applyCardsViewToAllFrames(active) {
-  daemCardsViewActive = active;
-  applyCardsViewStyle(document, active);
-  document.querySelectorAll('iframe, frame').forEach(frame => {
-    try {
-      const fd = frame.contentDocument || frame.contentWindow?.document;
-      if (fd) applyCardsViewStyle(fd, active);
-    } catch (e) { }
-  });
-}
-
-// ======= إخفاء الأعمدة (Hide Columns) =======
-const DAEM_HIDDEN_COL_KEYWORDS = ['Assignee Old', 'المعين السابق', 'signee Old'];
-
-function hideColsByKeyword(doc, hide) {
-  const allRows = doc.querySelectorAll('tr');
-  let hiddenIdxs = [];
-
-  for (const row of allRows) {
-    const headers = row.querySelectorAll('th, td');
-    let found = false;
-    for (let i = 0; i < headers.length; i++) {
-      const txt = headers[i].innerText.trim();
-      if (DAEM_HIDDEN_COL_KEYWORDS.some(k => txt.includes(k))) {
-        hiddenIdxs.push(i);
-        found = true;
-      }
-    }
-    if (found) break;
-  }
-
-  if (hiddenIdxs.length === 0) return;
-
-  allRows.forEach(row => {
-    const cells = row.querySelectorAll('th, td');
-    hiddenIdxs.forEach(idx => {
-      if (cells[idx]) {
-        cells[idx].style.setProperty('display', hide ? 'none' : '', 'important');
-      }
-    });
-  });
-}
-
-function applyHideColsStyle(doc, active) {
-  hideColsByKeyword(doc, active);
-}
-
-function applyHideColsToAllFrames(active) {
-  daemHideColsActive = active;
-  applyHideColsStyle(document, active);
-  document.querySelectorAll('iframe, frame').forEach(frame => {
-    try {
-      const fd = frame.contentDocument || frame.contentWindow?.document;
-      if (fd) applyHideColsStyle(fd, active);
-    } catch (e) { }
-  });
-}
-
-// ======= تثبيت عمود رقم التذكرة عند التمرير الأفقي (Sticky Column) =======
-let daemStickyColActive = false;
-
-// ألوان مصمتة تقارب كل لون تمييز شفاف عند تركيبه فوق خلفية بيضاء، لتفادي شفافية الخلية أثناء التثبيت
-const DAEM_STICKY_BG_MAP = {
-  'daem-cell-new': '#e2ecfe',
-  'daem-cell-recent': '#fce4f0',
-  'daem-cell-very-old': '#fef5de',
-  'daem-cell-old': '#daf4f9',
-  'daem-cell-not-solved': '#fde4e4',
-  'daem-cell-unassigned': '#fde4e4',
-  'daem-cell-mismatch': '#fef0da',
-  'daem-cell-solved': '#dbf5ec'
-};
-
-function daemGetStickyBg(cell) {
-  for (const cls in DAEM_STICKY_BG_MAP) {
-    if (cell.classList.contains(cls)) return DAEM_STICKY_BG_MAP[cls];
-  }
-  return '#ffffff';
-}
-
-function applyStickyColStyle(doc, active) {
-  const rows = doc.querySelectorAll('tr');
-  if (rows.length === 0) return;
-
-  // تحديد فهرس عمود رقم التذكرة عبر البحث عن أول خلية تطابق نمط رقم التذكرة (IM12345)
-  let colIdx = -1;
-  for (const row of rows) {
-    const cells = row.querySelectorAll('td');
-    for (let i = 0; i < cells.length; i++) {
-      if (/IM\d{5,9}/.test(cells[i].innerText.trim())) {
-        colIdx = i;
-        break;
-      }
-    }
-    if (colIdx !== -1) break;
-  }
-  if (colIdx === -1) return;
-
-  rows.forEach(row => {
-    const cells = row.querySelectorAll('th, td');
-    const cell = cells[colIdx];
-    if (!cell) return;
-    if (active) {
-      cell.style.setProperty('position', 'sticky', 'important');
-      cell.style.setProperty('left', '0', 'important');
-      cell.style.setProperty('z-index', cell.tagName === 'TH' ? '6' : '5', 'important');
-      cell.style.setProperty('background-color', cell.tagName === 'TH' ? '#f1f5f9' : daemGetStickyBg(cell), 'important');
-      cell.style.setProperty('box-shadow', '2px 0 4px rgba(0,0,0,0.15)', 'important');
-    } else {
-      cell.style.removeProperty('position');
-      cell.style.removeProperty('left');
-      cell.style.removeProperty('z-index');
-      cell.style.removeProperty('background-color');
-      cell.style.removeProperty('box-shadow');
-    }
-  });
-}
-
-function applyStickyColToAllFrames(active) {
-  daemStickyColActive = active;
-  applyStickyColStyle(document, active);
-  document.querySelectorAll('iframe, frame').forEach(frame => {
-    try {
-      const fd = frame.contentDocument || frame.contentWindow?.document;
-      if (fd) applyStickyColStyle(fd, active);
-    } catch (e) { }
-  });
-}
-
-// تطبيق الإعدادات المحفوظة عند تحميل الصفحة
-function initViewSettings() {
-  safeGetStorage(['daemCardsViewActive', 'daemHideCols', 'daemStickyCol'], (res) => {
-    if (res.daemCardsViewActive) {
-      daemCardsViewActive = true;
-      applyCardsViewToAllFrames(true);
-    }
-    if (res.daemHideCols) {
-      daemHideColsActive = true;
-      applyHideColsToAllFrames(true);
-    }
-    if (res.daemStickyCol) {
-      daemStickyColActive = true;
-      applyStickyColToAllFrames(true);
-    }
-  });
-}
-
-
 function highlightTickets() {
   try {
     if (!chrome.runtime || !chrome.runtime.id) return;
@@ -663,7 +430,7 @@ function highlightTickets() {
   const allRows = document.querySelectorAll('tr');
   if (allRows.length === 0) return;
 
-  // البحث عن فهرس عمود المهندس وعمود المعين السابق وعمود وقت الفتح وعمود التحديث وعمود البلدية وعمود Area/Service لتجنب اللبس وعمود العنوان
+  // البحث عن فهرس عمود المهندس وعمود المعين السابق وعمود وقت الفتح وعمود التحديث وعمود البلدية وعمود Area/Service لتجنب اللبس
   let engineerColIdx = -1;
   let assigneeOldColIdx = -1;
   let openTimeColIdx = -1;
@@ -671,7 +438,6 @@ function highlightTickets() {
   let baladiahColIdx = -1;
   let areaServiceColIdx = -1;
   let mobileColIdx = -1;
-  let titleColIdx = -1;
   try {
     for (const hRow of allRows) {
       const headers = hRow.querySelectorAll('th, td');
@@ -693,8 +459,6 @@ function highlightTickets() {
           areaServiceColIdx = i;
         } else if (txt.includes('الجوال') || txt.toLowerCase().includes('mobile') || txt.toLowerCase().includes('phone') || txt.toLowerCase().includes('extension')) {
           mobileColIdx = i;
-        } else if (txt.includes('العنوان') || txt.toLowerCase() === 'title' || txt.toLowerCase() === 'subject') {
-          titleColIdx = i;
         }
       }
       if (foundHeader) break;
@@ -842,32 +606,6 @@ function highlightTickets() {
       }
     }
 
-    // 3.7 تنسيق عمود العنوان ليتم عرضه بشكل مختصر ومترجم بالذكاء الاصطناعي
-    if (titleColIdx !== -1 && titleColIdx < cells.length) {
-      const titleCell = cells[titleColIdx];
-      let originalTitle = titleCell.getAttribute('data-original-title');
-      if (!originalTitle) {
-        originalTitle = titleCell.innerText.trim();
-        if (originalTitle && originalTitle !== '') {
-          titleCell.setAttribute('data-original-title', originalTitle);
-        }
-      }
-
-      if (originalTitle && originalTitle !== '') {
-        if (titleSummariesCache[originalTitle]) {
-          setCellText(titleCell, titleSummariesCache[originalTitle]);
-          titleCell.removeAttribute('title');
-          titleCell.setAttribute('data-tooltip', `العنوان الأصلي: ${originalTitle}`);
-        } else {
-          // إضافة لقائمة الانتظار لجدولة تلخيصها بالدفعات
-          if (!pendingTitlesToSummarize.has(originalTitle)) {
-            pendingTitlesToSummarize.add(originalTitle);
-            scheduleSummarization();
-          }
-        }
-      }
-    }
-
     // البحث الديناميكي عن خلية رقم التذكرة
     let targetCell = null;
     let ticketId = null;
@@ -897,7 +635,6 @@ function highlightTickets() {
 
       if (myTicket) {
         foundAny = true;
-        row.setAttribute('data-daem-registered', '1');
 
         // تحديث عمود Area/Service بناءً على نوع التصنيف في قاعدة البيانات
         if (areaServiceColIdx !== -1 && areaServiceColIdx < cells.length && myTicket.type && myTicket.type !== 'أخرى') {
@@ -966,10 +703,8 @@ function highlightTickets() {
           }
         }
 
-        // تحديد لون الصف بناءً على حالة البلاغ
-        let rowBgColor = '';
         if (isMismatched) {
-          rowBgColor = 'rgba(245, 158, 11, 0.12)';
+          // اللون مضاف مسبقاً (daem-cell-mismatch)
         } else {
           const status = (myTicket.solution || "").trim();
 
@@ -981,54 +716,33 @@ function highlightTickets() {
               const ticketDate = new Date(myTicket.date);
               const oneWeekAgo = new Date();
               oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-              if (ticketDate < oneWeekAgo) isLate = true;
+              if (ticketDate < oneWeekAgo) {
+                isLate = true;
+              }
             } catch (e) { }
           }
 
           if (isLate) {
             targetCell.classList.add('daem-cell-unassigned');
-            rowBgColor = 'rgba(153, 27, 27, 0.12)';
             currentCounts.unassigned++;
           } else if (status === 'بلاغ جديد') {
             targetCell.classList.add('daem-cell-new');
-            rowBgColor = 'rgba(59, 130, 246, 0.10)';
             currentCounts.new++;
           } else if (status === 'بانتظار المستفيد') {
             targetCell.classList.add('daem-cell-recent');
-            rowBgColor = 'rgba(236, 72, 153, 0.10)';
             currentCounts.recent++;
           } else if (status === 'لدى الوزارة') {
             targetCell.classList.add('daem-cell-very-old');
-            rowBgColor = 'rgba(251, 191, 36, 0.12)';
             currentCounts.veryOld++;
           } else if (status === 'مشكلة عامة') {
             targetCell.classList.add('daem-cell-old');
-            rowBgColor = 'rgba(6, 182, 212, 0.10)';
             currentCounts.old++;
           } else if (status === 'لم يتم الحل') {
             targetCell.classList.add('daem-cell-not-solved');
-            rowBgColor = 'rgba(239, 68, 68, 0.10)';
             currentCounts.notSolved++;
           } else if (status === 'تم الحل') {
             targetCell.classList.add('daem-cell-solved');
-            rowBgColor = 'rgba(16, 185, 129, 0.10)';
           }
-        }
-
-        // تطبيق لون الحالة على الصف كاملاً بالجافاسكريبت للعمل داخل الـ iframes
-        if (rowBgColor) {
-          row.querySelectorAll('td').forEach(td => {
-            td.style.setProperty('background-color', rowBgColor, 'important');
-          });
-        }
-
-      } else {
-        // تنظيف لون الصف إن لم تكن التذكرة مسجلة
-        if (row.getAttribute('data-daem-registered') === '1') {
-          row.querySelectorAll('td').forEach(td => {
-            td.style.removeProperty('background-color');
-          });
-          row.removeAttribute('data-daem-registered');
         }
       }
     }
@@ -1038,11 +752,6 @@ function highlightTickets() {
   window.daemMismatchedList = mismatchedList;
   updateDashboardPanelData();
   filterTableRows(currentFilter);
-
-  // إعادة تطبيق تثبيت عمود رقم التذكرة لضمان تحديث لون الخلفية مع تغيّر تصنيف التذكرة
-  if (daemStickyColActive) applyStickyColStyle(document, true);
-  // إعادة تطبيق مظهر البطاقات لضمان تحديث لون الشريط الجانبي مع تغيّر تصنيف التذكرة
-  if (daemCardsViewActive) applyCardsViewStyle(document, true);
 
   // لا نحدث العداد إلا إذا وجدنا بلاغات ملونة فعلاً في هذا الإطار
   if (foundAny) {
@@ -1095,41 +804,6 @@ function applyRowFilterInDocument(doc, filterType) {
     }
   });
 }
-
-function scheduleSummarization() {
-  if (summarizeTimeoutId) clearTimeout(summarizeTimeoutId);
-  summarizeTimeoutId = setTimeout(async () => {
-    const titlesArray = Array.from(pendingTitlesToSummarize);
-    pendingTitlesToSummarize.clear();
-    if (titlesArray.length === 0) return;
-
-    try {
-      safeSendMessage({
-        action: "SUMMARIZE_TITLES",
-        data: { titles: titlesArray }
-      }, (response) => {
-        if (response && response.success && response.summaries) {
-          let updated = false;
-          response.summaries.forEach((sum, idx) => {
-            const orig = titlesArray[idx];
-            if (orig && sum) {
-              titleSummariesCache[orig] = sum;
-              updated = true;
-            }
-          });
-          if (updated) {
-            safeSetStorage({ daemTitleSummaries: titleSummariesCache });
-            highlightTickets();
-          }
-        }
-      });
-    } catch (e) {
-      console.error("Error summarizing titles:", e);
-    }
-  }, 800);
-}
-
-
 
 
 function injectDashboardPanel() {
@@ -1274,21 +948,6 @@ function injectDashboardPanel() {
           </div>
         </div>
 
-        <!-- أزرار عرض وتخصيص الجدول -->
-        <div style="display: flex; gap: 6px; margin-top: 6px;">
-          <button id="daem-btn-cards-view" style="flex: 1; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.35); color: #818cf8; padding: 7px 8px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 5px; outline: none; transition: all 0.2s;">
-            🎴 عرض البطاقات
-          </button>
-          <button id="daem-btn-hide-cols" style="flex: 1; background: rgba(20, 184, 166, 0.12); border: 1px solid rgba(20, 184, 166, 0.35); color: #2dd4bf; padding: 7px 8px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 5px; outline: none; transition: all 0.2s;">
-            📐 إخفاء الأعمدة
-          </button>
-        </div>
-        <div style="display: flex; gap: 6px; margin-top: 6px;">
-          <button id="daem-btn-sticky-col" style="flex: 1; background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.35); color: #eab308; padding: 7px 8px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 5px; outline: none; transition: all 0.2s;">
-            📌 تثبيت رقم التذكرة
-          </button>
-        </div>
-
         <!-- زر الجولة التعليمية التفاعلية -->
         <button id="daem-btn-start-tour" style="width: 100%; margin-top: 8px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; padding: 8px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 6px; outline: none;">
           📽️ بدء الجولة التعليمية
@@ -1426,81 +1085,6 @@ function injectDashboardPanel() {
       e.stopPropagation();
       startGuidedTour();
     });
-
-    // زر تبديل عرض البطاقات
-    const btnCardsView = document.getElementById('daem-btn-cards-view');
-    if (btnCardsView) {
-      safeGetStorage(['daemCardsViewActive', 'daemHideCols', 'daemStickyCol'], (res) => {
-        if (res.daemCardsViewActive) {
-          btnCardsView.style.background = 'rgba(99, 102, 241, 0.3)';
-          btnCardsView.style.borderColor = '#818cf8';
-          btnCardsView.textContent = '🃏 إلغاء البطاقات';
-        }
-        if (res.daemHideCols) {
-          const btnHide = document.getElementById('daem-btn-hide-cols');
-          if (btnHide) {
-            btnHide.style.background = 'rgba(20, 184, 166, 0.3)';
-            btnHide.style.borderColor = '#2dd4bf';
-            btnHide.textContent = '📐 إظهار الأعمدة';
-          }
-        }
-        if (res.daemStickyCol) {
-          const btnSticky = document.getElementById('daem-btn-sticky-col');
-          if (btnSticky) {
-            btnSticky.style.background = 'rgba(234, 179, 8, 0.3)';
-            btnSticky.style.borderColor = '#eab308';
-            btnSticky.textContent = '📌 إلغاء التثبيت';
-          }
-        }
-      });
-
-      btnCardsView.addEventListener('click', (e) => {
-        e.stopPropagation();
-        safeGetStorage(['daemCardsViewActive'], (res) => {
-          const newVal = !res.daemCardsViewActive;
-          safeSetStorage({ daemCardsViewActive: newVal }, () => {
-            btnCardsView.style.background = newVal ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.12)';
-            btnCardsView.style.borderColor = newVal ? '#818cf8' : 'rgba(99, 102, 241, 0.35)';
-            btnCardsView.textContent = newVal ? '🃏 إلغاء البطاقات' : '🎴 عرض البطاقات';
-            applyCardsViewToAllFrames(newVal);
-          });
-        });
-      });
-    }
-
-    // زر إخفاء الأعمدة غير الضرورية
-    const btnHideCols = document.getElementById('daem-btn-hide-cols');
-    if (btnHideCols) {
-      btnHideCols.addEventListener('click', (e) => {
-        e.stopPropagation();
-        safeGetStorage(['daemHideCols'], (res) => {
-          const newVal = !res.daemHideCols;
-          safeSetStorage({ daemHideCols: newVal }, () => {
-            btnHideCols.style.background = newVal ? 'rgba(20, 184, 166, 0.3)' : 'rgba(20, 184, 166, 0.12)';
-            btnHideCols.style.borderColor = newVal ? '#2dd4bf' : 'rgba(20, 184, 166, 0.35)';
-            btnHideCols.textContent = newVal ? '📐 إظهار الأعمدة' : '📐 إخفاء الأعمدة';
-            applyHideColsToAllFrames(newVal);
-          });
-        });
-      });
-    }
-
-    // زر تبديل تثبيت عمود رقم التذكرة عند التمرير الأفقي
-    const btnStickyCol = document.getElementById('daem-btn-sticky-col');
-    if (btnStickyCol) {
-      btnStickyCol.addEventListener('click', (e) => {
-        e.stopPropagation();
-        safeGetStorage(['daemStickyCol'], (res) => {
-          const newVal = !res.daemStickyCol;
-          safeSetStorage({ daemStickyCol: newVal }, () => {
-            btnStickyCol.style.background = newVal ? 'rgba(234, 179, 8, 0.3)' : 'rgba(234, 179, 8, 0.12)';
-            btnStickyCol.style.borderColor = newVal ? '#eab308' : 'rgba(234, 179, 8, 0.35)';
-            btnStickyCol.textContent = newVal ? '📌 إلغاء التثبيت' : '📌 تثبيت رقم التذكرة';
-            applyStickyColToAllFrames(newVal);
-          });
-        });
-      });
-    }
 
     // تحقق من الجولة التعليمية التلقائية للمستخدمين الجدد
     safeGetStorage(['daemTourCompleted'], (result) => {
@@ -2342,6 +1926,9 @@ function normalizeCategory(rawCategory) {
 
 // حساب الموظف الذي عليه الدور حسب نفس خوارزمية التوزيع باللوحة الرئيسية
 function getLeastReceiver() {
+  if (!window.daemTicketsFetched) {
+    return null;
+  }
   const priorityOrder = [
     { name: 'البراء النصيان', user: 'a.alnesayan' },
     { name: 'عبدالرحمن العمري', user: 'af.alamri' },
@@ -2488,13 +2075,6 @@ function insertTextToField(text) {
 
 function showFloatingNotification(msg) {
   let targetDoc = document;
-  let targetWindow = window;
-  try {
-    if (window.top && window.top.document && window.top.document.body) {
-      targetDoc = window.top.document;
-      targetWindow = window.top;
-    }
-  } catch (e) { }
 
   // إزالة أي تنبيهات سابقة لتفادي التراكم والتداخل
   const oldToasts = targetDoc.querySelectorAll('.daem-floating-toast');
@@ -2682,7 +2262,7 @@ function injectFloatingPanel() {
       <button id="btn-close-no-reply" class="dp-btn dp-btn-red"><span class="dp-icon">❌</span> إغلاق لعدم الرد</button>
       <button id="btn-solved-feedback" class="dp-btn dp-btn-green"><span class="dp-icon">✅</span> تمت المعالجة بالإفادة</button>
 
-      <button id="btn-copy-new-ticket" style="background: #f59e0b; color: white; border: none; padding: 9px 12px; border-radius: 9px; font-weight: bold; cursor: pointer; text-align: right; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; font-size: 11.5px; width: 100%; font-family: Cairo, Arial, sans-serif; box-sizing: border-box;">
+      <button id="btn-copy-new-ticket" style="background: #f59e0b; color: white; border: none; padding: 9px 12px; border-radius: 9px; font-weight: bold; cursor: pointer; text-align: right; display: none; align-items: center; gap: 8px; transition: all 0.2s ease; font-size: 11.5px; width: 100%; font-family: Cairo, Arial, sans-serif; box-sizing: border-box;">
         ${dynamicBtnText}
       </button>
 
@@ -2700,6 +2280,7 @@ function injectFloatingPanel() {
   // تحديث تنبيه تحويل البلاغ وتحديث نص ومعرف زر التوزيع فوراً بعد الحقن
   updatePanelTransferWarning();
   updateSubmitButtonText(nextEmployee);
+  refreshAutoAssignButtonVisibility();
 
   const isDashboard = window.location.href.includes('tickets-daem.vercel.app') ||
     window.location.href.includes('localhost');
@@ -2976,8 +2557,7 @@ function injectFloatingPanel() {
       showFloatingNotification("لم يتم العثور على صندوق التحديثات بالصفحة! ⚠️");
       return;
     }
-    const rawText = journalEl.getAttribute('data-original-journal-text') || 
-                    (journalEl.tagName === 'TEXTAREA' ? (journalEl.value || '') : (journalEl.innerText || ''));
+    const rawText = journalEl.value || '';
     const lastUpdateText = extractLatestUpdate(rawText);
 
     if (!lastUpdateText) {
@@ -3013,30 +2593,41 @@ function injectFloatingPanel() {
       return;
     }
 
-    showFloatingNotification("جاري التحقق من بيانات التوزيع اللحظية... ⏳");
-
-    // محاولة جلب البيانات لحظياً مع وجود مؤقت ومحاولات متكررة في حال عدم اكتمال الجلب
-    let tickets = [];
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      tickets = await fetchTicketsPromise();
-      if (tickets && tickets.length > 0) {
-        websiteTickets = tickets;
-        break;
-      }
-      if (attempt < 3) {
-        showFloatingNotification(`لم يتم جلب البيانات بعد، لحظات من وقتك وجاري المحاولة... ⏳ (محاولة ${attempt}/3)`);
-        await new Promise(resolve => setTimeout(resolve, 2500));
+    let tickets = websiteTickets;
+    if (!tickets || tickets.length === 0) {
+      showFloatingNotification("جاري التحقق من بيانات التوزيع اللحظية... ⏳");
+      // محاولة جلب البيانات لحظياً مع وجود مؤقت ومحاولات متكررة في حال عدم اكتمال الجلب
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        tickets = await fetchTicketsPromise();
+        if (tickets && tickets.length > 0) {
+          websiteTickets = tickets;
+          break;
+        }
+        if (attempt < 3) {
+          showFloatingNotification(`لم يتم جلب البيانات بعد، لحظات من وقتك وجاري المحاولة... ⏳ (محاولة ${attempt}/3)`);
+          await new Promise(resolve => setTimeout(resolve, 2500));
+        }
       }
     }
 
-    if (!tickets || tickets.length === 0) {
+    if (!websiteTickets || websiteTickets.length === 0) {
       showFloatingNotification("عذراً، تعذر جلب البيانات اللحظية للتوزيع. يرجى المحاولة بعد قليل! ⚠️");
       return;
     }
 
     // حساب الموظف الذي عليه الدور تلقائياً بعد التحقق من البيانات اللحظية
     const nextEmployee = getLeastReceiver();
+    if (!nextEmployee || !nextEmployee.user) {
+      showFloatingNotification("تعذر حساب الموظف التالي! ⚠️");
+      return;
+    }
     updateSubmitButtonText(nextEmployee);
+
+    // 1. تعبئة حقل المعين له على الصفحة يدوياً فوراً
+    const assigneeInput = findAssigneeInput();
+    if (assigneeInput) {
+      triggerElementChangeEvents(assigneeInput, nextEmployee.user);
+    }
 
     // نسخ النص للحافظة كدعم للمستخدم
     const clipboardText = `رقم التذكرة: ${ticketId}\nالتصنيف: ${category}\nالموظف المستلم: ${nextEmployee.name} (${nextEmployee.user})`;
@@ -3065,7 +2656,8 @@ function injectFloatingPanel() {
         phoneNumber: phoneNumber,
         reportText: reportText,
         municipality: municipality,
-        role: role
+        role: role,
+        nationalId: extractNationalId()
       };
 
       // إرسال الطلب للخلفية لحفظ البلاغ في قاعدة بيانات الموقع مباشرة دون فتح أي نافذة
@@ -3080,7 +2672,7 @@ function injectFloatingPanel() {
             } else {
               showFloatingNotification("تعذر العثور على زر 'حفظ وخروج' بالصفحة! ⚠️");
             }
-          }, 800);
+          }, 100);
         } else {
           showFloatingNotification(`فشل حفظ البلاغ تلقائياً: ${response?.error || 'خطأ غير معروف'} ⚠️`);
         }
@@ -3089,24 +2681,16 @@ function injectFloatingPanel() {
   });
 
   // تفقد صلاحية المستخدم لإخفاء أو إظهار أزرار الإسناد التلقائي وإنشاء البلاغات
+  refreshAutoAssignButtonVisibility();
   safeGetStorage(['daemRole'], (result) => {
     const role = result.daemRole || 'support';
-    const btnCopy = document.getElementById('btn-copy-new-ticket');
     const btnFill = document.getElementById('btn-fill-copied');
-    const isDashboard = window.location.href.includes('tickets-daem.vercel.app') ||
-      window.location.href.includes('localhost');
-
     if (role === 'admin') {
-      // إخفاء زر الإسناد التلقائي إذا كان البلاغ مسجلاً مسبقاً بالموقع لتفادي إعادة إسناده
-      if (btnCopy) btnCopy.style.display = (!isDashboard && !isTicketAlreadyRegistered(getTicketNumber())) ? 'flex' : 'none';
       checkCopiedTicketData();
     } else {
-      if (btnCopy) btnCopy.style.display = 'none';
       if (btnFill) btnFill.style.display = 'none';
     }
   });
-
-
 }
 
 // تحديث ظهور زر الإسناد التلقائي بناءً على تسجيل البلاغ مسبقاً بالموقع
@@ -3117,9 +2701,22 @@ function refreshAutoAssignButtonVisibility() {
   const isDashboard = window.location.href.includes('tickets-daem.vercel.app') ||
     window.location.href.includes('localhost');
 
+  if (isDashboard) {
+    btnCopy.style.display = 'none';
+    return;
+  }
+
   safeGetStorage(['daemRole'], (result) => {
     const role = result.daemRole || 'support';
-    if (role !== 'admin' || isDashboard) return;
+    if (role !== 'admin') {
+      btnCopy.style.display = 'none';
+      return;
+    }
+
+    if (!window.daemTicketsFetched) {
+      btnCopy.style.display = 'none';
+      return;
+    }
 
     btnCopy.style.display = isTicketAlreadyRegistered(getTicketNumber()) ? 'none' : 'flex';
   });
@@ -3179,9 +2776,7 @@ try {
             if (btnCopy) btnCopy.style.display = 'none';
             if (btnFill) btnFill.style.display = 'none';
           } else {
-            const isDashboard = window.location.href.includes('tickets-daem.vercel.app') ||
-              window.location.href.includes('localhost');
-            if (btnCopy && !isDashboard) btnCopy.style.display = 'flex';
+            refreshAutoAssignButtonVisibility();
             checkCopiedTicketData();
           }
         }
@@ -3388,7 +2983,15 @@ function queryAllInPage(selector) {
     }
   }
 
-  recurse(document);
+  let startDoc = document;
+  try {
+    const highestWin = getHighestAccessibleWindow();
+    if (highestWin && highestWin.document) {
+      startDoc = highestWin.document;
+    }
+  } catch (e) { }
+
+  recurse(startDoc);
   return elements;
 }
 
@@ -3443,6 +3046,16 @@ function extractValue(labels) {
 }
 
 function extractPhone() {
+  const inputs = queryAllInPage('input');
+  for (let input of inputs) {
+    const name = (input.getAttribute('name') || '').toLowerCase();
+    if (name.includes('phone')) {
+      if (input.value && input.value.trim().length >= 9) {
+        return input.value.trim();
+      }
+    }
+  }
+
   const fromLabel = extractValue(["جوال المواطن", "رقم الجوال", "الهاتف"]);
   if (fromLabel && fromLabel.length >= 9) return fromLabel;
 
@@ -3455,20 +3068,61 @@ function extractPhone() {
   return "";
 }
 
-function extractReportText() {
-  const textareas = queryAllInPage('textarea');
-  for (let ta of textareas) {
-    if (ta.readOnly || ta.disabled) {
-      if (ta.value.length > 20) return ta.value;
+function extractNationalId() {
+  const inputs = queryAllInPage('input');
+  for (let input of inputs) {
+    const name = (input.getAttribute('name') || '').toLowerCase();
+    if (name.includes('nationalid') || name.includes('identity') || name.includes('national_id') || name.includes('national-id') || name.includes('idnumber') || name.includes('id_number') || name.includes('id-number')) {
+      if (input.value && input.value.trim().length >= 9) {
+        return input.value.trim();
+      }
     }
   }
+
+  const fromLabel = extractValue(["رقم الهوية", "الهوية"]);
+  if (fromLabel) return fromLabel.trim();
+  return "";
+}
+
+function extractReportText() {
+  const textareas = queryAllInPage('textarea');
+  
+  // 1. الأولوية الأولى: حقل الوصف النشط الذي يحمل اسم action أو description في خصائصه
+  for (let ta of textareas) {
+    const name = (ta.getAttribute('name') || '').toLowerCase();
+    if (name.includes('action') || name.includes('description')) {
+      if (ta.value && ta.value.length > 5 && !ta.value.includes('Asia/Riyadh')) {
+        return ta.value;
+      }
+    }
+  }
+
+  // 2. الأولوية الثانية: حقل القراءة فقط ولا يحتوي على توقيت الرياض (لتجنب تحديثات اليومية)
+  for (let ta of textareas) {
+    if (ta.readOnly || ta.disabled) {
+      if (ta.value.length > 20 && !ta.value.includes('Asia/Riyadh')) return ta.value;
+    }
+  }
+
+  // 3. الأولوية الثالثة: أي حقل نصي يتجاوز 20 حرفاً ولا يحتوي على توقيت الرياض
   for (let ta of textareas) {
     if (ta.value.length > 20 && !ta.value.includes('Asia/Riyadh')) return ta.value;
   }
+
   return extractValue(["نص البلاغ", "تفاصيل البلاغ", "الوصف"]);
 }
 
 function extractMunicipality() {
+  const inputs = queryAllInPage('input');
+  for (let input of inputs) {
+    const name = (input.getAttribute('name') || '').toLowerCase();
+    if (name.includes('balady.location') || name.includes('location') || name.includes('municipality')) {
+      if (input.value && input.value.trim().length > 1) {
+        return input.value.trim().split('-')[0].trim();
+      }
+    }
+  }
+
   const fromLabel = extractValue(["البلدية"]);
   if (fromLabel) {
     return fromLabel.split('-')[0].trim();
@@ -3480,8 +3134,7 @@ function detectMinistryUpdateToday() {
   const journalEl = findJournalUpdatesElement();
   if (!journalEl) return false;
 
-  const rawText = journalEl.getAttribute('data-original-journal-text') || 
-                  (journalEl.tagName === 'TEXTAREA' ? (journalEl.value || '') : (journalEl.innerText || ''));
+  const rawText = journalEl.tagName === 'TEXTAREA' ? (journalEl.value || '') : (journalEl.innerText || '');
 
   const today = new Date();
   const dd = String(today.getDate()).padStart(2, '0');
@@ -4252,8 +3905,7 @@ function updatePanelMinistryWarning() {
       return;
     }
 
-    const rawText = journalEl.getAttribute('data-original-journal-text') || 
-                    (journalEl.tagName === 'TEXTAREA' ? (journalEl.value || '') : (journalEl.innerText || ''));
+    const rawText = journalEl.tagName === 'TEXTAREA' ? (journalEl.value || '') : (journalEl.innerText || '');
     const contractor = getLastContractorUpdater(rawText);
 
     if (contractor) {
@@ -4427,9 +4079,6 @@ setInterval(updatePanelMinistryWarning, 3000);
 setTimeout(injectDashboardPanel, 1500);
 setInterval(injectDashboardPanel, 3000);
 
-// تطبيق إعدادات العرض المحفوظة (البطاقات / إخفاء الأعمدة)
-setTimeout(initViewSettings, 2000);
-
 // ==========================================================
 // التوزيع التلقائي للبلاغات الجديدة عند الدخول لصفحة البلاغ
 // ==========================================================
@@ -4463,10 +4112,12 @@ async function autoAssignIfNewTicket() {
       // وضع علامة لمنع التكرار قبل البدء لتجنب السباق في الاستدعاء المتزامن
       window.daemAutoAssignedTickets[ticketId] = true;
 
-      // جلب أحدث بيانات التوزيع والترتيب اللحظي
-      const tickets = await fetchTicketsPromise();
-      if (tickets && tickets.length > 0) {
-        websiteTickets = tickets;
+      // جلب أحدث بيانات التوزيع والترتيب اللحظي فقط إذا كانت القائمة فارغة
+      if (!websiteTickets || websiteTickets.length === 0) {
+        const tickets = await fetchTicketsPromise();
+        if (tickets && tickets.length > 0) {
+          websiteTickets = tickets;
+        }
       }
 
       const nextEmployee = getLeastReceiver();
@@ -4821,12 +4472,13 @@ async function handleKeyboardShortcutAssign() {
     return;
   }
 
-  showFloatingNotification("جاري التحقق من حالة البلاغ... ⏳");
-
-  // جلب البيانات اللحظية
-  const tickets = await fetchTicketsPromise();
-  if (tickets && tickets.length > 0) {
-    websiteTickets = tickets;
+  // جلب البيانات اللحظية فقط إذا كانت فارغة
+  if (!websiteTickets || websiteTickets.length === 0) {
+    showFloatingNotification("جاري التحقق من حالة البلاغ... ⏳");
+    const tickets = await fetchTicketsPromise();
+    if (tickets && tickets.length > 0) {
+      websiteTickets = tickets;
+    }
   }
 
   // التحقق مما إذا كان البلاغ موجوداً مسبقاً في قاعدة البيانات
@@ -4842,7 +4494,7 @@ async function handleKeyboardShortcutAssign() {
       if (!clicked) {
         showFloatingNotification("تعذر العثور على زر 'حفظ وخروج' بالصفحة! ⚠️");
       }
-    }, 500);
+    }, 100);
     return;
   }
 
@@ -4851,7 +4503,7 @@ async function handleKeyboardShortcutAssign() {
     showFloatingNotification("تعذر العثور على حقل المعين له! جاري محاولة الحفظ والخروج... ⚠️");
     setTimeout(() => {
       clickSaveAndExit();
-    }, 500);
+    }, 100);
     return;
   }
 
@@ -4860,7 +4512,7 @@ async function handleKeyboardShortcutAssign() {
     showFloatingNotification("تعذر حساب الموظف التالي! جاري محاولة الحفظ والخروج... ⚠️");
     setTimeout(() => {
       clickSaveAndExit();
-    }, 500);
+    }, 100);
     return;
   }
 
@@ -4890,7 +4542,8 @@ async function handleKeyboardShortcutAssign() {
       phoneNumber: phoneNumber,
       reportText: reportText,
       municipality: municipality,
-      role: role
+      role: role,
+      nationalId: extractNationalId()
     };
 
     showFloatingNotification("جاري إسناد البلاغ وحفظ البيانات... ⏳");
@@ -4907,13 +4560,13 @@ async function handleKeyboardShortcutAssign() {
           } else {
             showFloatingNotification("تعذر العثور على زر 'حفظ وخروج' بالصفحة! ⚠️");
           }
-        }, 350);
+        }, 100);
       } else {
         showFloatingNotification(`فشل حفظ البلاغ تلقائياً: ${response?.error || 'خطأ غير معروف'} ⚠️`);
         // حتى لو فشل الحفظ، نقوم بالخروج والحفظ لكيلا تتعطل إنتاجية المستخدم
         setTimeout(() => {
           clickSaveAndExit();
-        }, 1000);
+        }, 200);
       }
     });
   });

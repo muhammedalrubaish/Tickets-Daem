@@ -34,25 +34,40 @@ export default function WhatsappPopupPage() {
       // التحقق من إصدار الإضافة ومقارنته بالإصدار الأخير
       const urlParams = new URLSearchParams(window.location.search);
       const extVersion = urlParams.get('v');
-      const latestVersion = "1.4"; // رقم أحدث إصدار متاح للإضافة حالياً
+      const latestVersion = "2.2"; // رقم أحدث إصدار متاح للإضافة حالياً
 
       if (extVersion && parseFloat(extVersion) < parseFloat(latestVersion)) {
         window.parent.postMessage({ action: 'UPDATE_AVAILABLE' }, '*');
       }
+
+      // طلب الإعدادات الرسمية المخزنة في كروم لمواجهة تصفير localStorage اليومي
+      window.parent.postMessage({ action: 'GET_SETTINGS' }, '*');
     }
 
-    // الاستماع للبيانات المستخرجة من نافذة الإضافة الأصلية (Parent Window)
+    // الاستماع للرسائل الواردة من نافذة الإضافة الأصلية (Parent Window)
     const handleMessage = (event: MessageEvent) => {
-      if (event.data && event.data.action === 'EXTRACTED_DATA') {
-        const { ticketNumber, reportText, phoneNumber } = event.data.data || {};
-        if (ticketNumber) setTicketNumber(ticketNumber);
-        if (reportText) setReportText(reportText);
-        if (phoneNumber) setPhoneNumber(formatPhone(phoneNumber));
-        
-        if (ticketNumber || reportText || phoneNumber) {
-          showToast('تم سحب البيانات بنجاح! ⚡');
-        } else {
-          showToast('لم يتم العثور على بيانات. تأكد من أنك في صفحة البلاغ! ⚠️');
+      if (event.data) {
+        if (event.data.action === 'EXTRACTED_DATA') {
+          const { ticketNumber, reportText, phoneNumber } = event.data.data || {};
+          if (ticketNumber) setTicketNumber(ticketNumber);
+          if (reportText) setReportText(reportText);
+          if (phoneNumber) setPhoneNumber(formatPhone(phoneNumber));
+          
+          if (ticketNumber || reportText || phoneNumber) {
+            showToast('تم سحب البيانات بنجاح! ⚡');
+          } else {
+            showToast('لم يتم العثور على بيانات. تأكد من أنك في صفحة البلاغ! ⚠️');
+          }
+        } else if (event.data.action === 'SETTINGS_DATA') {
+          const { empName: extName, msgTemplate: extTemplate } = event.data.data || {};
+          if (extName) {
+            setEmpName(extName);
+            localStorage.setItem('balady_whatsapp_empName', extName);
+          }
+          if (extTemplate) {
+            setMsgTemplate(extTemplate);
+            localStorage.setItem('balady_whatsapp_template', extTemplate);
+          }
         }
       }
     };
@@ -71,6 +86,11 @@ export default function WhatsappPopupPage() {
   const handleSaveSettings = () => {
     localStorage.setItem('balady_whatsapp_empName', empName);
     localStorage.setItem('balady_whatsapp_template', msgTemplate);
+    // إرسال الإعدادات ليتم تخزينها دائماً في chrome.storage.local
+    window.parent.postMessage({
+      action: 'SAVE_SETTINGS',
+      data: { empName, msgTemplate }
+    }, '*');
     showToast('تم حفظ الإعدادات بنجاح! 💾');
     setShowSettings(false);
   };
