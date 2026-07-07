@@ -91,10 +91,9 @@ export default function OpenTicketsPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/fetch-open-tickets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+      const response = await fetch('/api/report-open-tickets', {
+        method: 'GET',
+        cache: 'no-store'
       });
 
       if (!response.ok) {
@@ -170,6 +169,9 @@ export default function OpenTicketsPage() {
   return (
     <div style={{ direction: 'rtl', padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <h1>التذاكر المفتوحة</h1>
+      <p style={{ color: '#666', fontSize: '14px', marginTop: '-10px', marginBottom: '20px' }}>
+        البيانات ترد من إضافة Daem Plus المثبتة بمتصفح الموظفين أثناء تصفحهم قائمة المهام بموقع داعم
+      </p>
 
       {/* قسم الإعدادات */}
       <div style={styles.settingsPanel}>

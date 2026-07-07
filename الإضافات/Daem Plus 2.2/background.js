@@ -106,7 +106,31 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         updateSolution(request.data.number, request.data.solution).then(res => sendResponse(res));
         return true;
     }
+    if (request.action === "REPORT_OPEN_TICKETS") {
+        reportOpenTickets(request.data.tickets).then(res => sendResponse(res));
+        return true;
+    }
 });
+
+// إرسال قائمة التذاكر المفتوحة الظاهرة حالياً بصفحة داعم إلى الموقع
+// ليقارنها بالبلاغات المسجلة ويرسل إشعاراً بالتذاكر غير المسجلة
+async function reportOpenTickets(tickets) {
+    try {
+        const response = await fetch("https://tickets-daem.vercel.app/api/report-open-tickets", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tickets })
+        });
+        if (response.ok) {
+            const data = await response.json();
+            return { success: true, data };
+        }
+        const errText = await response.text();
+        return { success: false, error: errText };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
 
 async function updateSolution(ticketNumber, solution) {
     try {
