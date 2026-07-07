@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
 
 interface OpenTicket {
   ticketId: string;
@@ -7,6 +8,38 @@ interface OpenTicket {
   subject: string;
   modifiedDate: string;
   url?: string;
+  isRegistered?: boolean;
+}
+
+async function getRegisteredTicketNumbers(): Promise<Set<string>> {
+  const registered = new Set<string>();
+  let from = 0;
+  const batchSize = 1000;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('ticket_number')
+      .range(from, from + batchSize - 1);
+
+    if (error) {
+      console.error('Supabase error fetching registered tickets:', error);
+      break;
+    }
+
+    if (!data || data.length === 0) break;
+
+    for (const row of data) {
+      if (row.ticket_number) {
+        registered.add(String(row.ticket_number).trim());
+      }
+    }
+
+    if (data.length < batchSize) break;
+    from += batchSize;
+  }
+
+  return registered;
 }
 
 export async function POST(request: NextRequest) {
@@ -59,10 +92,23 @@ export async function POST(request: NextRequest) {
     // استخراج البيانات من جدول التذاكر
     const tickets = parseTicketsFromHTML(html);
 
+    // جلب أرقام التذاكر المسجلة بالفعل في الموقع (قاعدة البيانات) لمقارنتها
+    const registeredTicketNumbers = await getRegisteredTicketNumbers();
+
+    const ticketsWithStatus = tickets.map((ticket) => ({
+      ...ticket,
+      isRegistered: registeredTicketNumbers.has(ticket.ticketId.trim())
+    }));
+
+    const registeredCount = ticketsWithStatus.filter((t) => t.isRegistered).length;
+    const unregisteredCount = ticketsWithStatus.length - registeredCount;
+
     return NextResponse.json({
       success: true,
-      count: tickets.length,
-      tickets,
+      count: ticketsWithStatus.length,
+      registeredCount,
+      unregisteredCount,
+      tickets: ticketsWithStatus,
       timestamp: new Date().toISOString(),
       authenticated
     });

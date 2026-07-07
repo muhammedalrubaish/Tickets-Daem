@@ -17,7 +17,10 @@ interface OpenTicket {
   subject: string;
   modifiedDate: string;
   url?: string;
+  isRegistered?: boolean;
 }
+
+type FilterMode = 'all' | 'registered' | 'unregistered';
 
 export default function OpenTicketsPage() {
   const [tickets, setTickets] = useState<OpenTicket[]>([]);
@@ -27,6 +30,7 @@ export default function OpenTicketsPage() {
   const [refreshInterval, setRefreshInterval] = useState(30000); // 30 ثانية
   const [lastCheckTime, setLastCheckTime] = useState<Date | null>(null);
   const [previousTickets, setPreviousTickets] = useState<string[]>([]);
+  const [filterMode, setFilterMode] = useState<FilterMode>('all');
 
   // تسجيل Service Worker وطلب إذن الإشعارات
   useEffect(() => {
@@ -104,17 +108,21 @@ export default function OpenTicketsPage() {
         setTickets(newTickets);
         setLastCheckTime(new Date());
 
-        // فحص التذاكر الجديدة
+        // فحص التذاكر الجديدة غير المسجلة بالموقع (هذه هي التي تستحق تنبيهاً)
         const currentTicketIds = newTickets.map((t: OpenTicket) => t.ticketId);
         const storedIds = previousTickets.length > 0 ? previousTickets : getStoredTicketIds();
-        const addedTickets = getNewTicketIds(currentTicketIds, storedIds);
+        const unregisteredTickets = newTickets.filter((t: OpenTicket) => !t.isRegistered);
+        const addedTickets = getNewTicketIds(
+          unregisteredTickets.map((t: OpenTicket) => t.ticketId),
+          storedIds
+        );
 
         if (addedTickets.length > 0 && notificationsEnabled) {
           // التحقق من تكرار الإشعارات (لا تزيد عن مرة واحدة في الدقيقة)
           if (checkNotificationFrequency('open_tickets_new', 60000)) {
             showLocalNotification(
-              'تذاكر جديدة',
-              `تم اكتشاف ${addedTickets.length} تذكرة جديدة: ${addedTickets.slice(0, 2).join(', ')}${addedTickets.length > 2 ? '...' : ''}`
+              'تذاكر جديدة غير مسجلة',
+              `تم اكتشاف ${addedTickets.length} تذكرة غير مسجلة: ${addedTickets.slice(0, 2).join(', ')}${addedTickets.length > 2 ? '...' : ''}`
             );
           }
         }
@@ -216,64 +224,134 @@ export default function OpenTicketsPage() {
       )}
 
       {/* عدد التذاكر */}
-      <div style={styles.statsBox}>
-        <div style={styles.statItem}>
-          <span style={styles.statLabel}>إجمالي التذاكر المفتوحة:</span>
+      <div style={styles.statsRow}>
+        <button
+          onClick={() => setFilterMode('all')}
+          style={{
+            ...styles.statsBox,
+            cursor: 'pointer',
+            border: filterMode === 'all' ? '2px solid #1976d2' : '1px solid #64b5f6'
+          }}
+        >
+          <span style={styles.statLabel}>الإجمالي</span>
           <span style={styles.statValue}>{tickets.length}</span>
-        </div>
+        </button>
+
+        <button
+          onClick={() => setFilterMode('unregistered')}
+          style={{
+            ...styles.statsBox,
+            backgroundColor: '#fff3e0',
+            borderColor: '#ffb74d',
+            cursor: 'pointer',
+            border: filterMode === 'unregistered' ? '2px solid #f57c00' : '1px solid #ffb74d'
+          }}
+        >
+          <span style={styles.statLabel}>غير مسجلة بالموقع</span>
+          <span style={{ ...styles.statValue, color: '#f57c00' }}>
+            {tickets.filter((t) => !t.isRegistered).length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setFilterMode('registered')}
+          style={{
+            ...styles.statsBox,
+            backgroundColor: '#e8f5e9',
+            borderColor: '#81c784',
+            cursor: 'pointer',
+            border: filterMode === 'registered' ? '2px solid #388e3c' : '1px solid #81c784'
+          }}
+        >
+          <span style={styles.statLabel}>مسجلة بالموقع</span>
+          <span style={{ ...styles.statValue, color: '#388e3c' }}>
+            {tickets.filter((t) => t.isRegistered).length}
+          </span>
+        </button>
       </div>
 
       {/* جدول التذاكر */}
-      {tickets.length > 0 ? (
-        <div style={styles.tableContainer}>
-          <table style={styles.table}>
-            <thead>
-              <tr style={styles.headerRow}>
-                <th style={styles.th}>معرف التذكرة</th>
-                <th style={styles.th}>الموضوع</th>
-                <th style={styles.th}>الفئة</th>
-                <th style={styles.th}>المهندس</th>
-                <th style={styles.th}>تاريخ التعديل</th>
-                <th style={styles.th}>الإجراء</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tickets.map((ticket) => (
-                <tr key={ticket.ticketId} style={styles.row}>
-                  <td style={styles.td}>
-                    <a
-                      href={ticket.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={styles.link}
-                    >
-                      {ticket.ticketId}
-                    </a>
-                  </td>
-                  <td style={styles.td}>{ticket.subject}</td>
-                  <td style={styles.td}>{ticket.category}</td>
-                  <td style={styles.td}>{ticket.engineer}</td>
-                  <td style={styles.td}>{ticket.modifiedDate}</td>
-                  <td style={styles.td}>
-                    <a
-                      href={ticket.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={styles.actionButton}
-                    >
-                      فتح
-                    </a>
-                  </td>
+      {(() => {
+        const filteredTickets =
+          filterMode === 'registered'
+            ? tickets.filter((t) => t.isRegistered)
+            : filterMode === 'unregistered'
+            ? tickets.filter((t) => !t.isRegistered)
+            : tickets;
+
+        if (filteredTickets.length === 0) {
+          return !loading ? (
+            <div style={styles.emptyBox}>
+              <p>لا توجد تذاكر لعرضها ضمن هذا الفلتر</p>
+            </div>
+          ) : null;
+        }
+
+        return (
+          <div style={styles.tableContainer}>
+            <table style={styles.table}>
+              <thead>
+                <tr style={styles.headerRow}>
+                  <th style={styles.th}>معرف التذكرة</th>
+                  <th style={styles.th}>الموضوع</th>
+                  <th style={styles.th}>الفئة</th>
+                  <th style={styles.th}>المهندس</th>
+                  <th style={styles.th}>تاريخ التعديل</th>
+                  <th style={styles.th}>حالة التسجيل</th>
+                  <th style={styles.th}>الإجراء</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : !loading ? (
-        <div style={styles.emptyBox}>
-          <p>لا توجد تذاكر مفتوحة في الوقت الحالي</p>
-        </div>
-      ) : null}
+              </thead>
+              <tbody>
+                {filteredTickets.map((ticket) => (
+                  <tr
+                    key={ticket.ticketId}
+                    style={{
+                      ...styles.row,
+                      backgroundColor: ticket.isRegistered ? undefined : '#fff8e1'
+                    }}
+                  >
+                    <td style={styles.td}>
+                      <a
+                        href={ticket.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={styles.link}
+                      >
+                        {ticket.ticketId}
+                      </a>
+                    </td>
+                    <td style={styles.td}>{ticket.subject}</td>
+                    <td style={styles.td}>{ticket.category}</td>
+                    <td style={styles.td}>{ticket.engineer}</td>
+                    <td style={styles.td}>{ticket.modifiedDate}</td>
+                    <td style={styles.td}>
+                      <span
+                        style={{
+                          ...styles.statusBadge,
+                          backgroundColor: ticket.isRegistered ? '#c8e6c9' : '#ffe0b2',
+                          color: ticket.isRegistered ? '#2e7d32' : '#e65100'
+                        }}
+                      >
+                        {ticket.isRegistered ? 'مسجلة' : 'غير مسجلة'}
+                      </span>
+                    </td>
+                    <td style={styles.td}>
+                      <a
+                        href={ticket.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={styles.actionButton}
+                      >
+                        فتح
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -317,26 +395,38 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginBottom: '20px',
     border: '1px solid #ef5350'
   },
-  statsBox: {
-    backgroundColor: '#e3f2fd',
-    padding: '15px',
-    borderRadius: '5px',
-    marginBottom: '20px',
-    border: '1px solid #64b5f6'
-  },
-  statItem: {
+  statsRow: {
     display: 'flex',
     gap: '10px',
-    alignItems: 'center'
+    flexWrap: 'wrap',
+    marginBottom: '20px'
+  },
+  statsBox: {
+    backgroundColor: '#e3f2fd',
+    padding: '15px 20px',
+    borderRadius: '5px',
+    border: '1px solid #64b5f6',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '5px',
+    alignItems: 'center',
+    fontFamily: 'inherit'
   },
   statLabel: {
-    fontSize: '16px',
+    fontSize: '14px',
     fontWeight: 'bold'
   },
   statValue: {
     fontSize: '24px',
     fontWeight: 'bold',
     color: '#1976d2'
+  },
+  statusBadge: {
+    padding: '4px 10px',
+    borderRadius: '12px',
+    fontSize: '12px',
+    fontWeight: 'bold',
+    display: 'inline-block'
   },
   tableContainer: {
     overflowX: 'auto',
