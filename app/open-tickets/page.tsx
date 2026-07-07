@@ -76,7 +76,6 @@ export default function OpenTicketsPage() {
   const showLocalNotification = (title: string, body: string) => {
     showNotification(title, {
       body,
-      vibrate: [100, 50, 100],
       tag: 'open-tickets',
       requireInteraction: false
     });
