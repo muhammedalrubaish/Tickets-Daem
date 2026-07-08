@@ -51,15 +51,19 @@ export async function POST(req: Request) {
 
         // الحصول على رقم البلاغ الفعلي للمزامنة مع Notion
         let ticketNumber = number;
-        if (!ticketNumber && (ticketId || mainTicketId)) {
+        let currentReceiver = receiver;
+        let currentCategory = category_type;
+        if (!ticketNumber || currentReceiver === undefined || currentCategory === undefined) {
           const { data } = await supabase
             .from('tickets')
-            .select('ticket_number')
+            .select('ticket_number, receiver, category_type')
             .or(conditions.join(','))
             .limit(1)
             .single();
           if (data) {
-            ticketNumber = data.ticket_number;
+            if (!ticketNumber) ticketNumber = data.ticket_number;
+            if (currentReceiver === undefined) currentReceiver = data.receiver;
+            if (currentCategory === undefined) currentCategory = data.category_type;
           }
         }
 
@@ -74,8 +78,8 @@ export async function POST(req: Request) {
         
         // إرسال إشعار Push حسب نوع التحديث
         try {
-          const rcv = receiver || 'غير محدد';
-          const category = category_type || 'غير محدد';
+          const rcv = currentReceiver || 'غير محدد';
+          const category = currentCategory || 'غير محدد';
           const sol = solution || 'غير محدد';
           const isVacation = solution === 'إجازة' || solution === 'في إجازة';
           const ticketNum = ticketNumber || 'غير محدد';
