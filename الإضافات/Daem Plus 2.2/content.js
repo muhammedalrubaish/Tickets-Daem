@@ -2853,6 +2853,90 @@ syncFromWebsite();
 setInterval(syncFromWebsite, 60000);
 setInterval(highlightTickets, 2000);
 
+// ─────────────────────────────────────────────────────────────
+// رصد التذاكر المفتوحة الظاهرة حالياً بالجدول وإرسالها للموقع
+// ليقارنها بالبلاغات المسجلة ويرسل إشعاراً بالتذاكر غير المسجلة
+// ─────────────────────────────────────────────────────────────
+function collectOpenTicketsForReport() {
+  const results = [];
+  const seenIds = new Set();
+
+  function scanDoc(doc) {
+    if (!doc) return;
+    const allRows = doc.querySelectorAll('tr');
+    if (allRows.length === 0) return;
+
+    let engineerColIdx = -1, categoryColIdx = -1, subjectColIdx = -1, statusColIdx = -1, updateColIdx = -1;
+    for (const hRow of allRows) {
+      const headers = hRow.querySelectorAll('th, td');
+      let foundHeader = false;
+      for (let i = 0; i < headers.length; i++) {
+        const txt = (headers[i].innerText || '').trim();
+        if (txt.includes('المهندس') || txt.toLowerCase().includes('engineer')) {
+          engineerColIdx = i; foundHeader = true;
+        } else if (txt.includes('الفئة') || txt.toLowerCase().includes('service') || txt.toLowerCase().includes('area')) {
+          categoryColIdx = i; foundHeader = true;
+        } else if (txt.includes('العنوان') || txt.toLowerCase().includes('title')) {
+          subjectColIdx = i; foundHeader = true;
+        } else if (txt.includes('الحالة') || txt.toLowerCase().includes('status')) {
+          statusColIdx = i; foundHeader = true;
+        } else if (txt.includes('تحديث') || txt.toLowerCase().includes('update')) {
+          updateColIdx = i; foundHeader = true;
+        }
+      }
+      if (foundHeader) break;
+    }
+
+    allRows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length < 3) return;
+
+      let ticketId = null;
+      for (let i = 0; i < cells.length; i++) {
+        const m = cells[i].innerText.trim().match(/IM\d{5,9}/);
+        if (m) { ticketId = m[0]; break; }
+      }
+      if (!ticketId || seenIds.has(ticketId)) return;
+      seenIds.add(ticketId);
+
+      results.push({
+        ticketId,
+        engineer: engineerColIdx !== -1 && cells[engineerColIdx] ? cells[engineerColIdx].innerText.trim() : '',
+        category: categoryColIdx !== -1 && cells[categoryColIdx] ? cells[categoryColIdx].innerText.trim() : '',
+        subject: subjectColIdx !== -1 && cells[subjectColIdx] ? cells[subjectColIdx].innerText.trim() : '',
+        status: statusColIdx !== -1 && cells[statusColIdx] ? cells[statusColIdx].innerText.trim() : '',
+        modifiedDate: updateColIdx !== -1 && cells[updateColIdx] ? cells[updateColIdx].innerText.trim() : ''
+      });
+    });
+  }
+
+  scanDoc(document);
+  document.querySelectorAll('iframe, frame').forEach(frame => {
+    try {
+      const fd = frame.contentDocument || frame.contentWindow?.document;
+      if (fd) scanDoc(fd);
+    } catch (e) { }
+  });
+
+  return results;
+}
+
+function reportOpenTicketsIfListPage() {
+  try {
+    if (!chrome.runtime || !chrome.runtime.id) return;
+  } catch (e) {
+    return;
+  }
+  if (!isListPage()) return;
+
+  const list = collectOpenTicketsForReport();
+  if (list.length === 0) return;
+
+  safeSendMessage({ action: "REPORT_OPEN_TICKETS", data: { tickets: list } });
+}
+
+setInterval(reportOpenTicketsIfListPage, 15000);
+
 
 // محاولة الحقن فوراً وبشكل دوري لدعم التحديثات الديناميكية (AJAX/iFrames)
 setTimeout(injectFloatingPanel, 1500);
