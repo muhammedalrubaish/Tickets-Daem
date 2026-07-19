@@ -23,6 +23,9 @@ const EMPLOYEES: { name: string; user: string; key: string; pass: string }[] = [
   { name: 'ثامر المنصور', user: 't.almansour', key: 'almansour', pass: '8888' },
 ];
 
+// المستخدمون بدور المشرف (صلاحيات كاملة: تحويل البلاغات، الإسناد، تجاوز قيد الحذف)
+const ADMIN_USERS = ['mialrubaish', 'af.alamri'];
+
 const VIEWER_PASSWORD = process.env.VIEWER_PASSWORD || 'Balady.2026';
 
 // سر التوقيع — يُفضل ضبط AUTH_SECRET صراحة في متغيرات البيئة على Vercel
@@ -90,7 +93,7 @@ export function verifyEmployeeLogin(username: string, password: string): AuthUse
     username: emp.user,
     name: emp.name,
     key: emp.key,
-    role: emp.user === 'mialrubaish' ? 'admin' : 'editor',
+    role: ADMIN_USERS.includes(emp.user) ? 'admin' : 'editor',
   };
 }
 
