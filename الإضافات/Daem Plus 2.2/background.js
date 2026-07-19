@@ -1,6 +1,36 @@
 // الخدمة الخلفية لتجاوز مشاكل CORS v1
 const DASHBOARD_API = "https://tickets-daem.vercel.app/api/tickets-json";
 
+// توكن الدخول الموقع من الخادم — تتطلبه عمليات الإنشاء والتحديث بعد إحكام الصلاحيات
+function getAuthToken() {
+    return new Promise((resolve) => {
+        try {
+            chrome.storage.local.get(['daemToken'], (result) => {
+                resolve((result && result.daemToken) ? result.daemToken : '');
+            });
+        } catch (e) {
+            resolve('');
+        }
+    });
+}
+
+async function authHeaders() {
+    const headers = { "Content-Type": "application/json" };
+    const token = await getAuthToken();
+    if (token) headers["Authorization"] = "Bearer " + token;
+    return headers;
+}
+
+// استخراج رسالة الخطأ العربية من استجابة الخادم بدل عرض JSON خام
+async function readErrorMessage(response) {
+    try {
+        const data = await response.json();
+        return (data && (data.error || data.details)) || ("HTTP " + response.status);
+    } catch (e) {
+        return "HTTP " + response.status;
+    }
+}
+
 // وظيفة جلب البيانات من الموقع (تتجاوز CORS لأنها تعمل في الخلفية)
 async function fetchTickets() {
     try {
@@ -20,16 +50,13 @@ async function createTicket(ticketData) {
     try {
         const response = await fetch("https://tickets-daem.vercel.app/api/create-ticket", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: await authHeaders(),
             body: JSON.stringify(ticketData)
         });
         if (response.ok) {
             return { success: true };
         } else {
-            const errText = await response.text();
-            return { success: false, error: errText };
+            return { success: false, error: await readErrorMessage(response) };
         }
     } catch (error) {
         console.error("Error creating ticket in background:", error);
@@ -42,9 +69,7 @@ async function updateTicketDate(ticketNumber, date) {
     try {
         const response = await fetch("https://tickets-daem.vercel.app/api/update-ticket", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: await authHeaders(),
             body: JSON.stringify({
                 number: ticketNumber,
                 date: date
@@ -53,8 +78,7 @@ async function updateTicketDate(ticketNumber, date) {
         if (response.ok) {
             return { success: true };
         } else {
-            const errText = await response.text();
-            return { success: false, error: errText };
+            return { success: false, error: await readErrorMessage(response) };
         }
     } catch (error) {
         console.error("Error updating ticket date in background:", error);
@@ -112,12 +136,11 @@ async function updateSolution(ticketNumber, solution) {
     try {
         const response = await fetch("https://tickets-daem.vercel.app/api/update-ticket", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: await authHeaders(),
             body: JSON.stringify({ number: ticketNumber, solution: solution })
         });
         if (response.ok) return { success: true };
-        const errText = await response.text();
-        return { success: false, error: errText };
+        return { success: false, error: await readErrorMessage(response) };
     } catch (error) {
         return { success: false, error: error.message };
     }

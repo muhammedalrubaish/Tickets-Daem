@@ -5,15 +5,16 @@ const iframe = document.getElementById('daem-iframe');
 window.addEventListener('message', (event) => {
   if (event.data && event.data.action === 'SET_ROLE') {
     if (event.data.role) {
-      chrome.storage.local.set({ 
+      chrome.storage.local.set({
         daemRole: event.data.role,
         daemPassword: event.data.password || '',
         daemUsername: event.data.username || '',
         daemUserKey: event.data.userKey || '',
-        daemUserArabic: event.data.userArabic || ''
+        daemUserArabic: event.data.userArabic || '',
+        daemToken: event.data.token || ''
       });
     } else {
-      chrome.storage.local.remove(['daemRole', 'daemPassword', 'daemUsername', 'daemUserKey', 'daemUserArabic']);
+      chrome.storage.local.remove(['daemRole', 'daemPassword', 'daemUsername', 'daemUserKey', 'daemUserArabic', 'daemToken']);
     }
   }
   

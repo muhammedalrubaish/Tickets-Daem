@@ -2371,7 +2371,7 @@ function injectFloatingPanel() {
       if (res && res.success) {
         showFloatingNotification(`✅ تم تحديث الحالة إلى: ${newStatus}`);
       } else {
-        showFloatingNotification('⚠️ فشل تحديث الحالة في الموقع');
+        showFloatingNotification(`⚠️ فشل تحديث الحالة: ${res?.error || 'تأكد من تسجيل الدخول في نافذة الإضافة'}`);
       }
     });
   });

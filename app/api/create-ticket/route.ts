@@ -2,9 +2,18 @@ import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
 import { sendPushNotification } from '../../../lib/push';
 import { createNotionTicket } from '../../../lib/notionSync';
+import { getAuthFromRequest } from '../../../lib/serverAuth';
 
 export async function POST(req: Request) {
   try {
+    const auth = getAuthFromRequest(req);
+    if (!auth) {
+      return NextResponse.json({ error: 'يجب تسجيل الدخول أولاً لإنشاء بلاغ. سجل دخولك ثم أعد المحاولة.' }, { status: 401 });
+    }
+    if (auth.role === 'viewer') {
+      return NextResponse.json({ error: 'حساب المشرف للعرض فقط ولا يملك صلاحية إنشاء البلاغات.' }, { status: 403 });
+    }
+
     const data = await req.json();
 
     // 1. Insert directly into Supabase
