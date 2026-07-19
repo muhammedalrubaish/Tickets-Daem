@@ -78,7 +78,8 @@ export default function ExtensionPopupPage() {
           password: '',
           username: savedUsername,
           userKey: savedUserKey,
-          userArabic: savedUserArabic
+          userArabic: savedUserArabic,
+          token: localStorage.getItem('daemToken') || ''
         }, '*');
       }
     }
@@ -178,47 +179,41 @@ export default function ExtensionPopupPage() {
     localStorage.removeItem('daemUsername');
     localStorage.removeItem('daemUserKey');
     localStorage.removeItem('daemUserArabic');
-    window.parent.postMessage({ action: 'SET_ROLE', role: 'support', password: '' }, '*');
+    localStorage.removeItem('daemToken');
+    window.parent.postMessage({ action: 'SET_ROLE', role: 'support', password: '', token: '' }, '*');
     setUserArabic('');
   };
 
-  const handleLoginAdmin = () => {
-    const EMPLOYEES = [
-      { name: 'البراء النصيان', user: 'a.alnesayan', key: 'alnesayan', pass: '1111' },
-      { name: 'عبدالله العويد', user: 'aalowaid', key: 'alowaid', pass: '2222' },
-      { name: 'عبدالرحمن العمري', user: 'af.alamri', key: 'alamri', pass: '3333' },
-      { name: 'عزام الحربي', user: 'azz.alharbi', key: 'alharbi', pass: '4444' },
-      { name: 'محمد الربيش', user: 'mialrubaish', key: 'alrubaish', pass: 'Balady.20' },
-      { name: 'صالح الغصن', user: 's.alghosen', key: 'alghosen', pass: '6666' },
-      { name: 'طارق الهدياني', user: 't.alhedyani', key: 'alhedyani', pass: '7777' },
-      { name: 'ثامر المنصور', user: 't.almansour', key: 'almansour', pass: '8888' },
-    ];
-
-    let currentEmployees = EMPLOYEES;
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('balady_employees_v1');
-      if (cached) {
-        try {
-          currentEmployees = JSON.parse(cached);
-        } catch (e) {}
-      }
-    }
-
-    const matchedEmp = currentEmployees.find(e => e.user === selectedUser);
-    if (!matchedEmp) {
-      setErrorMsg('الموظف غير موجود! ⚠️');
+  const handleLoginAdmin = async () => {
+    if (!password.trim()) {
+      setErrorMsg('يرجى إدخال كلمة المرور! ⚠️');
       return;
     }
 
-    if (password.trim() === matchedEmp.pass.trim()) {
-      const userRole = matchedEmp.user === 'mialrubaish' ? 'admin' : 'support';
+    // التحقق من بيانات الدخول يتم في الخادم ويعيد توكن موقعاً تستخدمه الإضافة في كل عملية
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: selectedUser, password: password.trim() })
+      });
+      const data = await res.json().catch(() => ({} as any));
+
+      if (!res.ok || !data.token) {
+        setErrorMsg(data.error || 'كلمة المرور غير صحيحة! ⚠️');
+        setPassword('');
+        return;
+      }
+
+      const userRole = data.role === 'admin' ? 'admin' : 'support';
       setRole(userRole);
       localStorage.setItem('daemRole', userRole);
-      localStorage.setItem('daemUsername', matchedEmp.user);
-      localStorage.setItem('daemUserKey', matchedEmp.key || '');
-      localStorage.setItem('daemUserArabic', matchedEmp.name);
+      localStorage.setItem('daemUsername', data.username || selectedUser);
+      localStorage.setItem('daemUserKey', data.key || '');
+      localStorage.setItem('daemUserArabic', data.name || '');
+      localStorage.setItem('daemToken', data.token);
 
-      setUserArabic(matchedEmp.name);
+      setUserArabic(data.name || '');
       // أمان: لا نحفظ ولا نمرر كلمة المرور بعد نجاح الدخول
       setPassword('');
 
@@ -226,14 +221,14 @@ export default function ExtensionPopupPage() {
         action: 'SET_ROLE',
         role: userRole,
         password: '',
-        username: matchedEmp.user,
-        userKey: matchedEmp.key || '',
-        userArabic: matchedEmp.name
+        username: data.username || selectedUser,
+        userKey: data.key || '',
+        userArabic: data.name || '',
+        token: data.token
       }, '*');
       setErrorMsg('');
-    } else {
-      setErrorMsg('كلمة المرور غير صحيحة! ⚠️');
-      setPassword('');
+    } catch (err) {
+      setErrorMsg('تعذر الاتصال بالخادم! ⚠️');
     }
   };
 
@@ -244,7 +239,8 @@ export default function ExtensionPopupPage() {
     localStorage.removeItem('daemUsername');
     localStorage.removeItem('daemUserKey');
     localStorage.removeItem('daemUserArabic');
-    window.parent.postMessage({ action: 'SET_ROLE', role: 'support', password: '' }, '*');
+    localStorage.removeItem('daemToken');
+    window.parent.postMessage({ action: 'SET_ROLE', role: 'support', password: '', token: '' }, '*');
     setShowPasswordField(false);
     setPassword('');
     setErrorMsg('');

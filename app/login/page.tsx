@@ -1,18 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import styles from '../page.module.css';
-
-const EMPLOYEES = [
-  { name: 'البراء النصيان', user: 'a.alnesayan', pass: '1111' },
-  { name: 'عبدالله العويد', user: 'aalowaid', pass: '2222' },
-  { name: 'عبدالرحمن العمري', user: 'af.alamri', pass: '3333' },
-  { name: 'عزام الحربي', user: 'azz.alharbi', pass: '4444' },
-  { name: 'محمد الربيش', user: 'mialrubaish', pass: 'Balady.20' },
-  { name: 'صالح الغصن', user: 's.alghosen', pass: '6666' },
-  { name: 'طارق الهدياني', user: 't.alhedyani', pass: '7777' },
-  { name: 'ثامر المنصور', user: 't.almansour', pass: '8888' },
-];
 
 export default function LoginPage() {
   const [loginMode, setLoginMode] = useState<'admin' | 'employee' | null>(null);
@@ -22,22 +11,10 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
-  const [employeesList, setEmployeesList] = useState(EMPLOYEES);
 
-  useEffect(() => {
-    const cached = localStorage.getItem('balady_employees_v1');
-    if (cached) {
-      try {
-        setEmployeesList(JSON.parse(cached));
-      } catch (e) {
-        console.error('Failed to parse cached employees list', e);
-      }
-    }
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (failedAttempts >= 3) {
       setError('تم حظر الدخول لتجاوز عدد المحاولات المسموح به (3 محاولات). يرجى مراجعة المسؤول.');
       return;
@@ -46,39 +23,37 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
-    setTimeout(() => {
-      let isSuccess = false;
-      let targetPath = '/';
+    // التحقق من بيانات الدخول يتم بالكامل في الخادم ويعيد توكن موقعاً
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          loginMode === 'admin'
+            ? { mode: 'viewer', password }
+            : { username: username.trim(), password: password.trim() }
+        ),
+      });
+      const data = await res.json().catch(() => ({} as any));
 
-      if (loginMode === 'admin') {
-        if (password === 'Balady.2026') {
-          document.cookie = 'auth_token=viewer; path=/; max-age=604800';
-          isSuccess = true;
-        }
-      } else {
-        const cleanUsername = username.trim().toLowerCase();
-        const emp = employeesList.find(e => e.user.toLowerCase() === cleanUsername && e.pass === password.trim());
-        if (emp) {
-          // جميع الموظفين يحصلون على توكن باسمائهم لضمان التعرف عليهم
-          document.cookie = `auth_token=editor_${encodeURIComponent(emp.name)}; path=/; max-age=604800`;
-          isSuccess = true;
-        }
-      }
-
-      if (isSuccess) {
-        window.location.href = targetPath;
+      if (res.ok && data.token) {
+        document.cookie = `auth_token=${encodeURIComponent(data.token)}; path=/; max-age=604800`;
+        window.location.href = '/';
       } else {
         const newCount = failedAttempts + 1;
         setFailedAttempts(newCount);
         setIsLoading(false);
-        
+
         if (newCount >= 3) {
           setError('تم حظر الدخول لتجاوز عدد المحاولات (3 محاولات). يرجى مراجعة المسؤول.');
         } else {
           setError(`بيانات الدخول غير صحيحة. المحاولات المتبقية: ${3 - newCount}`);
         }
       }
-    }, 1200);
+    } catch (err) {
+      setIsLoading(false);
+      setError('تعذر الاتصال بالخادم. حاول مرة أخرى.');
+    }
   };
 
   return (

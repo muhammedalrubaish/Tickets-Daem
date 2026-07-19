@@ -1863,27 +1863,44 @@ export default function DashboardClient({ complaints: initialComplaints }: Props
       return;
     }
 
-    const value = authCookie.split('=')[1];
-    if (value === 'super_admin') {
-      setUserRole('super_admin');
-    } else if (value === 'viewer' || value === 'admin' || value === 'true') {
-      setUserRole('viewer'); // المشرف الآن يرى فقط
-    } else if (value.startsWith('editor_')) {
-      const name = decodeURIComponent(value.replace('editor_', ''));
-      setLoggedInUser(name);
-      
-      // ترقية تلقائية لمحمد الربيش ليكون مشرفاً بصلاحيات محرر
-      // ترقية تلقائية لمحمد الربيش ليكون مشرفاً بصلاحيات محرر
-      if (name.includes('محمد الربيش')) {
+    const value = decodeURIComponent(authCookie.split('=').slice(1).join('='));
+
+    // فك حمولة التوكن الموقع لعرض الواجهة المناسبة — التحقق الفعلي من التوقيع يتم في الخادم عند كل عملية
+    const decodeTokenPayload = (token: string): { u: string; n: string; r: string; exp: number } | null => {
+      const parts = token.split('.');
+      if (parts.length !== 2) return null;
+      try {
+        const json = atob(parts[0].replace(/-/g, '+').replace(/_/g, '/'));
+        const payload = JSON.parse(json);
+        if (!payload || !payload.r || (payload.exp && payload.exp * 1000 < Date.now())) return null;
+        return payload;
+      } catch {
+        return null;
+      }
+    };
+
+    const payload = decodeTokenPayload(value);
+
+    if (payload) {
+      if (payload.r === 'admin') {
+        setLoggedInUser(payload.n);
         setUserRole('super_admin');
         setSelectedReceiver('all');
         setActiveFilter('all');
-      } else {
+      } else if (payload.r === 'editor') {
+        setLoggedInUser(payload.n);
         setUserRole('editor');
-        setSelectedReceiver(name);
+        setSelectedReceiver(payload.n);
         setActiveFilter('all');
+      } else {
+        setUserRole('viewer');
       }
+    } else if (value === 'viewer') {
+      // توافق خلفي: زر "بوابة المشرف" السريع يضبط كوكي رؤية فقط دون توكن
+      setUserRole('viewer');
     } else {
+      // كوكي قديمة أو منتهية — إعادة تسجيل الدخول للحصول على توكن موقع
+      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
       router.push('/login');
     }
   }, [router]);

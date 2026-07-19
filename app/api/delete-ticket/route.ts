@@ -1,16 +1,24 @@
 import { NextResponse } from 'next/server';
+import { getAuthFromRequest } from '../../../lib/serverAuth';
 
 export async function POST(req: Request) {
   try {
+    const auth = getAuthFromRequest(req);
+    if (!auth) {
+      return NextResponse.json({ error: 'يجب تسجيل الدخول أولاً لحذف البلاغ. سجل دخولك ثم أعد المحاولة.' }, { status: 401 });
+    }
+    if (auth.role === 'viewer') {
+      return NextResponse.json({ error: 'حساب المشرف للعرض فقط ولا يملك صلاحية حذف البلاغات.' }, { status: 403 });
+    }
+
     const { ticketId, createdAt, receiver, category, solution } = await req.json();
 
     if (!ticketId) {
       return NextResponse.json({ error: 'Ticket ID is required' }, { status: 400 });
     }
 
-    // التحقق من صلاحيات المشرف محمد الربيش لتجاوز قيد الساعتين
-    const cookieStore = req.headers.get('cookie') || '';
-    const isMainAdmin = cookieStore.includes('super_admin') || cookieStore.includes(encodeURIComponent('محمد الربيش'));
+    // المشرف (محمد الربيش) يتجاوز قيد الساعتين — الدور موثق بتوكن موقع من الخادم وليس بكوكي قابلة للتزوير
+    const isMainAdmin = auth.role === 'admin';
 
     // التحقق من الوقت (ساعتين) في السيرفر لزيادة الأمان (فقط لغير محمد الربيش)
     if (createdAt && !isMainAdmin) {

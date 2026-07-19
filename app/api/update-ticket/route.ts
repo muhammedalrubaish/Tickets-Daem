@@ -2,9 +2,18 @@ import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
 import { sendPushNotification } from '../../../lib/push';
 import { updateNotionTicket } from '../../../lib/notionSync';
+import { getAuthFromRequest } from '../../../lib/serverAuth';
 
 export async function POST(req: Request) {
   try {
+    const auth = getAuthFromRequest(req);
+    if (!auth) {
+      return NextResponse.json({ error: 'يجب تسجيل الدخول أولاً لتعديل البلاغ. سجل دخولك ثم أعد المحاولة.' }, { status: 401 });
+    }
+    if (auth.role === 'viewer') {
+      return NextResponse.json({ error: 'حساب المشرف للعرض فقط ولا يملك صلاحية تعديل البلاغات.' }, { status: 403 });
+    }
+
     let { ticketId, solution, status, receiver, mainTicketId, number, category_type, date } = await req.json();
 
     const updateData: any = {};
@@ -46,6 +55,19 @@ export async function POST(req: Request) {
       }
 
       if (conditions.length > 0) {
+        // تحويل البلاغ (تغيير المستقبل) صلاحية خاصة بالمشرف فقط — تُفحص هنا في الخادم
+        if (receiver !== undefined && auth.role !== 'admin') {
+          const { data: existing } = await supabase
+            .from('tickets')
+            .select('receiver')
+            .or(conditions.join(','))
+            .limit(1)
+            .single();
+          if (existing && (existing.receiver || '').trim() !== String(receiver).trim()) {
+            return NextResponse.json({ error: 'تحويل البلاغ لموظف آخر صلاحية خاصة بالمشرف فقط.' }, { status: 403 });
+          }
+        }
+
         const { error } = await query.or(conditions.join(','));
         if (error) throw error;
 
