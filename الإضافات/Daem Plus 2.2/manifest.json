@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Daem Plus",
-  "version": "2.3",
+  "version": "2.3.1",
   "description": "إضافة لتلوين البلاغات في منصة داعم بناءً على الحالة والوقت والمزامنة.",
   "permissions": ["storage"],
   "host_permissions": [

@@ -3671,7 +3671,9 @@ function extractDateFromContainer(container) {
 }
 
 function findAvailableTimeElement() {
-  const allElements = queryAllInPage('div, span, label, td, th, p, b, label-form, font');
+  // البحث في مستند الإطار الحالي فقط — البحث عبر كل الإطارات كان يحقن الشارة في مستند
+  // إطار آخر (كالقائمة) لا يراه فحص التكرار، فتتكدس شارات جديدة كل بضع ثوان
+  const allElements = document.querySelectorAll('div, span, label, td, th, p, b, label-form, font');
   const DATE_LABELS = [
     'وقت متاح', 'تاريخ ووقت متاح', 'تاريخ استقبال البلاغ', 'تاريخ البلاغ', 'تاريخ الإبلاغ',
     'تاريخ التسجيل', 'تاريخ التقديم', 'تاريخ الإنشاء', 'تاريخ الإسناد',
@@ -3968,21 +3970,31 @@ function isListPage() {
   return new Set(allMatches).size >= 3;
 }
 
+// إزالة كل شارات المدة من مستند الإطار الحالي (وليس الأولى فقط، لتنظيف أي تراكم)
+function removeAvailableTimeBadges() {
+  document.querySelectorAll('#daem-available-time-badge').forEach(b => {
+    try { b.remove(); } catch (e) { }
+  });
+}
+
 function updateAvailableTimeDisplay() {
   try {
     if (window === window.top && document.querySelector('iframe')) {
-      const badge = document.getElementById('daem-available-time-badge');
-      if (badge) badge.remove();
+      removeAvailableTimeBadges();
       return;
     }
 
     if (isListPage()) {
-      const badge = document.getElementById('daem-available-time-badge');
-      if (badge) badge.remove();
+      removeAvailableTimeBadges();
       // حقن لوحة الداشبورد للتأكيد
       injectDashboardPanel();
       return;
     }
+
+    // تنظيف أي شارات مكررة متراكمة من النسخ السابقة والإبقاء على الأولى فقط
+    document.querySelectorAll('#daem-available-time-badge').forEach((b, i) => {
+      if (i > 0) { try { b.remove(); } catch (e) { } }
+    });
 
     // تحديث تنبيه تحويل البلاغ أولاً وبشكل مستقل لضمان عمله حتى لو لم يتم العثور على تاريخ فتح البلاغ بالصفحة
     updatePanelTransferWarning();
@@ -3997,9 +4009,9 @@ function updateAvailableTimeDisplay() {
     let badge = document.getElementById('daem-available-time-badge');
     const panelDurationValue = document.getElementById('daem-panel-duration-value');
 
-    // إذا كانت الشارة واللوحة العائمة كلاهما محدثين بالفعل بالقيمة الحالية، نتخطى التحديث
+    // إذا كانت الشارة في مكانها الصحيح واللوحة العائمة كلاهما محدثين بالفعل بالقيمة الحالية، نتخطى التحديث
     const isPanelUpdated = panelDurationValue && !panelDurationValue.innerText.includes('جاري') && panelDurationValue.innerText !== '';
-    if (badge && badge.getAttribute('data-original-value') === value && isPanelUpdated) {
+    if (badge && badge.previousElementSibling === element && badge.getAttribute('data-original-value') === value && isPanelUpdated) {
       return; // كلاهما محدث، لا داعي للتحديث
     }
 
@@ -4042,8 +4054,10 @@ function updateAvailableTimeDisplay() {
       badge.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
       badge.style.transition = 'all 0.3s ease';
       badge.style.verticalAlign = 'middle';
+    }
 
-      // إدراج الشارة خلف العنصر مباشرة
+    // إدراج الشارة خلف العنصر مباشرة (أو إعادتها لمكانها إن أزاحها إعادة رسم الصفحة)
+    if (badge.previousElementSibling !== element) {
       element.after(badge);
     }
 
